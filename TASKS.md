@@ -22,8 +22,18 @@ Created by Nieto Software
 - [x] 6. Gate green: BUILD SUCCESSFUL (41 tasks). Engine tests: 12 total (1 smoke + 4 TileIndex + 4 Viewport + 3 AnimationClock), 0 failures/errors. APK + JAR paths/timestamps in summary
 - [x] 7. Docs: TASKS.md final; README updated (JavaFX 8 desktop runtime req, e.g. Liberica JRE 8 Full; compose-tiles script); CHANGES.md Phase 2 entry; THIRD_PARTY.md tile-art origin (open-source Micropolis via MicropolisJ, GPLv3, no Maxis art)
 
+## Phase 3: Tool palette, placement and status bar
+- [ ] 0. Shared game layer in :engine (za.co.nieto.nietocity.game): GameController owns engine thread + selected tool; beginStroke/dragTo/apply on engine thread; immutable StatusSnapshot (date, funds, pop, tool, cost); message queue via cityMessage listener; copy English CityMessages/StatusMessages/GuiStrings .properties into engine resources, load via ResourceBundle; JUnit (road costs 10; funds 0 -> INSUFFICIENT_FUNDS + map unchanged; res on water -> UH_OH; date format cityTime 0 and 48)
+- [ ] 1. Icons: 32 ic*.png -> engine/src/main/resources/tools/<TOOLNAME>.png and _hi.png; THIRD_PARTY.md origin
+- [ ] 2. Android status bar (top, classic: date, funds, pop, tool, cost) bound to StatusSnapshot 1/s + message ticker (~4s); retire Phase 2 overlay
+- [ ] 3. Android tool palette: 16 tools + icons, selected shows _hi + cost; landscape left column, portrait bottom sheet -> thin strip; tap selected again = deselect (pan)
+- [ ] 4. Android placement: tap places, drag draws stroke with ToolPreview overlay applied on release; two-finger pan; pinch zoom; no tool = one-finger pan; UH_OH/INSUFFICIENT_FUNDS in ticker; long press = query
+- [ ] 5. Query dialog (both): zone name + density/land value/crime/pollution/growth from StatusMessages; close by tap/Esc
+- [ ] 6. Desktop (JavaFX 8): top status bar, ticker, left palette, same GameController; left-drag place/stroke, right/Space+drag pan, wheel zoom, right-click query; runnable jar; run once, report console
+- [ ] 7. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail + test count; APK/JAR paths
+- [ ] 8. Docs: TASKS.md, CHANGES.md (top), README controls (phone+PC), THIRD_PARTY.md (icons, strings)
+
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
-- Phase 2: Tile renderer, Android and desktop
 - Phase 3: Tool palette, placement, status bar
 - Phase 4: Speed, budget, evaluation, graphs, mini map
 - Phase 5: Disasters, sprites, sound
