@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- NietoCity. Created by Nieto Software. GPLv3. Portrait layout: palette is a
-     collapsible bottom sheet over the map. -->
+<!-- NietoCity. Created by Nieto Software. GPLv3. Portrait: palette is a
+     collapsible bottom sheet over the map (never over the status bar). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -36,39 +36,62 @@
             android:layout_height="match_parent" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|start"
+            android:layout_gravity="bottom"
             android:orientation="vertical">
 
-            <Button
-                android:id="@+id/paletteToggle"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/toolsBar"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
+                android:minHeight="48dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="#DD000000"
+                android:clickable="true"
+                android:focusable="true"
                 android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                android:background="#AA000000"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                android:text="@string/tools_toggle" />
+                android:paddingRight="10dp">
 
-            <HorizontalScrollView
+                <ImageView
+                    android:id="@+id/selectedIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/selectedName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:id="@+id/toolsHandle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:text="@string/tools_toggle" />
+
+            </LinearLayout>
+
+            <ScrollView
                 android:id="@+id/paletteScroll"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbars="none">
+                android:scrollbars="none"
+                android:visibility="gone">
 
                 <za.co.nieto.nietocity.ToolPaletteView
                     android:id="@+id/palette"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal" />
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            </HorizontalScrollView>
+            </ScrollView>
 
         </LinearLayout>
 

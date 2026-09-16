@@ -217,7 +217,35 @@ public class DesktopApp extends Application
 
 	private Image icon(String fileName)
 	{
-		return new Image(DesktopApp.class.getResourceAsStream("/tools/" + fileName));
+		Image base = new Image(DesktopApp.class.getResourceAsStream("/tools/" + fileName));
+		return scale3x(base);
+	}
+
+	/** 3x nearest-neighbour scale so the small tool icons are visible and crisp. */
+	private static Image scale3x(Image base)
+	{
+		int w = (int) base.getWidth();
+		int h = (int) base.getHeight();
+		int[] pix = new int[w * h];
+		base.getPixelReader().getPixels(0, 0, w, h, PixelFormat.getIntArgbInstance(), pix, 0, w);
+		int zw = w * 3;
+		int zh = h * 3;
+		int[] out = new int[zw * zh];
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
+				int p = pix[y * w + x];
+				int baseIdx = (y * 3) * zw + x * 3;
+				for (int dy = 0; dy < 3; dy++) {
+					int rowIdx = baseIdx + dy * zw;
+					for (int dx = 0; dx < 3; dx++) {
+						out[rowIdx + dx] = p;
+					}
+				}
+			}
+		}
+		WritableImage wi = new WritableImage(zw, zh);
+		wi.getPixelWriter().setPixels(0, 0, zw, zh, PixelFormat.getIntArgbInstance(), out, 0, zw);
+		return wi;
 	}
 
 	private void refreshPalette()

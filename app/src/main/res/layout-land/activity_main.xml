@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- NietoCity. Created by Nieto Software. GPLv3. Landscape layout: palette is a
-     scrollable left column. -->
+<!-- NietoCity. Created by Nieto Software. GPLv3. Landscape: palette is a
+     scrollable 72dp left column. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -33,15 +33,14 @@
 
         <ScrollView
             android:id="@+id/paletteScroll"
-            android:layout_width="wrap_content"
+            android:layout_width="72dp"
             android:layout_height="match_parent"
             android:scrollbars="none">
 
             <za.co.nieto.nietocity.ToolPaletteView
                 android:id="@+id/palette"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:layout_height="wrap_content" />
 
         </ScrollView>
 

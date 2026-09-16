@@ -8,16 +8,19 @@
 package za.co.nieto.nietocity
 
 import android.app.Activity
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.View
-import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import micropolisj.engine.MapGenerator
 import micropolisj.engine.Micropolis
+import micropolisj.engine.MicropolisTool
 import za.co.nieto.nietocity.game.GameController
+import za.co.nieto.nietocity.game.GameStrings
 
 /**
  * Phase 3: a new random map shown in CityView, with a top status bar, a message
@@ -63,19 +66,38 @@ class MainActivity : Activity() {
         cityView = findViewById(R.id.cityView)
         palette = findViewById(R.id.palette)
 
+        val columns = if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) 1 else 4
         cityView.setController(controller)
-        palette.setController(controller)
-        palette.listener = { statusBar.update(controller.snapshot()) }
+        palette.setup(controller, columns)
 
         // Long press queries the tile and shows a small panel (tap outside / Back
         // to close).
         cityView.queryListener = { x, y -> showQuery(x, y) }
 
-        // Portrait bottom sheet: the toggle collapses the palette to a thin strip.
-        val toggle: Button? = findViewById(R.id.paletteToggle)
-        val scroll: View? = findViewById(R.id.paletteScroll)
-        toggle?.setOnClickListener {
-            scroll?.let { it.visibility = if (it.visibility == View.GONE) View.VISIBLE else View.GONE }
+        // Portrait: a "Tools" bar shows the selected tool and toggles the grid.
+        val toolsBar: View? = findViewById(R.id.toolsBar)
+        val paletteScroll: View? = findViewById(R.id.paletteScroll)
+        val selIcon: ImageView? = findViewById(R.id.selectedIcon)
+        val selName: TextView? = findViewById(R.id.selectedName)
+        toolsBar?.setOnClickListener {
+            paletteScroll?.let {
+                it.visibility = if (it.visibility == View.GONE) View.VISIBLE else View.GONE
+            }
+        }
+        palette.listener = { tool ->
+            statusBar.update(controller.snapshot())
+            updateSelectedBar(selIcon, selName, tool)
+        }
+        updateSelectedBar(selIcon, selName, controller.getTool())
+    }
+
+    private fun updateSelectedBar(icon: ImageView?, name: TextView?, tool: MicropolisTool?) {
+        if (tool == null) {
+            icon?.setImageBitmap(null)
+            name?.text = getString(R.string.pan_mode)
+        } else {
+            icon?.setImageBitmap(palette.iconFor(tool))
+            name?.text = GameStrings.toolName(tool)
         }
     }
 
