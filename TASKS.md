@@ -8,7 +8,7 @@ Created by Nieto Software
 - [x] 3. :engine compiles as Java 8 (javap: major version 52), no Android/java.awt deps; no shim needed (CHANGES.md)
 - [x] 4. JUnit smoke test (seeded map, res zone + road + coal plant + power line, 200 ticks) passes: pop 0->20, funds changed. JUnit XML: tests=1, failures=0, errors=0
 - [x] 5. MainActivity builds the demo city, runs 100 ticks on a background thread, shows "Engine OK: population 20, funds 996845"; tiles.rc bundled in APK (verify on S22)
-- [ ] 6. :desktop module (Java 8) runs the same ticks and builds a runnable JAR
+- [x] 6. :desktop module (Java 8, major version 52) runs the same 100 ticks; runnable fat JAR prints "Engine OK: population 20, funds 996845" (java -jar desktop.jar)
 - [ ] 7. gradlew assembleDebug succeeds; APK path reported
 - [ ] 8. TASKS.md and README.md updated
 
