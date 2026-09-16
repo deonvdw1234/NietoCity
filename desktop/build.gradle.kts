@@ -26,6 +26,10 @@ dependencies {
 // Build a self-contained, runnable JAR: our classes + the engine's classes and
 // data files (tiles.rc, tiles/aliases.txt), with the Main-Class in the manifest.
 tasks.jar {
+    // Building the runtime classpath also builds :engine:jar, whose classes and
+    // data files we unpack into this JAR. Declaring the dependency keeps task
+    // ordering correct (e.g. under --rerun-tasks).
+    dependsOn(configurations.runtimeClasspath)
     manifest {
         attributes["Main-Class"] = "za.co.nieto.nietocity.desktop.Main"
     }
