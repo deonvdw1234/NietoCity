@@ -2,10 +2,8 @@
  * NietoCity - Android city renderer.
  * Created by Nieto Software.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version. See the LICENSE file.
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, version 3 or later. See LICENSE.
  */
 package za.co.nieto.nietocity
 
@@ -22,22 +20,16 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import micropolisj.engine.MapListener
-import micropolisj.engine.MapState
-import micropolisj.engine.Micropolis
-import micropolisj.engine.Speed
-import micropolisj.engine.Sprite
 import micropolisj.engine.TileConstants
-import za.co.nieto.nietocity.render.AnimationClock
+import za.co.nieto.nietocity.game.GameController
 import za.co.nieto.nietocity.render.TileIndex
 import za.co.nieto.nietocity.render.Viewport
 
 /**
- * A SurfaceView that renders the Micropolis map using the shared render core.
- * The simulation runs on its own thread (AnimationClock); a separate render
- * thread redraws only when something changes (animation tick, map change, or a
- * pan/zoom), and idles otherwise. Integer zoom with nearest-neighbour sampling
- * keeps the pixel art crisp.
+ * A SurfaceView that renders the Micropolis map through the shared GameController
+ * using the render core. The simulation runs on the GameController's engine
+ * thread; a separate render thread redraws only when something changes.
+ * Integer zoom with nearest-neighbour sampling keeps the pixel art crisp.
  */
 class CityView @JvmOverloads constructor(
     context: Context,
@@ -54,16 +46,6 @@ class CityView @JvmOverloads constructor(
         isDither = false
     }
 
-    private val overlayPaint = Paint().apply {
-        isAntiAlias = true
-        color = Color.WHITE
-        textSize = 15f * resources.displayMetrics.scaledDensity
-    }
-    private val overlayBgPaint = Paint().apply {
-        isAntiAlias = true
-        color = Color.argb(140, 0, 0, 0)
-    }
-
     private val src = Rect()
     private val dst = Rect()
 
@@ -71,15 +53,13 @@ class CityView @JvmOverloads constructor(
     private val scaleDetector = ScaleGestureDetector(context, ScaleListener())
     private var scaleAccum = 1f
 
-    private var city: Micropolis? = null
+    private var controller: GameController? = null
     private var viewport: Viewport? = null
-    private var clock: AnimationClock? = null
 
     private val renderLock = Object()
     @Volatile private var dirty = true
     private var renderThread: RenderThread? = null
 
-    // Reused snapshot of the visible tiles so we don't hold the engine lock while drawing.
     private var snapshot = IntArray(0)
 
     init {
@@ -104,31 +84,14 @@ class CityView @JvmOverloads constructor(
         }
     }
 
-    /** Attach the city to render. Safe to call before or after the surface exists. */
-    fun setCity(city: Micropolis) {
-        clock?.stop()
-        this.city = city
-        city.addMapListener(RenderMapListener())
-
+    /** Attach the shared controller and start rendering its city. */
+    fun setController(controller: GameController) {
+        this.controller = controller
+        controller.setFrameCallback { requestRender() }
         if (width > 0 && height > 0) {
             initViewport(width, height)
         }
-        clock = AnimationClock(city, AnimationClock.Listener { requestRender() }).apply {
-            setSpeed(Speed.NORMAL)
-        }
         requestRender()
-    }
-
-    fun getCity(): Micropolis? = city
-
-    /** Start the simulation clock (call from Activity.onResume). */
-    fun resumeEngine() {
-        clock?.start()
-    }
-
-    /** Stop the simulation clock (call from Activity.onPause). */
-    fun pauseEngine() {
-        clock?.stop()
     }
 
     fun getViewport(): Viewport? = viewport
@@ -141,7 +104,7 @@ class CityView @JvmOverloads constructor(
     }
 
     private fun initViewport(w: Int, h: Int) {
-        val c = city ?: return
+        val c = controller?.getEngine() ?: return
         val vp = viewport
         if (vp == null) {
             val fresh = Viewport(c.width, c.height, w, h)
@@ -149,7 +112,6 @@ class CityView @JvmOverloads constructor(
             fresh.centreOnTile(c.width / 2, c.height / 2)
             viewport = fresh
         } else {
-            // Rotation / resize: keep the tile under the view centre centred.
             val centreX = vp.tileXAt(vp.viewWidthPx / 2)
             val centreY = vp.tileYAt(vp.viewHeightPx / 2)
             vp.setViewSize(w, h)
@@ -183,7 +145,8 @@ class CityView @JvmOverloads constructor(
 
     private fun drawFrame(canvas: Canvas) {
         canvas.drawColor(Color.BLACK)
-        val c = city ?: return
+        val gc = controller ?: return
+        val c = gc.getEngine()
         val vp = viewport ?: return
 
         val firstCol: Int
@@ -191,17 +154,13 @@ class CityView @JvmOverloads constructor(
         val firstRow: Int
         val lastRow: Int
         val cycle: Int
-        val pop: Int
-        val funds: Int
 
         synchronized(c) {
             firstCol = vp.firstVisibleCol()
             lastCol = vp.lastVisibleCol()
             firstRow = vp.firstVisibleRow()
             lastRow = vp.lastVisibleRow()
-            cycle = c.animationCycle
-            pop = c.cityPopulation
-            funds = c.budget.totalFunds
+            cycle = gc.animationCycle()
 
             val cols = lastCol - firstCol + 1
             val rows = lastRow - firstRow + 1
@@ -230,18 +189,6 @@ class CityView @JvmOverloads constructor(
                 canvas.drawBitmap(atlas, src, dst, tilePaint)
             }
         }
-
-        drawOverlay(canvas, pop, funds)
-    }
-
-    private fun drawOverlay(canvas: Canvas, pop: Int, funds: Int) {
-        val text = "NietoCity Phase 2: pop $pop, funds $funds"
-        val pad = 8f * resources.displayMetrics.density
-        val textW = overlayPaint.measureText(text)
-        val fm = overlayPaint.fontMetrics
-        val textH = fm.descent - fm.ascent
-        canvas.drawRect(0f, 0f, textW + 2 * pad, textH + 2 * pad, overlayBgPaint)
-        canvas.drawText(text, pad, pad - fm.ascent, overlayPaint)
     }
 
     private inner class RenderThread : Thread("nieto-render") {
@@ -314,7 +261,6 @@ class CityView @JvmOverloads constructor(
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             val vp = viewport ?: return true
             scaleAccum *= detector.scaleFactor
-            // Step the integer zoom once the pinch crosses a threshold, then reset.
             if (scaleAccum >= ZOOM_STEP_IN) {
                 vp.setZoom(vp.zoom + 1)
                 scaleAccum = 1f
@@ -326,14 +272,6 @@ class CityView @JvmOverloads constructor(
             }
             return true
         }
-    }
-
-    private inner class RenderMapListener : MapListener {
-        override fun mapAnimation() = requestRender()
-        override fun mapOverlayDataChanged(overlayDataType: MapState?) { /* overlays: later phase */ }
-        override fun spriteMoved(sprite: Sprite?) = requestRender()
-        override fun tileChanged(xpos: Int, ypos: Int) = requestRender()
-        override fun wholeMapChanged() = requestRender()
     }
 
     companion object {

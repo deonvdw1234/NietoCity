@@ -13,10 +13,13 @@ package za.co.nieto.nietocity.game;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import micropolisj.engine.CityLocation;
+import micropolisj.engine.MapListener;
+import micropolisj.engine.MapState;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.MicropolisMessage;
 import micropolisj.engine.MicropolisTool;
 import micropolisj.engine.Sound;
+import micropolisj.engine.Sprite;
 import micropolisj.engine.Speed;
 import micropolisj.engine.ToolPreview;
 import micropolisj.engine.ToolResult;
@@ -51,6 +54,15 @@ public final class GameController
 			}
 		});
 		engine.addListener(new EngineListener());
+		engine.addMapListener(new FrameListener());
+	}
+
+	private void fireFrame()
+	{
+		Runnable cb = frameCallback;
+		if (cb != null) {
+			cb.run();
+		}
 	}
 
 	public Micropolis getEngine() { return engine; }
@@ -184,5 +196,15 @@ public final class GameController
 		public void evaluationChanged() { }
 		public void fundsChanged() { }
 		public void optionsChanged() { }
+	}
+
+	/** Triggers a repaint (via the render callback) when the map changes. */
+	private final class FrameListener implements MapListener
+	{
+		public void mapAnimation() { fireFrame(); }
+		public void mapOverlayDataChanged(MapState overlayDataType) { }
+		public void spriteMoved(Sprite sprite) { fireFrame(); }
+		public void tileChanged(int xpos, int ypos) { fireFrame(); }
+		public void wholeMapChanged() { fireFrame(); }
 	}
 }
