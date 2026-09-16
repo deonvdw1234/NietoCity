@@ -12,6 +12,16 @@ Created by Nieto Software
 - [x] 7. Gate green: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug BUILD SUCCESSFUL (41 tasks). APK + JAR paths reported in README/summary. Fixed an implicit-dependency error the gate surfaced in :desktop:jar
 - [x] 8. TASKS.md finalised; README.md "How to build" added (APK: assembleDebug/installDebug; JAR: java -jar); CLAUDE.md project notes added
 
+## Phase 2: Tile renderer (Android and desktop)
+- [ ] 0. JavaFX 8 toolchain proof: find a JDK 8 bundling JavaFX (jfxrt.jar); if none, stop and ask for Liberica JDK 8 Full; give :desktop a Gradle toolchain (lang 8, that vendor); record in CLAUDE.md
+- [ ] 1. Compose tile atlas once via micropolisj.build_tool.MakeTiles (16x16 -> engine resources 16x16/tiles.png + tiles.idx); tracked scripts/compose-tiles.cmd; no awt in any module
+- [ ] 2. Render core in :engine (za.co.nieto.nietocity.render): TileIndex, Viewport, AnimationClock; pure Java 8, no awt/android; JUnit tests (tile coverage, viewport clamp, zoom centre)
+- [ ] 3. Android renderer: CityView SurfaceView + render thread, tiles.png from classpath, integer zoom, nearest-neighbour, redraw on MapListener/animation; engine on own thread; default 3x on S22
+- [ ] 4. Touch: drag pan, pinch zoom (1x/2x/3x), double-tap centre; MainActivity generates random map, CityView full screen + overlay "pop X, funds Y" each second
+- [ ] 5. Desktop renderer (JavaFX 8): Stage + Canvas, same core + atlas, setSmooth(false); drag pan, wheel zoom, arrow keys; title mirrors overlay; :desktop:jar still runnable (JavaFX from runtime, don't bundle jfxrt.jar)
+- [ ] 6. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug; quote raw tail + test count; report APK/JAR paths
+- [ ] 7. Docs: TASKS.md, README (desktop runtime req + compose-tiles), CHANGES.md, THIRD_PARTY.md (tile art origin)
+
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 2: Tile renderer, Android and desktop
 - Phase 3: Tool palette, placement, status bar
