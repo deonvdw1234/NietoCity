@@ -20,7 +20,7 @@ Created by Nieto Software
 - [x] 4. Touch: drag pans, pinch steps zoom 1x/2x/3x, double-tap centres; MainActivity generates random map, CityView full screen + overlay "NietoCity Phase 2: pop X, funds Y" (redraws each animation tick)
 - [x] 5. Desktop renderer (JavaFX 8): Stage+Canvas, shared core+atlas, per-tile nearest-neighbour cache (crisp); mouse drag pan, wheel zoom, arrow keys; title mirrors overlay; engine own thread + Platform.runLater; runnable jar (no jfxrt bundled). Ran 10s: clean console, no exceptions, renders (verify visually)
 - [x] 6. Gate green: BUILD SUCCESSFUL (41 tasks). Engine tests: 12 total (1 smoke + 4 TileIndex + 4 Viewport + 3 AnimationClock), 0 failures/errors. APK + JAR paths/timestamps in summary
-- [ ] 7. Docs: TASKS.md, README (desktop runtime req + compose-tiles), CHANGES.md, THIRD_PARTY.md (tile art origin)
+- [x] 7. Docs: TASKS.md final; README updated (JavaFX 8 desktop runtime req, e.g. Liberica JRE 8 Full; compose-tiles script); CHANGES.md Phase 2 entry; THIRD_PARTY.md tile-art origin (open-source Micropolis via MicropolisJ, GPLv3, no Maxis art)
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 2: Tile renderer, Android and desktop

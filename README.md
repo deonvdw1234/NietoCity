@@ -17,8 +17,13 @@ Requirements: the Android SDK (platform 34) and a JDK. The Gradle wrapper
 (`gradlew`) fetches Gradle 9.5.1, which runs on the Android Studio JBR (JDK 25).
 All build output is written outside the repo, to `C:\NietoCity-build`.
 
-Modules: `:engine` (pure-Java simulation, Java 8), `:app` (Android, Kotlin),
-`:desktop` (pure-Java, Java 8).
+Modules: `:engine` (pure-Java simulation + platform-neutral render core, Java 8),
+`:app` (Android, Kotlin), `:desktop` (Java 8 + JavaFX 8).
+
+The `:desktop` module builds with a JDK 8 "Full" toolchain (BellSoft Liberica
+JDK 8 Full) so JavaFX 8 is available at compile time. Gradle finds it
+automatically and never downloads a JDK. `:engine` still compiles to Java 8
+bytecode with `javac --release 8` on the JBR.
 
 ### Android app (APK)
 ```
@@ -32,15 +37,31 @@ The APK is written to `C:\NietoCity-build\app\outputs\apk\debug\app-debug.apk`.
 gradlew :desktop:jar      # builds a self-contained runnable JAR
 java -jar C:\NietoCity-build\desktop\libs\desktop.jar
 ```
-Runs on Windows 7 with a Java 8 (or later) runtime. Prints, for example:
-`Engine OK: population 20, funds 996845`.
+The desktop app uses **JavaFX 8**, which is not bundled in the JAR. Run it with a
+**Java 8 runtime that includes JavaFX**, e.g. BellSoft **Liberica JRE 8 Full**
+(free, no Oracle). For example:
+```
+"C:\Program Files\BellSoft\LibericaJDK-8-Full\bin\java.exe" -jar C:\NietoCity-build\desktop\libs\desktop.jar
+```
+It runs on Windows 7 with such a runtime. A window opens showing the map;
+drag to pan, mouse wheel to zoom (1x/2x/3x), arrow keys to pan. The title bar
+shows the population and funds.
 
 ### Tests
 ```
-gradlew :engine:test      # engine simulation smoke test
+gradlew :engine:test      # engine + render-core tests
 ```
 
-### Full Phase 1 gate
+### Full gate
 ```
 gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug
+```
+
+### Tile atlas (one-off)
+The tile artwork is composed into `engine/src/main/resources/16x16/`
+(`tiles.png` + `tiles.idx`) and committed, so normal builds need nothing extra.
+To regenerate it from the MicropolisJ source art (after unzipping MicropolisJ
+into `tools\`), run:
+```
+scripts\compose-tiles.cmd
 ```

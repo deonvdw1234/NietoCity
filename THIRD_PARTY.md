@@ -10,6 +10,16 @@ NietoCity is based on Micropolis, the source code of the original SimCity, relea
     code), and the runtime data files `tiles.rc` and `tiles/aliases.txt`.
   - Not imported: GUI/Swing code, graphics/PNG/sound assets, and build tooling.
 
+## Tile artwork
+
+The tile atlas shipped in `engine/src/main/resources/16x16/` (`tiles.png`,
+`tiles.idx`) is composed from the Micropolis tile artwork included in the
+open-source Micropolis release, via MicropolisJ (Jason Long), under GPLv3. It is
+built from `graphics/tiles.rc` and the tile art in the MicropolisJ source using
+that project's `MakeTiles` tool (see `scripts/compose-tiles.cmd`). This is the
+open-sourced Micropolis art, not SimCity/Maxis trademark artwork; no Maxis
+trademark art is used.
+
 SimCity is a trademark of Electronic Arts Inc. NietoCity is not affiliated with or endorsed by Electronic Arts or Maxis. No SimCity trademarks or Maxis artwork are used.
 
 Created by Nieto Software

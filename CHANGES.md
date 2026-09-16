@@ -3,6 +3,19 @@
 Changes made to the imported Micropolis / MicropolisJ source, most recent first.
 Created by Nieto Software.
 
+## 2026-09-16 - Phase 2 tile renderer
+
+- Composed the 16x16 tile atlas (`engine/src/main/resources/16x16/tiles.png` and
+  `tiles.idx`) from the MicropolisJ source art using its `MakeTiles` build tool,
+  run headless (see `scripts/compose-tiles.cmd`). No java.awt code was added to
+  any shipped module.
+- Added a platform-neutral render core to `:engine`
+  (`za.co.nieto.nietocity.render`: TileIndex, Viewport, AnimationClock). The atlas
+  index is parsed with a small dependency-free scanner rather than the engine's
+  `XML_Helper`, because `XML_Helper` uses `javax.xml.stream` (StAX), which is not
+  present in the Android runtime and would crash on the phone.
+- No changes to the imported `micropolisj.*` source files themselves this phase.
+
 ## 2026-09-16 - Phase 1 engine import
 
 - Imported the `micropolisj.engine` package from MicropolisJ commit
