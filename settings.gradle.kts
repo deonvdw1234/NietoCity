@@ -23,3 +23,4 @@ dependencyResolutionManagement {
 rootProject.name = "NietoCity"
 
 include(":app")
+include(":engine")

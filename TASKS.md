@@ -4,7 +4,7 @@ Created by Nieto Software
 ## Phase 1: Scaffold and engine import
 - [x] 0. Toolchain proof (JDK 25, Gradle 9.5.1, AGP 8.13.0 — recorded in CLAUDE.md)
 - [x] 1. Android project scaffold (za.co.nieto.nietocity, minSdk 26, targetSdk 34, Kotlin DSL); build output redirected to C:\NietoCity-build, no build\ in repo
-- [ ] 2. :engine module with MicropolisJ engine package and resources, GPL headers kept
+- [x] 2. :engine module with MicropolisJ engine package and resources, GPL headers kept (commit 9f6ddb4; +micropolisj.XML_Helper, a required engine compile dependency)
 - [ ] 3. :engine compiles with no Android or java.awt dependencies
 - [ ] 4. JUnit smoke test (200 ticks, population and funds change) passes
 - [ ] 5. MainActivity shows "Engine OK: population X, funds Y"
