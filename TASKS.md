@@ -33,6 +33,10 @@ Created by Nieto Software
 - [x] 7. Gate green: BUILD SUCCESSFUL (41 tasks). Engine tests: 16 total (1 smoke + 4 game + 3 AnimationClock + 4 TileIndex + 4 Viewport), 0 failures/errors. APK + JAR paths/timestamps in summary
 - [x] 8. Docs: TASKS.md final; CHANGES.md Phase 3 entry; README Controls section (phone + PC); THIRD_PARTY.md strings note (icons already noted)
 
+## Phase 3b: S22 fixes
+- [x] A. Palette rebuilt as finger-sized grid cells (>=56dp, 3x nearest-neighbour icons, name + cost, highlight border); portrait bottom sheet (4-col grid + Tools bar), landscape 72dp left column; desktop icons 3x. Never covers the status bar.
+- [x] B. New cities start with the level's funds (easy 20000 default) via GameController.newGame(); JUnit added (game tests now 5). Gate: 17 engine tests, 0 fail/err.
+
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar
 - Phase 4: Speed, budget, evaluation, graphs, mini map

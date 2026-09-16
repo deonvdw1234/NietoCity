@@ -3,6 +3,16 @@
 Changes made to the imported Micropolis / MicropolisJ source, most recent first.
 Created by Nieto Software.
 
+## 2026-09-16 - Phase 3b fixes (S22)
+
+- Tool palette rebuilt as a grid of finger-sized cells (>=56dp, 3x
+  nearest-neighbour icons, name + cost, highlight border): portrait bottom sheet
+  (4-column grid with a "Tools" bar) and landscape 72dp left column; desktop
+  icons scaled 3x too. Fixes the tiny, unhittable palette on the S22.
+- New cities now start with the game level's funds (easy 20000 by default) via
+  GameController.newGame(), matching how the original applies funds when a city
+  is created. Fixes the "$0" status bar on a new city.
+
 ## 2026-09-16 - Phase 3 tools, placement and status bar
 
 - Added a shared game layer to `:engine` (`za.co.nieto.nietocity.game`):
