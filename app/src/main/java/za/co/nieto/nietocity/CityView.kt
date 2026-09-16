@@ -1,5 +1,5 @@
 /*
- * NietoCity - Android city renderer.
+ * NietoCity - Android city renderer and input.
  * Created by Nieto Software.
  *
  * This program is free software: you can redistribute it and/or modify it under
@@ -21,14 +21,18 @@ import android.view.ScaleGestureDetector
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import micropolisj.engine.TileConstants
+import micropolisj.engine.ToolPreview
+import micropolisj.engine.ToolResult
 import za.co.nieto.nietocity.game.GameController
 import za.co.nieto.nietocity.render.TileIndex
 import za.co.nieto.nietocity.render.Viewport
 
 /**
- * A SurfaceView that renders the Micropolis map through the shared GameController
- * using the render core. The simulation runs on the GameController's engine
- * thread; a separate render thread redraws only when something changes.
+ * Renders the map through the shared GameController and handles input:
+ *  - no tool selected: one finger pans, pinch zooms, double tap centres.
+ *  - a tool selected: one finger taps to place or drags to draw a stroke (with a
+ *    translucent preview applied on release); two fingers pan; pinch zooms.
+ *  - long press queries the tile regardless of the selected tool.
  * Integer zoom with nearest-neighbour sampling keeps the pixel art crisp.
  */
 class CityView @JvmOverloads constructor(
@@ -37,14 +41,22 @@ class CityView @JvmOverloads constructor(
 ) : SurfaceView(context, attrs), SurfaceHolder.Callback {
 
     private val loMask = TileConstants.LOMASK.code
+    private val clear = TileConstants.CLEAR.toInt()
     private val tileIndex = TileIndex.loadDefault()
     private val atlas: Bitmap = loadAtlas()
 
     private val tilePaint = Paint().apply {
-        isFilterBitmap = false   // nearest-neighbour: crisp pixels
+        isFilterBitmap = false
         isAntiAlias = false
         isDither = false
     }
+    private val previewPaint = Paint().apply {
+        isFilterBitmap = false
+        isAntiAlias = false
+        alpha = 170
+    }
+    private val tintOk = Paint().apply { color = Color.argb(70, 0, 200, 0) }
+    private val tintBad = Paint().apply { color = Color.argb(90, 220, 0, 0) }
 
     private val src = Rect()
     private val dst = Rect()
@@ -56,22 +68,30 @@ class CityView @JvmOverloads constructor(
     private var controller: GameController? = null
     private var viewport: Viewport? = null
 
+    /** Called (on the UI thread) when a long press queries a tile. */
+    var queryListener: ((Int, Int) -> Unit)? = null
+
+    // Stroke / pan state
+    @Volatile private var preview: ToolPreview? = null
+    private var strokeActive = false
+    private var strokeOriginX = 0
+    private var strokeOriginY = 0
+    private var strokeCurX = 0
+    private var strokeCurY = 0
+    private var panning = false
+    private var lastPanX = 0f
+    private var lastPanY = 0f
+    private var suppressUp = false
+
     private val renderLock = Object()
     @Volatile private var dirty = true
     private var renderThread: RenderThread? = null
-
     private var snapshot = IntArray(0)
 
     init {
         holder.addCallback(this)
         isClickable = true
         isFocusable = true
-    }
-
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        scaleDetector.onTouchEvent(event)
-        gestureDetector.onTouchEvent(event)
-        return true
     }
 
     private fun loadAtlas(): Bitmap {
@@ -84,7 +104,6 @@ class CityView @JvmOverloads constructor(
         }
     }
 
-    /** Attach the shared controller and start rendering its city. */
     fun setController(controller: GameController) {
         this.controller = controller
         controller.setFrameCallback { requestRender() }
@@ -116,6 +135,109 @@ class CityView @JvmOverloads constructor(
             val centreY = vp.tileYAt(vp.viewHeightPx / 2)
             vp.setViewSize(w, h)
             vp.centreOnTile(centreX, centreY)
+        }
+    }
+
+    // --- input ---
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        scaleDetector.onTouchEvent(event)
+        gestureDetector.onTouchEvent(event)
+
+        val tool = controller?.getTool()
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                suppressUp = false
+                lastPanX = event.x
+                lastPanY = event.y
+                if (tool != null) {
+                    beginStroke(event.x, event.y)
+                } else {
+                    panning = true
+                }
+            }
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                // Second finger: switch to pan/zoom, abandon any stroke.
+                cancelStroke()
+                panning = true
+                lastPanX = event.getX(0)
+                lastPanY = event.getY(0)
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (event.pointerCount >= 2) {
+                    val fx = (event.getX(0) + event.getX(1)) / 2f
+                    val fy = (event.getY(0) + event.getY(1)) / 2f
+                    viewport?.panBy((lastPanX - fx).toInt(), (lastPanY - fy).toInt())
+                    lastPanX = fx
+                    lastPanY = fy
+                    requestRender()
+                } else if (strokeActive) {
+                    extendStroke(event.x, event.y)
+                } else if (panning) {
+                    viewport?.panBy((lastPanX - event.x).toInt(), (lastPanY - event.y).toInt())
+                    lastPanX = event.x
+                    lastPanY = event.y
+                    requestRender()
+                }
+            }
+            MotionEvent.ACTION_POINTER_UP -> {
+                // Dropping back toward one finger: keep panning with a remaining one.
+                val remaining = if (event.actionIndex == 0) 1 else 0
+                if (remaining < event.pointerCount) {
+                    lastPanX = event.getX(remaining)
+                    lastPanY = event.getY(remaining)
+                }
+            }
+            MotionEvent.ACTION_UP -> {
+                if (strokeActive && !suppressUp) {
+                    applyStroke()
+                }
+                cancelStroke()
+                panning = false
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                cancelStroke()
+                panning = false
+            }
+        }
+        return true
+    }
+
+    private fun beginStroke(px: Float, py: Float) {
+        val vp = viewport ?: return
+        strokeOriginX = vp.tileXAt(px.toInt())
+        strokeOriginY = vp.tileYAt(py.toInt())
+        strokeCurX = strokeOriginX
+        strokeCurY = strokeOriginY
+        strokeActive = true
+        updatePreview()
+    }
+
+    private fun extendStroke(px: Float, py: Float) {
+        val vp = viewport ?: return
+        val tx = vp.tileXAt(px.toInt())
+        val ty = vp.tileYAt(py.toInt())
+        if (tx != strokeCurX || ty != strokeCurY) {
+            strokeCurX = tx
+            strokeCurY = ty
+            updatePreview()
+        }
+    }
+
+    private fun updatePreview() {
+        preview = controller?.preview(strokeOriginX, strokeOriginY, strokeCurX, strokeCurY)
+        requestRender()
+    }
+
+    private fun applyStroke() {
+        controller?.apply(strokeOriginX, strokeOriginY, strokeCurX, strokeCurY, null)
+    }
+
+    private fun cancelStroke() {
+        if (strokeActive || preview != null) {
+            strokeActive = false
+            preview = null
+            requestRender()
         }
     }
 
@@ -189,6 +311,42 @@ class CityView @JvmOverloads constructor(
                 canvas.drawBitmap(atlas, src, dst, tilePaint)
             }
         }
+
+        drawPreview(canvas, vp, cycle, firstCol, lastCol, firstRow, lastRow)
+    }
+
+    private fun drawPreview(
+        canvas: Canvas, vp: Viewport, cycle: Int,
+        firstCol: Int, lastCol: Int, firstRow: Int, lastRow: Int
+    ) {
+        val pv = preview ?: return
+        val tiles = pv.tiles
+        val tp = vp.tilePx()
+        val bad = pv.toolResult == ToolResult.UH_OH || pv.toolResult == ToolResult.INSUFFICIENT_FUNDS
+        val tint = if (bad) tintBad else tintOk
+        for (ry in tiles.indices) {
+            val rowArr = tiles[ry]
+            for (rx in rowArr.indices) {
+                val cValue = rowArr[rx].toInt()
+                if (cValue == clear) continue
+                val mapX = strokeOriginX + rx - pv.offsetX
+                val mapY = strokeOriginY + ry - pv.offsetY
+                if (mapX < firstCol || mapX > lastCol || mapY < firstRow || mapY > lastRow) continue
+                val screenX = vp.tileScreenX(mapX)
+                val screenY = vp.tileScreenY(mapY)
+                val masked = cValue and loMask
+                if (tileIndex.hasImage(masked)) {
+                    val yOff = tileIndex.frameOffsetY(masked, cycle)
+                    src.set(0, yOff, TileIndex.TILE_SIZE, yOff + TileIndex.TILE_SIZE)
+                    dst.set(screenX, screenY, screenX + tp, screenY + tp)
+                    canvas.drawBitmap(atlas, src, dst, previewPaint)
+                }
+                canvas.drawRect(
+                    screenX.toFloat(), screenY.toFloat(),
+                    (screenX + tp).toFloat(), (screenY + tp).toFloat(), tint
+                )
+            }
+        }
     }
 
     private inner class RenderThread : Thread("nieto-render") {
@@ -233,22 +391,22 @@ class CityView @JvmOverloads constructor(
     private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent): Boolean = true
 
-        override fun onScroll(
-            e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float
-        ): Boolean {
-            if (scaleDetector.isInProgress) return false
-            viewport?.let {
-                it.panBy(distanceX.toInt(), distanceY.toInt())
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            // Centre only in pan mode; in place mode the taps place tiles.
+            if (controller?.getTool() == null) {
+                val vp = viewport ?: return false
+                vp.centreOnTile(vp.tileXAt(e.x.toInt()), vp.tileYAt(e.y.toInt()))
                 requestRender()
             }
             return true
         }
 
-        override fun onDoubleTap(e: MotionEvent): Boolean {
-            val vp = viewport ?: return false
-            vp.centreOnTile(vp.tileXAt(e.x.toInt()), vp.tileYAt(e.y.toInt()))
-            requestRender()
-            return true
+        override fun onLongPress(e: MotionEvent) {
+            // Query regardless of the selected tool; do not also place.
+            suppressUp = true
+            cancelStroke()
+            val vp = viewport ?: return
+            queryListener?.invoke(vp.tileXAt(e.x.toInt()), vp.tileYAt(e.y.toInt()))
         }
     }
 

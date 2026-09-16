@@ -18,6 +18,7 @@ import android.widget.TextView
 import micropolisj.engine.MapGenerator
 import micropolisj.engine.Micropolis
 import za.co.nieto.nietocity.game.GameController
+import za.co.nieto.nietocity.game.GameStrings
 
 /**
  * Phase 3: a new random map shown in CityView, with a top status bar, a message
@@ -66,6 +67,13 @@ class MainActivity : Activity() {
         cityView.setController(controller)
         palette.setController(controller)
         palette.listener = { statusBar.update(controller.snapshot()) }
+
+        // Long press queries the tile. (The full query panel arrives in task 5;
+        // for now show the zone name in the ticker.)
+        cityView.queryListener = { x, y ->
+            val zs = controller.query(x, y)
+            controller.postMessage(GameStrings.zoneName(zs.building))
+        }
 
         // Portrait bottom sheet: the toggle collapses the palette to a thin strip.
         val toggle: Button? = findViewById(R.id.paletteToggle)

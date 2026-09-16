@@ -173,6 +173,8 @@ public final class GameController
 	{
 		if (r == ToolResult.INSUFFICIENT_FUNDS) {
 			messages.add(GameStrings.cityMessage(MicropolisMessage.INSUFFICIENT_FUNDS));
+		} else if (r == ToolResult.UH_OH) {
+			messages.add("Cannot build there.");
 		}
 	}
 
