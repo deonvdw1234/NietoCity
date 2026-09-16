@@ -20,6 +20,13 @@ that project's `MakeTiles` tool (see `scripts/compose-tiles.cmd`). This is the
 open-sourced Micropolis art, not SimCity/Maxis trademark artwork; no Maxis
 trademark art is used.
 
+## Tool icons
+
+The tool palette icons in `engine/src/main/resources/tools/` are MicropolisJ's
+`ic*.png` toolbar icons (Jason Long, GPLv3), copied and renamed to the
+`MicropolisTool` names (`<NAME>.png` and `<NAME>_hi.png` for the highlighted
+selected state). Open-sourced Micropolis artwork; no Maxis trademark art.
+
 SimCity is a trademark of Electronic Arts Inc. NietoCity is not affiliated with or endorsed by Electronic Arts or Maxis. No SimCity trademarks or Maxis artwork are used.
 
 Created by Nieto Software

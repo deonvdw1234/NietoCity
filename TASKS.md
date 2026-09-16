@@ -24,7 +24,7 @@ Created by Nieto Software
 
 ## Phase 3: Tool palette, placement and status bar
 - [x] 0. Shared game layer in :engine (za.co.nieto.nietocity.game): GameController (owns engine thread via AnimationClock task queue, selected tool, apply on engine thread), StatusSnapshot, GameStrings (English bundles copied to engine resources); JUnit 4 pass (road=10, funds0->INSUFFICIENT_FUNDS+unchanged, res-on-water->UH_OH, date cityTime 0/48). 16 engine tests total
-- [ ] 1. Icons: 32 ic*.png -> engine/src/main/resources/tools/<TOOLNAME>.png and _hi.png; THIRD_PARTY.md origin
+- [x] 1. Copied 32 tool icons (16 tools x plain/_hi) to engine/src/main/resources/tools/<TOOLNAME>.png; THIRD_PARTY.md updated
 - [ ] 2. Android status bar (top, classic: date, funds, pop, tool, cost) bound to StatusSnapshot 1/s + message ticker (~4s); retire Phase 2 overlay
 - [ ] 3. Android tool palette: 16 tools + icons, selected shows _hi + cost; landscape left column, portrait bottom sheet -> thin strip; tap selected again = deselect (pan)
 - [ ] 4. Android placement: tap places, drag draws stroke with ToolPreview overlay applied on release; two-finger pan; pinch zoom; no tool = one-finger pan; UH_OH/INSUFFICIENT_FUNDS in ticker; long press = query
