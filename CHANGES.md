@@ -1,0 +1,21 @@
+# CHANGES
+
+Changes made to the imported Micropolis / MicropolisJ source, most recent first.
+Created by Nieto Software.
+
+## 2026-09-16 - Phase 1 engine import
+
+- Imported the `micropolisj.engine` package from MicropolisJ commit
+  `9f6ddb4b5f36a005fe4c4f77488d7969eabf0797` into the `:engine` module, with all
+  GPL headers preserved unchanged.
+- Also copied `micropolisj.XML_Helper` (from `src/micropolisj/XML_Helper.java`).
+  The engine package imports it (`Micropolis.java`) for XML save/load, so the
+  engine will not compile without it. It is a small, pure-Java StAX helper with
+  no GUI, AWT, or Android dependency. Copied verbatim; no code changes.
+- Copied the runtime data files the engine reads via `getResourceAsStream`:
+  `tiles.rc` (from the upstream `graphics/` folder) to the resources root, and
+  `tiles/aliases.txt` to `resources/tiles/`.
+- java.awt shim: NONE REQUIRED. The imported engine code contains no `java.awt`
+  import or reference, so no shim was needed for Task 3.
+- No engine source files were otherwise modified; the engine compiles to Java 8
+  bytecode (class-file major version 52) via `javac --release 8`.
