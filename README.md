@@ -65,3 +65,26 @@ into `tools\`), run:
 ```
 scripts\compose-tiles.cmd
 ```
+
+## Controls
+
+A top status bar shows the date, funds, population, and the selected tool and its
+cost. A one-line ticker under it shows the latest city message for a few seconds.
+The tool palette lists the 16 tools; the selected tool is highlighted. Selecting
+the highlighted tool again returns to pan mode.
+
+### Phone (Android)
+- No tool selected: one finger pans, pinch zooms (1x/2x/3x), double tap centres.
+- Tool selected: tap to place, or drag to draw a stroke (a translucent preview
+  shows where it lands - green if buildable, red if not) applied on release; two
+  fingers pan; pinch zooms.
+- Long press: query the tile (a small panel; tap outside or Back to close).
+- Palette: a scrollable left column in landscape; a bottom sheet in portrait that
+  collapses to a thin strip with the "Tools" button.
+
+### PC (desktop)
+- Left-drag: place a tile or draw a stroke (with preview) when a tool is
+  selected; pans when no tool is selected.
+- Right-drag or Space+drag: pan. Mouse wheel: zoom. Arrow keys: pan.
+- Right-click: query the tile (a dialog; Esc or OK to close).
+- Palette: a scrollable left column.

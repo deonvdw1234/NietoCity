@@ -31,7 +31,7 @@ Created by Nieto Software
 - [x] 5. Query: shared QueryReport (header + zone/density/value/crime/pollution/growth from Status/GuiStrings); Android shows it as a dismissable dialog on long press. Desktop query wired with desktop UI in task 6
 - [x] 6. Desktop (JavaFX 8): top status bar + ticker, left palette column, same GameController; left-drag place/stroke (with preview), right/Space+drag pan, wheel zoom, arrow keys, right-click query; runnable jar (no jfxrt). Ran 10s: clean console, no exceptions
 - [x] 7. Gate green: BUILD SUCCESSFUL (41 tasks). Engine tests: 16 total (1 smoke + 4 game + 3 AnimationClock + 4 TileIndex + 4 Viewport), 0 failures/errors. APK + JAR paths/timestamps in summary
-- [ ] 8. Docs: TASKS.md, CHANGES.md (top), README controls (phone+PC), THIRD_PARTY.md (icons, strings)
+- [x] 8. Docs: TASKS.md final; CHANGES.md Phase 3 entry; README Controls section (phone + PC); THIRD_PARTY.md strings note (icons already noted)
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar

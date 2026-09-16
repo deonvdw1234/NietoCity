@@ -3,6 +3,19 @@
 Changes made to the imported Micropolis / MicropolisJ source, most recent first.
 Created by Nieto Software.
 
+## 2026-09-16 - Phase 3 tools, placement and status bar
+
+- Added a shared game layer to `:engine` (`za.co.nieto.nietocity.game`):
+  GameController (owns the engine thread, selected tool, tool apply/preview/query,
+  message queue), StatusSnapshot, QueryReport, GameStrings.
+- Copied the English MicropolisJ string bundles (CityMessages, GuiStrings,
+  StatusMessages) into engine resources and load them via ResourceBundle. They
+  are parsed by java.util.ResourceBundle (works on Android), unlike the tile
+  index which needs the StAX-free scanner.
+- Copied MicropolisJ's 16 `ic*.png` tool icons (plain + highlighted) into engine
+  resources, renamed to the MicropolisTool names.
+- No changes to the imported `micropolisj.*` source files themselves this phase.
+
 ## 2026-09-16 - Phase 2 tile renderer
 
 - Composed the 16x16 tile atlas (`engine/src/main/resources/16x16/tiles.png` and

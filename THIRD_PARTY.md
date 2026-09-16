@@ -27,6 +27,14 @@ The tool palette icons in `engine/src/main/resources/tools/` are MicropolisJ's
 `MicropolisTool` names (`<NAME>.png` and `<NAME>_hi.png` for the highlighted
 selected state). Open-sourced Micropolis artwork; no Maxis trademark art.
 
+## Strings
+
+The English string bundles in `engine/src/main/resources/micropolisj/`
+(`CityMessages.properties`, `GuiStrings.properties`, `StatusMessages.properties`)
+are from MicropolisJ (Jason Long), GPLv3, with their headers preserved. They
+provide engine message text, the date/funds/tool labels, and the zone/status
+words used by the status bar and the query panel.
+
 SimCity is a trademark of Electronic Arts Inc. NietoCity is not affiliated with or endorsed by Electronic Arts or Maxis. No SimCity trademarks or Maxis artwork are used.
 
 Created by Nieto Software
