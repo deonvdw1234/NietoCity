@@ -11,38 +11,35 @@ package za.co.nieto.nietocity
 
 import android.app.Activity
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.view.Gravity
-import android.widget.TextView
-import micropolisj.engine.NietoDemo
+import micropolisj.engine.MapGenerator
+import micropolisj.engine.Micropolis
 
 /**
- * Phase 1 smoke screen: proves the shared Micropolis engine loads its data files
- * and simulates inside the Android app. It builds the demo city, runs 100 ticks
- * on a background thread, then shows the population and funds. No rendering yet.
+ * Phase 2: generates a new random map and shows it full screen in CityView.
+ * The simulation runs on its own thread while the Activity is resumed.
  */
 class MainActivity : Activity() {
+
+    private lateinit var cityView: CityView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val text = TextView(this).apply {
-            gravity = Gravity.CENTER
-            textSize = 20f
-            text = getString(R.string.engine_starting)
-        }
-        setContentView(text)
+        val city = Micropolis()
+        MapGenerator(city).generateNewCity()
 
-        Thread {
-            val city = NietoDemo.newDemoCity()
-            repeat(100) { NietoDemo.tick(city) }
-            val population = NietoDemo.population(city)
-            val funds = NietoDemo.funds(city)
+        cityView = CityView(this)
+        cityView.setCity(city)
+        setContentView(cityView)
+    }
 
-            Handler(Looper.getMainLooper()).post {
-                text.text = getString(R.string.engine_ok, population, funds)
-            }
-        }.start()
+    override fun onResume() {
+        super.onResume()
+        cityView.resumeEngine()
+    }
+
+    override fun onPause() {
+        cityView.pauseEngine()
+        super.onPause()
     }
 }

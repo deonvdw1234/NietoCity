@@ -16,7 +16,7 @@ Created by Nieto Software
 - [x] 0. JavaFX 8 toolchain: Liberica JDK 8 Full 1.8.0_482 (jfxrt.jar present); :desktop uses BellSoft lang-8 Gradle toolchain, auto-download off; recorded in CLAUDE.md
 - [x] 1. Composed 16x16 atlas via MakeTiles (headless): engine/src/main/resources/16x16/tiles.png (16x15056) + tiles.idx (786 named tiles, all integer names matching tiles.rc; 174 numbers are animation-reserved, no art, as upstream); scripts/compose-tiles.cmd tracked
 - [x] 2. Render core in :engine (za.co.nieto.nietocity.render): TileIndex (regex parse, no StAX - Android lacks javax.xml.stream), Viewport, AnimationClock; 11 render tests pass (12 engine tests total)
-- [ ] 3. Android renderer: CityView SurfaceView + render thread, tiles.png from classpath, integer zoom, nearest-neighbour, redraw on MapListener/animation; engine on own thread; default 3x on S22
+- [x] 3. Android renderer: CityView SurfaceView + render thread, atlas from classpath, nearest-neighbour integer zoom (default 3x), redraw on MapListener/animation clock, engine on own thread; fullscreen + rotation without restart (verify on S22)
 - [ ] 4. Touch: drag pan, pinch zoom (1x/2x/3x), double-tap centre; MainActivity generates random map, CityView full screen + overlay "pop X, funds Y" each second
 - [ ] 5. Desktop renderer (JavaFX 8): Stage + Canvas, same core + atlas, setSmooth(false); drag pan, wheel zoom, arrow keys; title mirrors overlay; :desktop:jar still runnable (JavaFX from runtime, don't bundle jfxrt.jar)
 - [ ] 6. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug; quote raw tail + test count; report APK/JAR paths
