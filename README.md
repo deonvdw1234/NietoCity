@@ -15,7 +15,10 @@ This project is licensed under the GNU General Public License v3.0. See LICENSE 
 
 Requirements: the Android SDK (platform 34) and a JDK. The Gradle wrapper
 (`gradlew`) fetches Gradle 9.5.1, which runs on the Android Studio JBR (JDK 25).
-All build output is written outside the repo, to `C:\NietoCity-build`.
+All build output is written outside the repo, to `C:\NietoCity-build`. For
+convenience the latest builds are also copied to the project root as
+`NietoCity-debug.apk` and `NietoCity-desktop.jar` (git-ignored, overwritten each
+build).
 
 Modules: `:engine` (pure-Java simulation + platform-neutral render core, Java 8),
 `:app` (Android, Kotlin), `:desktop` (Java 8 + JavaFX 8).

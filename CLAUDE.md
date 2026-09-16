@@ -42,3 +42,5 @@
   to this project.
 - Cost guard: no /code-review, no /workflows, no multi-agent work; manual mode
   only.
+- Latest builds are copied to the repo root as NietoCity-debug.apk and
+  NietoCity-desktop.jar (git-ignored, overwritten each build; *.apk/*.jar ignored).

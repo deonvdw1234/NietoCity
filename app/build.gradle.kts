@@ -46,3 +46,20 @@ dependencies {
     implementation(project(":engine"))
     implementation(libs.androidx.core.ktx)
 }
+
+// Keep the latest debug APK in the project root as NietoCity-debug.apk, so the
+// newest build is always easy to find. Runs after assembleDebug; overwrites.
+tasks.register("publishApkToRoot") {
+    doLast {
+        val apk = layout.buildDirectory.file("outputs/apk/debug/app-debug.apk").get().asFile
+        val dest = rootProject.layout.projectDirectory.file("NietoCity-debug.apk").asFile
+        if (apk.exists()) {
+            apk.copyTo(dest, overwrite = true)
+            logger.lifecycle("Published APK to ${dest.absolutePath}")
+        }
+    }
+}
+// assembleDebug is registered later by AGP, so match it lazily.
+tasks.matching { it.name == "assembleDebug" }.configureEach {
+    finalizedBy("publishApkToRoot")
+}

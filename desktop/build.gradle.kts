@@ -45,3 +45,19 @@ tasks.jar {
         configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }
     })
 }
+
+// Keep the latest runnable JAR in the project root as NietoCity-desktop.jar, so
+// the newest build is always easy to find. Runs after :desktop:jar; overwrites.
+tasks.register("publishJarToRoot") {
+    doLast {
+        val jarFile = tasks.named<Jar>("jar").get().archiveFile.get().asFile
+        val dest = rootProject.layout.projectDirectory.file("NietoCity-desktop.jar").asFile
+        if (jarFile.exists()) {
+            jarFile.copyTo(dest, overwrite = true)
+            logger.lifecycle("Published JAR to ${dest.absolutePath}")
+        }
+    }
+}
+tasks.named("jar") {
+    finalizedBy("publishJarToRoot")
+}
