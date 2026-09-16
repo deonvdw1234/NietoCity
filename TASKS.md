@@ -18,7 +18,7 @@ Created by Nieto Software
 - [x] 2. Render core in :engine (za.co.nieto.nietocity.render): TileIndex (regex parse, no StAX - Android lacks javax.xml.stream), Viewport, AnimationClock; 11 render tests pass (12 engine tests total)
 - [x] 3. Android renderer: CityView SurfaceView + render thread, atlas from classpath, nearest-neighbour integer zoom (default 3x), redraw on MapListener/animation clock, engine on own thread; fullscreen + rotation without restart (verify on S22)
 - [x] 4. Touch: drag pans, pinch steps zoom 1x/2x/3x, double-tap centres; MainActivity generates random map, CityView full screen + overlay "NietoCity Phase 2: pop X, funds Y" (redraws each animation tick)
-- [ ] 5. Desktop renderer (JavaFX 8): Stage + Canvas, same core + atlas, setSmooth(false); drag pan, wheel zoom, arrow keys; title mirrors overlay; :desktop:jar still runnable (JavaFX from runtime, don't bundle jfxrt.jar)
+- [x] 5. Desktop renderer (JavaFX 8): Stage+Canvas, shared core+atlas, per-tile nearest-neighbour cache (crisp); mouse drag pan, wheel zoom, arrow keys; title mirrors overlay; engine own thread + Platform.runLater; runnable jar (no jfxrt bundled). Ran 10s: clean console, no exceptions, renders (verify visually)
 - [ ] 6. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug; quote raw tail + test count; report APK/JAR paths
 - [ ] 7. Docs: TASKS.md, README (desktop runtime req + compose-tiles), CHANGES.md, THIRD_PARTY.md (tile art origin)
 
