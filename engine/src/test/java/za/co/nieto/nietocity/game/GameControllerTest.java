@@ -68,4 +68,11 @@ public class GameControllerTest
 		assertEquals("Jan 1900", GameStrings.formatGameDate(0));
 		assertEquals("Jan 1901", GameStrings.formatGameDate(48));
 	}
+
+	@Test
+	public void newEasyCityStartsWith20000Funds()
+	{
+		GameController gc = GameController.newGame();
+		assertEquals(20000, gc.snapshot().funds);
+	}
 }

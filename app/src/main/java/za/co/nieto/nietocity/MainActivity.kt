@@ -16,8 +16,6 @@ import android.os.SystemClock
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import micropolisj.engine.MapGenerator
-import micropolisj.engine.Micropolis
 import micropolisj.engine.MicropolisTool
 import za.co.nieto.nietocity.game.GameController
 import za.co.nieto.nietocity.game.GameStrings
@@ -54,11 +52,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        controller = (lastNonConfigurationInstance as? GameController) ?: run {
-            val city = Micropolis()
-            MapGenerator(city).generateNewCity()
-            GameController(city)
-        }
+        controller = (lastNonConfigurationInstance as? GameController) ?: GameController.newGame()
 
         setContentView(R.layout.activity_main)
         statusBar = findViewById(R.id.statusBar)

@@ -46,7 +46,6 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import micropolisj.engine.MapGenerator;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.MicropolisTool;
 import micropolisj.engine.TileConstants;
@@ -109,9 +108,8 @@ public class DesktopApp extends Application
 		atlas.getPixelReader().getPixels(0, 0, atlasWidth, atlasHeight,
 			PixelFormat.getIntArgbInstance(), atlasPixels, 0, atlasWidth);
 
-		Micropolis city = new Micropolis();
-		new MapGenerator(city).generateNewCity();
-		this.controller = new GameController(city);
+		this.controller = GameController.newGame();
+		Micropolis city = controller.getEngine();
 
 		final int startW = 1024;
 		final int startH = 720;

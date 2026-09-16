@@ -13,6 +13,8 @@ package za.co.nieto.nietocity.game;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import micropolisj.engine.CityLocation;
+import micropolisj.engine.GameLevel;
+import micropolisj.engine.MapGenerator;
 import micropolisj.engine.MapListener;
 import micropolisj.engine.MapState;
 import micropolisj.engine.Micropolis;
@@ -35,12 +37,38 @@ public final class GameController
 		void onResult(ToolResult result);
 	}
 
+	/** Difficulty levels (match the engine's GameLevel). Easy is the default. */
+	public static final int LEVEL_EASY = 0;
+	public static final int LEVEL_MEDIUM = 1;
+	public static final int LEVEL_HARD = 2;
+
 	private final Micropolis engine;
 	private final AnimationClock clock;
 
 	private volatile MicropolisTool tool;        // selected tool, or null (pan mode)
 	private volatile Runnable frameCallback;     // renderer redraw hook
 	private final ConcurrentLinkedQueue<String> messages = new ConcurrentLinkedQueue<String>();
+
+	/** Create a fresh random city at the default (easy) level with its funds. */
+	public static GameController newGame()
+	{
+		return newGame(LEVEL_EASY);
+	}
+
+	/**
+	 * Create a fresh random city at the given level and apply that level's
+	 * starting funds (easy 20000, medium 10000, hard 5000). The engine
+	 * constructor leaves funds at 0; the original applies them when a city is
+	 * created, which is what this does.
+	 */
+	public static GameController newGame(int gameLevel)
+	{
+		Micropolis city = new Micropolis();
+		new MapGenerator(city).generateNewCity();
+		city.setGameLevel(gameLevel);
+		city.setFunds(GameLevel.getStartingFunds(gameLevel));
+		return new GameController(city);
+	}
 
 	public GameController(Micropolis engine)
 	{
