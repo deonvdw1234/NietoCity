@@ -43,6 +43,6 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":engine"))
     implementation(libs.androidx.core.ktx)
-    // :engine wired in during task 5.
 }

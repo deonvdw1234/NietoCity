@@ -11,9 +11,17 @@ package za.co.nieto.nietocity
 
 import android.app.Activity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.widget.TextView
+import micropolisj.engine.NietoDemo
 
+/**
+ * Phase 1 smoke screen: proves the shared Micropolis engine loads its data files
+ * and simulates inside the Android app. It builds the demo city, runs 100 ticks
+ * on a background thread, then shows the population and funds. No rendering yet.
+ */
 class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,8 +30,19 @@ class MainActivity : Activity() {
         val text = TextView(this).apply {
             gravity = Gravity.CENTER
             textSize = 20f
-            text = "NietoCity"
+            text = getString(R.string.engine_starting)
         }
         setContentView(text)
+
+        Thread {
+            val city = NietoDemo.newDemoCity()
+            repeat(100) { NietoDemo.tick(city) }
+            val population = NietoDemo.population(city)
+            val funds = NietoDemo.funds(city)
+
+            Handler(Looper.getMainLooper()).post {
+                text.text = getString(R.string.engine_ok, population, funds)
+            }
+        }.start()
     }
 }

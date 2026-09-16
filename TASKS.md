@@ -7,7 +7,7 @@ Created by Nieto Software
 - [x] 2. :engine module with MicropolisJ engine package and resources, GPL headers kept (commit 9f6ddb4; +micropolisj.XML_Helper, a required engine compile dependency)
 - [x] 3. :engine compiles as Java 8 (javap: major version 52), no Android/java.awt deps; no shim needed (CHANGES.md)
 - [x] 4. JUnit smoke test (seeded map, res zone + road + coal plant + power line, 200 ticks) passes: pop 0->20, funds changed. JUnit XML: tests=1, failures=0, errors=0
-- [ ] 5. MainActivity shows "Engine OK: population X, funds Y"
+- [x] 5. MainActivity builds the demo city, runs 100 ticks on a background thread, shows "Engine OK: population 20, funds 996845"; tiles.rc bundled in APK (verify on S22)
 - [ ] 6. :desktop module (Java 8) runs the same ticks and builds a runnable JAR
 - [ ] 7. gradlew assembleDebug succeeds; APK path reported
 - [ ] 8. TASKS.md and README.md updated
