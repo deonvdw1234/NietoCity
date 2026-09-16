@@ -18,7 +18,6 @@ import android.widget.TextView
 import micropolisj.engine.MapGenerator
 import micropolisj.engine.Micropolis
 import za.co.nieto.nietocity.game.GameController
-import za.co.nieto.nietocity.game.GameStrings
 
 /**
  * Phase 3: a new random map shown in CityView, with a top status bar, a message
@@ -68,12 +67,9 @@ class MainActivity : Activity() {
         palette.setController(controller)
         palette.listener = { statusBar.update(controller.snapshot()) }
 
-        // Long press queries the tile. (The full query panel arrives in task 5;
-        // for now show the zone name in the ticker.)
-        cityView.queryListener = { x, y ->
-            val zs = controller.query(x, y)
-            controller.postMessage(GameStrings.zoneName(zs.building))
-        }
+        // Long press queries the tile and shows a small panel (tap outside / Back
+        // to close).
+        cityView.queryListener = { x, y -> showQuery(x, y) }
 
         // Portrait bottom sheet: the toggle collapses the palette to a thin strip.
         val toggle: Button? = findViewById(R.id.paletteToggle)
@@ -96,6 +92,20 @@ class MainActivity : Activity() {
         ui.removeCallbacks(pump)
         controller.stop()
         super.onPause()
+    }
+
+    private fun showQuery(x: Int, y: Int) {
+        val report = controller.queryReport(x, y)
+        val body = StringBuilder()
+        for (i in report.labels.indices) {
+            body.append(report.labels[i]).append(' ').append(report.values[i])
+            if (i < report.labels.size - 1) body.append('\n')
+        }
+        android.app.AlertDialog.Builder(this)
+            .setTitle(report.header)
+            .setMessage(body.toString())
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun pumpTicker(now: Long) {

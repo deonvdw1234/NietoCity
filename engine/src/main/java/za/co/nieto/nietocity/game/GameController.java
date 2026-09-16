@@ -186,6 +186,12 @@ public final class GameController
 		}
 	}
 
+	/** A formatted zone query report for the tile (read-only). */
+	public QueryReport queryReport(int x, int y)
+	{
+		return QueryReport.of(query(x, y));
+	}
+
 	private final class EngineListener implements Micropolis.Listener
 	{
 		public void cityMessage(MicropolisMessage message, CityLocation loc)

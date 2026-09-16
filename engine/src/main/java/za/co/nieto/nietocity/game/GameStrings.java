@@ -68,4 +68,10 @@ public final class GameStrings
 		String key = "status." + index;
 		return STATUS.containsKey(key) ? STATUS.getString(key) : ("#" + index);
 	}
+
+	/** A GUI label (GuiStrings), e.g. notification.density_lbl. */
+	public static String gui(String key)
+	{
+		return GUI.containsKey(key) ? GUI.getString(key) : key;
+	}
 }

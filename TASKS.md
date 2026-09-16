@@ -28,7 +28,7 @@ Created by Nieto Software
 - [x] 2. Android status bar (top: date, funds, pop, tool, cost) bound to StatusSnapshot ~1/s + message ticker (~4s); CityView renders via GameController (retained across rotation); Phase 2 overlay retired
 - [x] 3. Android tool palette: 16 tools (classic order) with icons; selected shows _hi; landscape left scroll column, portrait bottom sheet with collapse toggle; tap selected again deselects; status bar reflects tool immediately
 - [x] 4. Android placement: tap places, drag draws stroke with translucent ToolPreview (green ok / red bad) applied on release; two-finger pan; pinch zoom; no tool = one-finger pan; INSUFFICIENT_FUNDS/UH_OH -> ticker; long press = query (zone name in ticker for now)
-- [ ] 5. Query dialog (both): zone name + density/land value/crime/pollution/growth from StatusMessages; close by tap/Esc
+- [x] 5. Query: shared QueryReport (header + zone/density/value/crime/pollution/growth from Status/GuiStrings); Android shows it as a dismissable dialog on long press. Desktop query wired with desktop UI in task 6
 - [ ] 6. Desktop (JavaFX 8): top status bar, ticker, left palette, same GameController; left-drag place/stroke, right/Space+drag pan, wheel zoom, right-click query; runnable jar; run once, report console
 - [ ] 7. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail + test count; APK/JAR paths
 - [ ] 8. Docs: TASKS.md, CHANGES.md (top), README controls (phone+PC), THIRD_PARTY.md (icons, strings)
