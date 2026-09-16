@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Gradle wrapper: keep POSIX line endings for the shell script, treat jar as binary
+gradlew text eol=lf
+gradlew.bat text eol=crlf
+*.jar binary

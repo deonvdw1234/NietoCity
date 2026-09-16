@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+build/
+*/build/
+# Android Studio / IntelliJ
+.idea/
+*.iml
+local.properties
+.kotlin/
+# Signing
+*.jks
+*.keystore
+# OS
+.DS_Store
+Thumbs.db
+# Claude Code local settings
+.claude/settings.local.json
+
+# Internal operating brief, not for the public repo
+Standing Claude Rules.pdf
+# Third-party source zips fetched during Phase 1
+tools/
