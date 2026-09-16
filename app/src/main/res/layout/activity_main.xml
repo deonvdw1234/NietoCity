@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- NietoCity. Created by Nieto Software. GPLv3. Portrait layout. -->
+<!-- NietoCity. Created by Nieto Software. GPLv3. Portrait layout: palette is a
+     collapsible bottom sheet over the map. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -24,10 +25,53 @@
         android:singleLine="true"
         android:visibility="gone" />
 
-    <za.co.nieto.nietocity.CityView
-        android:id="@+id/cityView"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1">
+
+        <za.co.nieto.nietocity.CityView
+            android:id="@+id/cityView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/paletteToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:background="#AA000000"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:text="@string/tools_toggle" />
+
+            <HorizontalScrollView
+                android:id="@+id/paletteScroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none">
+
+                <za.co.nieto.nietocity.ToolPaletteView
+                    android:id="@+id/palette"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+
+            </HorizontalScrollView>
+
+        </LinearLayout>
+
+    </FrameLayout>
 
 </LinearLayout>

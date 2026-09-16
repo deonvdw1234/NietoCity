@@ -13,6 +13,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.View
+import android.widget.Button
 import android.widget.TextView
 import micropolisj.engine.MapGenerator
 import micropolisj.engine.Micropolis
@@ -29,6 +30,7 @@ class MainActivity : Activity() {
     private lateinit var statusBar: StatusBarView
     private lateinit var ticker: TextView
     private lateinit var cityView: CityView
+    private lateinit var palette: ToolPaletteView
 
     private val ui = Handler(Looper.getMainLooper())
     private var lastStatusAt = 0L
@@ -59,7 +61,18 @@ class MainActivity : Activity() {
         statusBar = findViewById(R.id.statusBar)
         ticker = findViewById(R.id.ticker)
         cityView = findViewById(R.id.cityView)
+        palette = findViewById(R.id.palette)
+
         cityView.setController(controller)
+        palette.setController(controller)
+        palette.listener = { statusBar.update(controller.snapshot()) }
+
+        // Portrait bottom sheet: the toggle collapses the palette to a thin strip.
+        val toggle: Button? = findViewById(R.id.paletteToggle)
+        val scroll: View? = findViewById(R.id.paletteScroll)
+        toggle?.setOnClickListener {
+            scroll?.let { it.visibility = if (it.visibility == View.GONE) View.VISIBLE else View.GONE }
+        }
     }
 
     override fun onRetainNonConfigurationInstance(): Any = controller
