@@ -23,7 +23,7 @@ Created by Nieto Software
 - [x] 7. Docs: TASKS.md final; README updated (JavaFX 8 desktop runtime req, e.g. Liberica JRE 8 Full; compose-tiles script); CHANGES.md Phase 2 entry; THIRD_PARTY.md tile-art origin (open-source Micropolis via MicropolisJ, GPLv3, no Maxis art)
 
 ## Phase 3: Tool palette, placement and status bar
-- [ ] 0. Shared game layer in :engine (za.co.nieto.nietocity.game): GameController owns engine thread + selected tool; beginStroke/dragTo/apply on engine thread; immutable StatusSnapshot (date, funds, pop, tool, cost); message queue via cityMessage listener; copy English CityMessages/StatusMessages/GuiStrings .properties into engine resources, load via ResourceBundle; JUnit (road costs 10; funds 0 -> INSUFFICIENT_FUNDS + map unchanged; res on water -> UH_OH; date format cityTime 0 and 48)
+- [x] 0. Shared game layer in :engine (za.co.nieto.nietocity.game): GameController (owns engine thread via AnimationClock task queue, selected tool, apply on engine thread), StatusSnapshot, GameStrings (English bundles copied to engine resources); JUnit 4 pass (road=10, funds0->INSUFFICIENT_FUNDS+unchanged, res-on-water->UH_OH, date cityTime 0/48). 16 engine tests total
 - [ ] 1. Icons: 32 ic*.png -> engine/src/main/resources/tools/<TOOLNAME>.png and _hi.png; THIRD_PARTY.md origin
 - [ ] 2. Android status bar (top, classic: date, funds, pop, tool, cost) bound to StatusSnapshot 1/s + message ticker (~4s); retire Phase 2 overlay
 - [ ] 3. Android tool palette: 16 tools + icons, selected shows _hi + cost; landscape left column, portrait bottom sheet -> thin strip; tap selected again = deselect (pan)

@@ -13,6 +13,8 @@
  */
 package za.co.nieto.nietocity.render;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.Speed;
 
@@ -29,6 +31,11 @@ public final class AnimationClock
 	private volatile Speed speed = Speed.NORMAL;
 	private volatile boolean running;
 	private Thread thread;
+
+	// Tasks (e.g. tool placement) to run on the engine thread, under the engine
+	// lock, between animation ticks. The pump wakes the loop so they run promptly.
+	private final ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<Runnable>();
+	private final Object pump = new Object();
 
 	public AnimationClock(Micropolis engine, Listener listener)
 	{
@@ -68,6 +75,9 @@ public final class AnimationClock
 	public synchronized void stop()
 	{
 		running = false;
+		synchronized (pump) {
+			pump.notifyAll();
+		}
 		if (thread != null) {
 			thread.interrupt();
 			thread = null;
@@ -79,18 +89,53 @@ public final class AnimationClock
 		return running;
 	}
 
+	/** Queue a task to run on the engine thread (under the engine lock), soon. */
+	public void post(Runnable task)
+	{
+		tasks.add(task);
+		synchronized (pump) {
+			pump.notifyAll();
+		}
+	}
+
+	private void drainTasks()
+	{
+		Runnable task;
+		while ((task = tasks.poll()) != null) {
+			synchronized (engine) {
+				task.run();
+			}
+		}
+	}
+
 	private void loop()
 	{
+		long last = System.currentTimeMillis();
 		while (running) {
+			drainTasks();
+
 			Speed s = speed;
-			if (s != Speed.PAUSED) {
-				tickOnce(s);
+			long now = System.currentTimeMillis();
+			if (now - last >= s.animationDelay) {
+				if (s != Speed.PAUSED) {
+					tickOnce(s);
+				}
+				if (listener != null) {
+					listener.onAnimated();
+				}
+				last = now;
 			}
-			if (listener != null) {
-				listener.onAnimated();
+
+			long waitMs = s.animationDelay - (System.currentTimeMillis() - last);
+			if (waitMs < 1) {
+				waitMs = 1;
 			}
 			try {
-				Thread.sleep(s.animationDelay);
+				synchronized (pump) {
+					if (running && tasks.isEmpty()) {
+						pump.wait(waitMs);
+					}
+				}
 			}
 			catch (InterruptedException e) {
 				break;
