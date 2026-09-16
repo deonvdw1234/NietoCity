@@ -17,6 +17,9 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import micropolisj.engine.MapListener
@@ -51,8 +54,22 @@ class CityView @JvmOverloads constructor(
         isDither = false
     }
 
+    private val overlayPaint = Paint().apply {
+        isAntiAlias = true
+        color = Color.WHITE
+        textSize = 15f * resources.displayMetrics.scaledDensity
+    }
+    private val overlayBgPaint = Paint().apply {
+        isAntiAlias = true
+        color = Color.argb(140, 0, 0, 0)
+    }
+
     private val src = Rect()
     private val dst = Rect()
+
+    private val gestureDetector = GestureDetector(context, GestureListener())
+    private val scaleDetector = ScaleGestureDetector(context, ScaleListener())
+    private var scaleAccum = 1f
 
     private var city: Micropolis? = null
     private var viewport: Viewport? = null
@@ -67,6 +84,14 @@ class CityView @JvmOverloads constructor(
 
     init {
         holder.addCallback(this)
+        isClickable = true
+        isFocusable = true
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        scaleDetector.onTouchEvent(event)
+        gestureDetector.onTouchEvent(event)
+        return true
     }
 
     private fun loadAtlas(): Bitmap {
@@ -166,6 +191,8 @@ class CityView @JvmOverloads constructor(
         val firstRow: Int
         val lastRow: Int
         val cycle: Int
+        val pop: Int
+        val funds: Int
 
         synchronized(c) {
             firstCol = vp.firstVisibleCol()
@@ -173,6 +200,8 @@ class CityView @JvmOverloads constructor(
             firstRow = vp.firstVisibleRow()
             lastRow = vp.lastVisibleRow()
             cycle = c.animationCycle
+            pop = c.cityPopulation
+            funds = c.budget.totalFunds
 
             val cols = lastCol - firstCol + 1
             val rows = lastRow - firstRow + 1
@@ -201,6 +230,18 @@ class CityView @JvmOverloads constructor(
                 canvas.drawBitmap(atlas, src, dst, tilePaint)
             }
         }
+
+        drawOverlay(canvas, pop, funds)
+    }
+
+    private fun drawOverlay(canvas: Canvas, pop: Int, funds: Int) {
+        val text = "NietoCity Phase 2: pop $pop, funds $funds"
+        val pad = 8f * resources.displayMetrics.density
+        val textW = overlayPaint.measureText(text)
+        val fm = overlayPaint.fontMetrics
+        val textH = fm.descent - fm.ascent
+        canvas.drawRect(0f, 0f, textW + 2 * pad, textH + 2 * pad, overlayBgPaint)
+        canvas.drawText(text, pad, pad - fm.ascent, overlayPaint)
     }
 
     private inner class RenderThread : Thread("nieto-render") {
@@ -242,6 +283,51 @@ class CityView @JvmOverloads constructor(
         }
     }
 
+    private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
+        override fun onDown(e: MotionEvent): Boolean = true
+
+        override fun onScroll(
+            e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float
+        ): Boolean {
+            if (scaleDetector.isInProgress) return false
+            viewport?.let {
+                it.panBy(distanceX.toInt(), distanceY.toInt())
+                requestRender()
+            }
+            return true
+        }
+
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            val vp = viewport ?: return false
+            vp.centreOnTile(vp.tileXAt(e.x.toInt()), vp.tileYAt(e.y.toInt()))
+            requestRender()
+            return true
+        }
+    }
+
+    private inner class ScaleListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+            scaleAccum = 1f
+            return true
+        }
+
+        override fun onScale(detector: ScaleGestureDetector): Boolean {
+            val vp = viewport ?: return true
+            scaleAccum *= detector.scaleFactor
+            // Step the integer zoom once the pinch crosses a threshold, then reset.
+            if (scaleAccum >= ZOOM_STEP_IN) {
+                vp.setZoom(vp.zoom + 1)
+                scaleAccum = 1f
+                requestRender()
+            } else if (scaleAccum <= ZOOM_STEP_OUT) {
+                vp.setZoom(vp.zoom - 1)
+                scaleAccum = 1f
+                requestRender()
+            }
+            return true
+        }
+    }
+
     private inner class RenderMapListener : MapListener {
         override fun mapAnimation() = requestRender()
         override fun mapOverlayDataChanged(overlayDataType: MapState?) { /* overlays: later phase */ }
@@ -252,5 +338,7 @@ class CityView @JvmOverloads constructor(
 
     companion object {
         const val DEFAULT_ZOOM = 3
+        private const val ZOOM_STEP_IN = 1.30f
+        private const val ZOOM_STEP_OUT = 0.77f
     }
 }
