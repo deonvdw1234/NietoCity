@@ -13,7 +13,7 @@ Created by Nieto Software
 - [x] 8. TASKS.md finalised; README.md "How to build" added (APK: assembleDebug/installDebug; JAR: java -jar); CLAUDE.md project notes added
 
 ## Phase 2: Tile renderer (Android and desktop)
-- [ ] 0. JavaFX 8 toolchain proof: find a JDK 8 bundling JavaFX (jfxrt.jar); if none, stop and ask for Liberica JDK 8 Full; give :desktop a Gradle toolchain (lang 8, that vendor); record in CLAUDE.md
+- [x] 0. JavaFX 8 toolchain: Liberica JDK 8 Full 1.8.0_482 (jfxrt.jar present); :desktop uses BellSoft lang-8 Gradle toolchain, auto-download off; recorded in CLAUDE.md
 - [ ] 1. Compose tile atlas once via micropolisj.build_tool.MakeTiles (16x16 -> engine resources 16x16/tiles.png + tiles.idx); tracked scripts/compose-tiles.cmd; no awt in any module
 - [ ] 2. Render core in :engine (za.co.nieto.nietocity.render): TileIndex, Viewport, AnimationClock; pure Java 8, no awt/android; JUnit tests (tile coverage, viewport clamp, zoom centre)
 - [ ] 3. Android renderer: CityView SurfaceView + render thread, tiles.png from classpath, integer zoom, nearest-neighbour, redraw on MapListener/animation; engine on own thread; default 3x on S22

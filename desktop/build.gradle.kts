@@ -3,16 +3,23 @@
 //
 // Pure Java, targeting Java 8 (class-file major version 52) so it runs on
 // Windows 7 with a Java 8 runtime. Depends on :engine. `gradlew :desktop:jar`
-// produces a single runnable JAR with the engine classes and data files bundled.
+// produces a single runnable JAR with the engine classes and data files bundled
+// (but NOT jfxrt.jar - JavaFX comes from the Java 8 Full runtime).
+//
+// Uses a JDK 8 "Full" toolchain (BellSoft Liberica) so that (a) it compiles to
+// Java 8 bytecode natively and (b) JavaFX 8 (jfxrt.jar, on the JDK 8 boot
+// classpath) is available at compile time without an external dependency.
 
 plugins {
     java
     application
 }
 
-tasks.withType<JavaCompile>().configureEach {
-    options.release.set(8)
-    options.compilerArgs.add("-Xlint:-options")
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+        vendor.set(JvmVendorSpec.BELLSOFT)
+    }
 }
 
 application {

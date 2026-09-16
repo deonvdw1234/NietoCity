@@ -21,8 +21,16 @@
   API that AGP 8.13.0 depends on, so we are pinned to 9.5.x. Do not bump the
   wrapper past 9.5.x without also moving to an AGP that no longer uses that API.
 - AGP: 8.13.0. Kotlin: 2.4.20. compileSdk 34.
-- Java 8 (:engine, :desktop): compiled with javac --release 8 on JDK 25, which
-  emits major version 52. (Only obsolete-option warnings; no JDK 8 install needed.)
+- Java 8 (:engine): compiled with javac --release 8 on JDK 25, which emits major
+  version 52. (Only obsolete-option warnings; no JDK 8 install needed.)
+- :desktop (from Phase 2): JavaFX 8 UI, so it uses a Gradle toolchain pinned to a
+  JDK 8 "Full" that bundles JavaFX. Vendor BellSoft, languageVersion 8.
+  Path: C:\Program Files\BellSoft\LibericaJDK-8-Full  (Liberica JDK 8 Full,
+  1.8.0_482, jre\lib\ext\jfxrt.jar present). Detected by Gradle from the Windows
+  registry; org.gradle.java.installations.auto-download=false (never download a
+  JDK). JAVA_HOME is unchanged (still the JBR/JDK 25); only :desktop's toolchain
+  differs. The desktop JAR does NOT bundle jfxrt.jar - JavaFX comes from the
+  Java 8 Full runtime at run time.
 
 ## Project notes (from Phase 1)
 - Build output lives in C:\NietoCity-build (outside Dropbox); nothing is written
