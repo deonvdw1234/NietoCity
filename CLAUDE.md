@@ -23,3 +23,14 @@
 - AGP: 8.13.0. Kotlin: 2.4.20. compileSdk 34.
 - Java 8 (:engine, :desktop): compiled with javac --release 8 on JDK 25, which
   emits major version 52. (Only obsolete-option warnings; no JDK 8 install needed.)
+
+## Project notes (from Phase 1)
+- Build output lives in C:\NietoCity-build (outside Dropbox); nothing is written
+  to a build\ folder inside the repo.
+- POPI not applicable: the app collects and stores no personal data.
+- The repo is deliberately public for GPL compliance, so never commit secrets or
+  keystores.
+- The standing-rules WPF items (themes, nav rail, mascot, RSG radio) do not apply
+  to this project.
+- Cost guard: no /code-review, no /workflows, no multi-agent work; manual mode
+  only.
