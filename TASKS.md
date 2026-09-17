@@ -79,7 +79,9 @@ Created by Nieto Software
       RoadJoin 5 + ToolGuard 4 + AnimationClock 3 + PowerOverlay 2 + TileIndex 4 +
       Viewport 4). NietoCity-debug.apk and NietoCity-desktop.jar refreshed in the
       project root (published by the build's publishApkToRoot / jar-to-root tasks).
-- [ ] 6. Docs: TASKS/CHANGES/README/CLAUDE updates.
+- [x] 6. Docs: TASKS.md final; CHANGES.md Phase 4a entry at the top; README Controls
+      updated (rand, selected-tool bar + X, tool kinds, path-following, back button,
+      power bolt); CLAUDE.md gained the currency rule and the tool-kind rule.
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar

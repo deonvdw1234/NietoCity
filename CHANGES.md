@@ -3,6 +3,33 @@
 Changes made to the imported Micropolis / MicropolisJ source, most recent first.
 Created by Nieto Software.
 
+## 2026-09-17 - Phase 4a play feedback (first real city)
+
+- Road join: investigated first. The engine already joins orthogonally-adjacent
+  roads placed in separate strokes (its `fixZone` fixes each laid tile and its
+  four neighbours), proven by `RoadJoinTest`; the engine is unchanged. The gap
+  Andre saw came from our layer applying a drag as one axis-snapped stroke.
+  GameController now keeps the finger's tile waypoints and lays the road along
+  them as axis-aligned engine strokes on release (`previewPath`/`applyPath`); the
+  engine charges each tile once. Both renderers follow the drag path.
+- Power indicator: shared `render.PowerOverlay` blinks the LIGHTNINGBOLT tile over
+  unpowered zone centres, driven from the engine animation cycle (~0.5s on/off,
+  steady while paused). Both renderers draw it.
+- Currency: new `game.CurrencyFormat` renders all money we format as South African
+  rand ("R", no space, space-grouped, e.g. R8 833). `GameStrings.formatFunds`
+  delegates to it; the Android and desktop cost labels use it. No "$" from our
+  code; engine bundle strings keep their wording.
+- Tool guard: `GameController.ToolKind`/`kindOf` split tools into STROKE (stay
+  selected) and ONE_SHOT (police, fire, stadium, seaport, coal, nuclear, airport;
+  return to Pan after one successful placement). A selected-tool bar shows the
+  tool's icon, name and cost with a 48dp X that returns to Pan; "Pan" shows when
+  nothing is selected. Two-finger pan and long-press query unchanged.
+- Android back button: closes the query dialog, then the tools drawer; with
+  nothing open, three presses within 2s ask "Exit NietoCity?" (Exit / Stay, Stay
+  default); one or two presses toast a hint. Single exit point for the Phase 7
+  splash.
+- No changes to the imported `micropolisj.*` source files this phase.
+
 ## 2026-09-16 - Phase 3b fixes (S22)
 
 - Tool palette rebuilt as a grid of finger-sized cells (>=56dp, 3x

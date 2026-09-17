@@ -72,22 +72,41 @@ scripts\compose-tiles.cmd
 ## Controls
 
 A top status bar shows the date, funds, population, and the selected tool and its
-cost. A one-line ticker under it shows the latest city message for a few seconds.
-The tool palette lists the 16 tools; the selected tool is highlighted. Selecting
-the highlighted tool again returns to pan mode.
+cost. Money is shown in South African rand (e.g. R8 833). A one-line ticker under
+it shows the latest city message for a few seconds. The tool palette lists the 16
+tools; the selected tool is highlighted. Selecting the highlighted tool again
+returns to pan mode.
+
+A selected-tool bar always shows the current tool's icon, name and cost with a
+large X that returns to Pan (it shows "Pan" when nothing is selected).
+
+Tools come in two kinds:
+- Stroke tools (bulldozer, wire, road, rail, park, and the R/C/I zones) stay
+  selected so you can keep drawing. Roads, rail and wire follow your drag path, so
+  a bent drag lays a connected bend with no gaps.
+- One-shot tools (police, fire, stadium, seaport, coal and nuclear plants, airport)
+  return to Pan automatically after one successful placement.
 
 ### Phone (Android)
 - No tool selected: one finger pans, pinch zooms (1x/2x/3x), double tap centres.
 - Tool selected: tap to place, or drag to draw a stroke (a translucent preview
   shows where it lands - green if buildable, red if not) applied on release; two
-  fingers pan; pinch zooms.
+  fingers always pan; pinch zooms.
 - Long press: query the tile (a small panel; tap outside or Back to close).
+- The X on the selected-tool bar returns to Pan.
 - Palette: a scrollable left column in landscape; a bottom sheet in portrait that
   collapses to a thin strip with the "Tools" button.
+- Back button: closes the query dialog first, then the tools drawer; with nothing
+  open, press Back three times within two seconds to be asked before exiting (one
+  or two presses show a hint).
+- An unpowered zone centre blinks a yellow lightning bolt until you wire it to
+  power.
 
 ### PC (desktop)
 - Left-drag: place a tile or draw a stroke (with preview) when a tool is
-  selected; pans when no tool is selected.
+  selected; pans when no tool is selected. Roads/rail/wire follow the drag path.
 - Right-drag or Space+drag: pan. Mouse wheel: zoom. Arrow keys: pan.
 - Right-click: query the tile (a dialog; Esc or OK to close).
+- The X in the status area returns to Pan.
 - Palette: a scrollable left column.
+- An unpowered zone centre blinks a yellow lightning bolt until it has power.

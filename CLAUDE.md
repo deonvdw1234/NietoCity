@@ -13,6 +13,11 @@
 - Android: minSdk 26, targetSdk 34. Desktop: must run on Windows 7 with Java 8.
 - Offline only: no INTERNET permission, no analytics, no update checks.
 - Test phone: Samsung Galaxy S22.
+- Currency: every money figure we format goes through game.CurrencyFormat (South
+  African rand, "R" prefix, no space, space-grouped, e.g. R8 833); never a "$".
+- Tool kinds: STROKE tools stay selected; ONE_SHOT tools (police, fire, stadium,
+  seaport, coal, nuclear, airport) return to Pan after one successful placement
+  (GameController.kindOf / maybeAutoClear).
 
 ## Toolchain (verified 2026-09-16)
 - JDK: 25.0.3 (Android Studio JBR at %JAVA_HOME%). Runs the Gradle daemon fine;
