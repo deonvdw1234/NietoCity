@@ -13,6 +13,7 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.TextView
+import za.co.nieto.nietocity.game.CurrencyFormat
 import za.co.nieto.nietocity.game.StatusSnapshot
 
 /**
@@ -65,6 +66,6 @@ class StatusBarView @JvmOverloads constructor(
         fundsView.text = s.fundsText
         popView.text = "Pop ${s.population}"
         toolView.text = s.toolName
-        costView.text = if (s.toolCost != 0) "$${s.toolCost}" else ""
+        costView.text = if (s.toolCost != 0) CurrencyFormat.format(s.toolCost.toLong()) else ""
     }
 }

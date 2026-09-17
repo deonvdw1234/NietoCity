@@ -52,6 +52,7 @@ import micropolisj.engine.MicropolisTool;
 import micropolisj.engine.TileConstants;
 import micropolisj.engine.ToolPreview;
 import micropolisj.engine.ToolResult;
+import za.co.nieto.nietocity.game.CurrencyFormat;
 import za.co.nieto.nietocity.game.GameController;
 import za.co.nieto.nietocity.game.QueryReport;
 import za.co.nieto.nietocity.game.StatusSnapshot;
@@ -440,7 +441,7 @@ public class DesktopApp extends Application
 		fundsLbl.setText(s.fundsText);
 		popLbl.setText("Pop " + s.population);
 		toolLbl.setText(s.toolName);
-		costLbl.setText(s.toolCost != 0 ? ("$" + s.toolCost) : "");
+		costLbl.setText(s.toolCost != 0 ? CurrencyFormat.format(s.toolCost) : "");
 		stage.setTitle("NietoCity - " + s.date);
 	}
 

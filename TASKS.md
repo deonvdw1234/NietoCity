@@ -54,7 +54,11 @@ Created by Nieto Software
       (4 on / 4 off, ~0.5s at NORMAL) so it holds steady while paused. Both renderers
       snapshot a parallel bolt flag under the engine lock and draw the bolt over the
       tile. JUnit (PowerOverlayTest): blink phases + unpowered res-zone shows/hides bolt.
-- [ ] 2. Currency: South African rand, "R" prefix, no space, locale grouping; one CurrencyFormat helper in :engine.
+- [x] 2. Currency: new game.CurrencyFormat (R prefix, no space, space-grouped, e.g.
+      R8 833) is the one place we format money. GameStrings.formatFunds delegates to
+      it (status bar funds + palette cost); Android status-bar cost and desktop cost
+      label now use it instead of a hardcoded "$". Engine bundle strings are unchanged.
+      JUnit (CurrencyFormatTest): grouping, negatives, no "$", formatFunds returns rand.
 - [ ] 3. Tool guard: STROKE vs ONE-SHOT tools; selected-tool bar with large X to Pan; two-finger pan; query = long press.
 - [ ] 4. Android back button: query dialog -> tools drawer -> three-press exit confirm.
 - [ ] 5. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug; quote tail + test count; fresh artefacts.

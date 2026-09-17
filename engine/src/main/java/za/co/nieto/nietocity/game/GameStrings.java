@@ -24,10 +24,10 @@ public final class GameStrings
 
 	private GameStrings() {}
 
-	/** Funds formatted the way the original does, e.g. "$1,000,000" style. */
+	/** Funds/costs formatted as South African rand, e.g. "R8 833" (never a "$"). */
 	public static String formatFunds(int funds)
 	{
-		return MessageFormat.format(GUI.getString("funds"), funds);
+		return CurrencyFormat.format(funds);
 	}
 
 	/** Game date ("MMM yyyy") derived from cityTime exactly as the original. */
