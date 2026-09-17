@@ -49,7 +49,11 @@ Created by Nieto Software
       on an existing road is a no-op). JUnit: L-drag 40,40->43,40->43,42 lays 6
       connected tiles for 60; gap-proof documents the old single-stroke behaviour.
       Both renderers (Android + desktop) record the path and use previewPath/applyPath.
-- [ ] 1. Power indicator: blinking LIGHTNINGBOLT on unpowered zone centres (shared render core).
+- [x] 1. Power indicator: shared render.PowerOverlay blinks the LIGHTNINGBOLT (tile 827)
+      over unpowered zone centres. Blink is driven from the engine animation cycle
+      (4 on / 4 off, ~0.5s at NORMAL) so it holds steady while paused. Both renderers
+      snapshot a parallel bolt flag under the engine lock and draw the bolt over the
+      tile. JUnit (PowerOverlayTest): blink phases + unpowered res-zone shows/hides bolt.
 - [ ] 2. Currency: South African rand, "R" prefix, no space, locale grouping; one CurrencyFormat helper in :engine.
 - [ ] 3. Tool guard: STROKE vs ONE-SHOT tools; selected-tool bar with large X to Pan; two-finger pan; query = long press.
 - [ ] 4. Android back button: query dialog -> tools drawer -> three-press exit confirm.

@@ -24,6 +24,7 @@ import micropolisj.engine.TileConstants
 import micropolisj.engine.ToolPreview
 import micropolisj.engine.ToolResult
 import za.co.nieto.nietocity.game.GameController
+import za.co.nieto.nietocity.render.PowerOverlay
 import za.co.nieto.nietocity.render.TileIndex
 import za.co.nieto.nietocity.render.Viewport
 
@@ -91,6 +92,7 @@ class CityView @JvmOverloads constructor(
     @Volatile private var dirty = true
     private var renderThread: RenderThread? = null
     private var snapshot = IntArray(0)
+    private var boltSnapshot = BooleanArray(0)
 
     init {
         holder.addCallback(this)
@@ -300,27 +302,41 @@ class CityView @JvmOverloads constructor(
             val rows = lastRow - firstRow + 1
             if (snapshot.size < cols * rows) {
                 snapshot = IntArray(cols * rows)
+                boltSnapshot = BooleanArray(cols * rows)
             }
             var i = 0
             for (row in firstRow..lastRow) {
                 for (col in firstCol..lastCol) {
-                    snapshot[i++] = c.getTile(col, row).code and loMask
+                    snapshot[i] = c.getTile(col, row).code and loMask
+                    // Blink a lightning bolt over unpowered zone centres (shared core).
+                    boltSnapshot[i] = PowerOverlay.showBolt(c, col, row, cycle)
+                    i++
                 }
             }
         }
 
         val tp = vp.tilePx()
+        val boltImage = tileIndex.hasImage(PowerOverlay.LIGHTNINGBOLT)
         var i = 0
         for (row in firstRow..lastRow) {
             val screenY = vp.tileScreenY(row)
             for (col in firstCol..lastCol) {
-                val tile = snapshot[i++]
-                if (!tileIndex.hasImage(tile)) continue
-                val yOff = tileIndex.frameOffsetY(tile, cycle)
+                val tile = snapshot[i]
+                val bolt = boltSnapshot[i]
+                i++
                 val screenX = vp.tileScreenX(col)
-                src.set(0, yOff, TileIndex.TILE_SIZE, yOff + TileIndex.TILE_SIZE)
-                dst.set(screenX, screenY, screenX + tp, screenY + tp)
-                canvas.drawBitmap(atlas, src, dst, tilePaint)
+                if (tileIndex.hasImage(tile)) {
+                    val yOff = tileIndex.frameOffsetY(tile, cycle)
+                    src.set(0, yOff, TileIndex.TILE_SIZE, yOff + TileIndex.TILE_SIZE)
+                    dst.set(screenX, screenY, screenX + tp, screenY + tp)
+                    canvas.drawBitmap(atlas, src, dst, tilePaint)
+                }
+                if (bolt && boltImage) {
+                    val yOff = tileIndex.frameOffsetY(PowerOverlay.LIGHTNINGBOLT, cycle)
+                    src.set(0, yOff, TileIndex.TILE_SIZE, yOff + TileIndex.TILE_SIZE)
+                    dst.set(screenX, screenY, screenX + tp, screenY + tp)
+                    canvas.drawBitmap(atlas, src, dst, tilePaint)
+                }
             }
         }
 

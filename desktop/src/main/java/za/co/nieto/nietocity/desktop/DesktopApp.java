@@ -55,6 +55,7 @@ import micropolisj.engine.ToolResult;
 import za.co.nieto.nietocity.game.GameController;
 import za.co.nieto.nietocity.game.QueryReport;
 import za.co.nieto.nietocity.game.StatusSnapshot;
+import za.co.nieto.nietocity.render.PowerOverlay;
 import za.co.nieto.nietocity.render.TileIndex;
 import za.co.nieto.nietocity.render.Viewport;
 
@@ -452,6 +453,7 @@ public class DesktopApp extends Application
 	// --- rendering ---
 
 	private int[] snapshot = new int[0];
+	private boolean[] boltSnapshot = new boolean[0];
 
 	private void redraw()
 	{
@@ -474,25 +476,38 @@ public class DesktopApp extends Application
 			int rows = lastRow - firstRow + 1;
 			if (snapshot.length < cols * rows) {
 				snapshot = new int[cols * rows];
+				boltSnapshot = new boolean[cols * rows];
 			}
 			int i = 0;
 			for (int row = firstRow; row <= lastRow; row++) {
 				for (int col = firstCol; col <= lastCol; col++) {
-					snapshot[i++] = city.getTile(col, row) & LOMASK;
+					snapshot[i] = city.getTile(col, row) & LOMASK;
+					// Blink a lightning bolt over unpowered zone centres (shared core).
+					boltSnapshot[i] = PowerOverlay.showBolt(city, col, row, cycle);
+					i++;
 				}
 			}
 		}
 
 		int zoom = viewport.getZoom();
 		int tp = viewport.tilePx();
+		boolean boltImage = tileIndex.hasImage(PowerOverlay.LIGHTNINGBOLT);
 		int i = 0;
 		for (int row = firstRow; row <= lastRow; row++) {
 			int screenY = viewport.tileScreenY(row);
 			for (int col = firstCol; col <= lastCol; col++) {
-				int tile = snapshot[i++];
-				if (!tileIndex.hasImage(tile)) continue;
-				int yOff = tileIndex.frameOffsetY(tile, cycle);
-				gc.drawImage(tileImage(yOff, zoom), viewport.tileScreenX(col), screenY);
+				int tile = snapshot[i];
+				boolean bolt = boltSnapshot[i];
+				i++;
+				int screenX = viewport.tileScreenX(col);
+				if (tileIndex.hasImage(tile)) {
+					int yOff = tileIndex.frameOffsetY(tile, cycle);
+					gc.drawImage(tileImage(yOff, zoom), screenX, screenY);
+				}
+				if (bolt && boltImage) {
+					int yOff = tileIndex.frameOffsetY(PowerOverlay.LIGHTNINGBOLT, cycle);
+					gc.drawImage(tileImage(yOff, zoom), screenX, screenY);
+				}
 			}
 		}
 
