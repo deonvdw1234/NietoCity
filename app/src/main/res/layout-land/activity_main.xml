@@ -52,4 +52,55 @@
 
     </LinearLayout>
 
+    <!-- Selected-tool bar: always shows the current tool (or Pan) with a large X. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#DD000000"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp">
+
+        <ImageView
+            android:id="@+id/selectedIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:id="@+id/selectedName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:singleLine="true" />
+
+        <TextView
+            android:id="@+id/selectedCost"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:textColor="#FFE080"
+            android:textSize="14sp"
+            android:singleLine="true" />
+
+        <TextView
+            android:id="@+id/clearTool"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:text="@string/clear_tool"
+            android:contentDescription="@string/clear_tool_desc"
+            android:background="#33FFFFFF"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
 </LinearLayout>

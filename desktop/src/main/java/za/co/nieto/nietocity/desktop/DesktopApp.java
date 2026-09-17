@@ -92,6 +92,8 @@ public class DesktopApp extends Application
 	private Stage stage;
 
 	private Label dateLbl, fundsLbl, popLbl, toolLbl, costLbl, tickerLbl;
+	private ImageView selIconView;
+	private Button clearToolBtn;
 	private long tickerHideAt;
 
 	// input state
@@ -174,7 +176,24 @@ public class DesktopApp extends Application
 		popLbl = statusLabel();
 		toolLbl = statusLabel();
 		costLbl = statusLabel();
-		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, toolLbl, costLbl);
+		costLbl.setStyle("-fx-text-fill: #FFE080;");
+
+		selIconView = new ImageView();
+		// A large X (>=48px) that returns to Pan; only shown when a tool is selected.
+		clearToolBtn = new Button("✕");
+		clearToolBtn.setMinSize(48, 48);
+		clearToolBtn.setFocusTraversable(false);
+		clearToolBtn.setStyle("-fx-font-size: 18; -fx-text-fill: white; -fx-background-color: #444;");
+		clearToolBtn.setOnAction(e -> {
+			controller.setTool(null);
+			refreshPalette();
+			updateStatus();
+		});
+		clearToolBtn.setVisible(false);
+		clearToolBtn.setManaged(false);
+
+		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, selIconView, toolLbl, costLbl, clearToolBtn);
+		status.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 		status.setPadding(new Insets(4, 8, 4, 8));
 		status.setStyle("-fx-background-color: #202020;");
 
@@ -380,7 +399,12 @@ public class DesktopApp extends Application
 
 	private void applyStroke()
 	{
-		controller.applyPath(pathXs(), pathYs(), null);
+		// onResult runs on the engine thread; a one-shot tool may have returned to
+		// Pan, so refresh the palette and status on the JavaFX thread.
+		controller.applyPath(pathXs(), pathYs(), r -> Platform.runLater(() -> {
+			refreshPalette();
+			updateStatus();
+		}));
 	}
 
 	private void cancelStroke()
@@ -440,8 +464,21 @@ public class DesktopApp extends Application
 		dateLbl.setText(s.date);
 		fundsLbl.setText(s.fundsText);
 		popLbl.setText("Pop " + s.population);
-		toolLbl.setText(s.toolName);
-		costLbl.setText(s.toolCost != 0 ? CurrencyFormat.format(s.toolCost) : "");
+
+		MicropolisTool tool = controller.getTool();
+		if (tool == null) {
+			toolLbl.setText("Pan");
+			costLbl.setText("");
+			selIconView.setImage(null);
+			clearToolBtn.setVisible(false);
+			clearToolBtn.setManaged(false);
+		} else {
+			toolLbl.setText(s.toolName);
+			costLbl.setText(s.toolCost != 0 ? CurrencyFormat.format(s.toolCost) : "");
+			selIconView.setImage(plainIcons.get(tool));
+			clearToolBtn.setVisible(true);
+			clearToolBtn.setManaged(true);
+		}
 		stage.setTitle("NietoCity - " + s.date);
 	}
 

@@ -59,7 +59,14 @@ Created by Nieto Software
       it (status bar funds + palette cost); Android status-bar cost and desktop cost
       label now use it instead of a hardcoded "$". Engine bundle strings are unchanged.
       JUnit (CurrencyFormatTest): grouping, negatives, no "$", formatFunds returns rand.
-- [ ] 3. Tool guard: STROKE vs ONE-SHOT tools; selected-tool bar with large X to Pan; two-finger pan; query = long press.
+- [x] 3. Tool guard: GameController.ToolKind/kindOf classifies tools; STROKE tools
+      (bulldozer, wire, road, rail, park, R/C/I) stay selected, ONE_SHOT tools
+      (police, fire, stadium, seaport, coal, nuclear, airport) auto-return to Pan
+      after a successful placement (maybeAutoClear in all apply paths). Selected-tool
+      bar shows icon + name + cost + a 48dp X that returns to Pan (portrait bottom bar
+      + new landscape bottom bar; desktop status area with icon + X); "Pan" when
+      nothing is selected. Two-finger pan and long-press query unchanged. JUnit
+      (ToolGuardTest): one-shot clears on success, stays on failure, stroke stays, kinds.
 - [ ] 4. Android back button: query dialog -> tools drawer -> three-press exit confirm.
 - [ ] 5. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug; quote tail + test count; fresh artefacts.
 - [ ] 6. Docs: TASKS/CHANGES/README/CLAUDE updates.

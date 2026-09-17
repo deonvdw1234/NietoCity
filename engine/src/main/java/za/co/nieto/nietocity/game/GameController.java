@@ -111,6 +111,34 @@ public final class GameController
 
 	// --- tool selection ---
 
+	/**
+	 * The two kinds of tool. STROKE tools (bulldozer, road, rail, wire, park and
+	 * the three zones) stay selected until cleared, so you can keep drawing.
+	 * ONE_SHOT tools (the services and the big buildings) return to Pan after one
+	 * successful placement, so you do not accidentally drop a second R5000 stadium.
+	 */
+	public enum ToolKind { STROKE, ONE_SHOT }
+
+	/** Which kind a tool is. QUERY is not placed here (it is a long press). */
+	public static ToolKind kindOf(MicropolisTool t)
+	{
+		if (t == null) {
+			return ToolKind.STROKE;
+		}
+		switch (t) {
+		case POLICE:
+		case FIRE:
+		case STADIUM:
+		case SEAPORT:
+		case POWERPLANT:
+		case NUCLEAR:
+		case AIRPORT:
+			return ToolKind.ONE_SHOT;
+		default:
+			return ToolKind.STROKE;
+		}
+	}
+
 	public MicropolisTool getTool() { return tool; }
 	public void setTool(MicropolisTool tool) { this.tool = tool; }
 
@@ -118,6 +146,14 @@ public final class GameController
 	public void toggleTool(MicropolisTool t)
 	{
 		this.tool = (this.tool == t) ? null : t;
+	}
+
+	/** After a successful placement, a one-shot tool returns to Pan. */
+	private void maybeAutoClear(MicropolisTool t, ToolResult r)
+	{
+		if (r == ToolResult.SUCCESS && kindOf(t) == ToolKind.ONE_SHOT && this.tool == t) {
+			this.tool = null;
+		}
 	}
 
 	// --- status ---
@@ -177,6 +213,7 @@ public final class GameController
 			public void run() {
 				ToolResult r = applyStroke(t, x0, y0, x1, y1);
 				noteResult(r);
+				maybeAutoClear(t, r);
 				if (cb != null) cb.onResult(r);
 			}
 		});
@@ -189,7 +226,9 @@ public final class GameController
 	public ToolResult applyNow(MicropolisTool t, int x0, int y0, int x1, int y1)
 	{
 		synchronized (engine) {
-			return applyStroke(t, x0, y0, x1, y1);
+			ToolResult r = applyStroke(t, x0, y0, x1, y1);
+			maybeAutoClear(t, r);
+			return r;
 		}
 	}
 
@@ -262,6 +301,7 @@ public final class GameController
 			public void run() {
 				ToolResult r = applyPathStroke(t, xs, ys);
 				noteResult(r);
+				maybeAutoClear(t, r);
 				if (cb != null) cb.onResult(r);
 			}
 		});
@@ -271,7 +311,9 @@ public final class GameController
 	public ToolResult applyPathNow(MicropolisTool t, int[] xs, int[] ys)
 	{
 		synchronized (engine) {
-			return applyPathStroke(t, xs, ys);
+			ToolResult r = applyPathStroke(t, xs, ys);
+			maybeAutoClear(t, r);
+			return r;
 		}
 	}
 

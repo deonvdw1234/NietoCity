@@ -6,4 +6,6 @@
     <string name="engine_ok">Engine OK: population %1$d, funds %2$d</string>
     <string name="tools_toggle">Tools</string>
     <string name="pan_mode">Pan</string>
+    <string name="clear_tool">✕</string>
+    <string name="clear_tool_desc">Return to Pan</string>
 </resources>

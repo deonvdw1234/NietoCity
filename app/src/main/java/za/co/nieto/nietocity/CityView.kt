@@ -72,6 +72,10 @@ class CityView @JvmOverloads constructor(
     /** Called (on the UI thread) when a long press queries a tile. */
     var queryListener: ((Int, Int) -> Unit)? = null
 
+    /** Called (on the UI thread) after a placement is applied (e.g. to refresh the
+     *  tool bar when a one-shot tool has returned to Pan). */
+    var placementListener: (() -> Unit)? = null
+
     // Stroke / pan state
     @Volatile private var preview: ToolPreview? = null
     private var strokeActive = false
@@ -242,7 +246,10 @@ class CityView @JvmOverloads constructor(
     }
 
     private fun applyStroke() {
-        controller?.applyPath(pathX.toIntArray(), pathY.toIntArray(), null)
+        controller?.applyPath(pathX.toIntArray(), pathY.toIntArray()) { _ ->
+            // onResult runs on the engine thread; refresh the UI on the UI thread.
+            post { placementListener?.invoke() }
+        }
     }
 
     private fun cancelStroke() {

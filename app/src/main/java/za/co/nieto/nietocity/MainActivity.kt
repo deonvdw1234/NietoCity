@@ -17,6 +17,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import micropolisj.engine.MicropolisTool
+import za.co.nieto.nietocity.game.CurrencyFormat
 import za.co.nieto.nietocity.game.GameController
 import za.co.nieto.nietocity.game.GameStrings
 
@@ -68,32 +69,53 @@ class MainActivity : Activity() {
         // to close).
         cityView.queryListener = { x, y -> showQuery(x, y) }
 
-        // Portrait: a "Tools" bar shows the selected tool and toggles the grid.
+        // Selected-tool bar: always shows the current tool (or Pan), its cost and a
+        // large X that returns to Pan. In portrait the bar also toggles the grid.
         val toolsBar: View? = findViewById(R.id.toolsBar)
         val paletteScroll: View? = findViewById(R.id.paletteScroll)
-        val selIcon: ImageView? = findViewById(R.id.selectedIcon)
-        val selName: TextView? = findViewById(R.id.selectedName)
         toolsBar?.setOnClickListener {
             paletteScroll?.let {
                 it.visibility = if (it.visibility == View.GONE) View.VISIBLE else View.GONE
             }
         }
-        palette.listener = { tool ->
-            statusBar.update(controller.snapshot())
-            updateSelectedBar(selIcon, selName, tool)
+        val clearBtn: View? = findViewById(R.id.clearTool)
+        clearBtn?.setOnClickListener {
+            controller.setTool(null)
+            refreshTool()
         }
-        updateSelectedBar(selIcon, selName, controller.getTool())
+        palette.listener = {
+            refreshTool()
+        }
+        // A one-shot tool clears itself after placing; refresh the bar and palette.
+        cityView.placementListener = { refreshTool() }
+        refreshTool()
     }
 
-    private fun updateSelectedBar(icon: ImageView?, name: TextView?, tool: MicropolisTool?) {
+    /** Sync the status bar, the palette highlight and the selected-tool bar to the
+     *  controller's current tool (which may have auto-cleared after a placement). */
+    private fun refreshTool() {
+        val tool = controller.getTool()
+        statusBar.update(controller.snapshot())
+        palette.syncSelection()
+
+        val icon: ImageView? = findViewById(R.id.selectedIcon)
+        val name: TextView? = findViewById(R.id.selectedName)
+        val cost: TextView? = findViewById(R.id.selectedCost)
+        val clearBtn: View? = findViewById(R.id.clearTool)
         if (tool == null) {
             icon?.setImageBitmap(null)
             name?.text = getString(R.string.pan_mode)
+            cost?.text = ""
+            clearBtn?.visibility = View.GONE
         } else {
             icon?.setImageBitmap(palette.iconFor(tool))
             name?.text = GameStrings.toolName(tool)
+            cost?.text = if (tool.toolCost != 0) CurrencyFormat.format(tool.toolCost.toLong()) else ""
+            clearBtn?.visibility = View.VISIBLE
         }
     }
+
+    private val MicropolisTool.toolCost: Int get() = getToolCost()
 
     override fun onRetainNonConfigurationInstance(): Any = controller
 

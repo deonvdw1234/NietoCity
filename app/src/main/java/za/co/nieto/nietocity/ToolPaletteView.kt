@@ -77,6 +77,9 @@ class ToolPaletteView @JvmOverloads constructor(
     /** The (scaled) icon for a tool, for the collapsed "Tools" bar. */
     fun iconFor(tool: MicropolisTool): Bitmap? = plainIcons[tool]
 
+    /** Re-read the controller's selection into the cells (after an external change). */
+    fun syncSelection() = refresh()
+
     private fun toggle(tool: MicropolisTool) {
         controller?.toggleTool(tool)
         refresh()
