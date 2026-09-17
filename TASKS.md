@@ -73,7 +73,12 @@ Created by Nieto Software
       "Exit NietoCity?" dialog (Exit / Stay, Stay focused as default); one or two
       presses show a "Press back 3 times to exit" toast. Never exits without the
       dialog; exitApp() is the single exit point (Phase 7 splash hook).
-- [ ] 5. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug; quote tail + test count; fresh artefacts.
+- [x] 5. Gate green: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug ->
+      "BUILD SUCCESSFUL in 8s / 43 actionable tasks: 43 executed". Engine tests: 32
+      total, 0 failures / 0 errors (EngineSmoke 1 + Currency 4 + GameController 5 +
+      RoadJoin 5 + ToolGuard 4 + AnimationClock 3 + PowerOverlay 2 + TileIndex 4 +
+      Viewport 4). NietoCity-debug.apk and NietoCity-desktop.jar refreshed in the
+      project root (published by the build's publishApkToRoot / jar-to-root tasks).
 - [ ] 6. Docs: TASKS/CHANGES/README/CLAUDE updates.
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
