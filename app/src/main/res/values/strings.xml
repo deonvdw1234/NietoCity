@@ -8,4 +8,8 @@
     <string name="pan_mode">Pan</string>
     <string name="clear_tool">✕</string>
     <string name="clear_tool_desc">Return to Pan</string>
+    <string name="back_hint">Press back 3 times to exit</string>
+    <string name="exit_title">Exit NietoCity?</string>
+    <string name="exit_yes">Exit</string>
+    <string name="exit_no">Stay</string>
 </resources>

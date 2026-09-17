@@ -16,6 +16,7 @@ import android.os.SystemClock
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import micropolisj.engine.MicropolisTool
 import za.co.nieto.nietocity.game.CurrencyFormat
 import za.co.nieto.nietocity.game.GameController
@@ -37,6 +38,10 @@ class MainActivity : Activity() {
     private val ui = Handler(Looper.getMainLooper())
     private var lastStatusAt = 0L
     private var tickerHideAt = 0L
+
+    private var queryDialog: android.app.AlertDialog? = null
+    private var backCount = 0
+    private var firstBackAt = 0L
 
     private val pump = object : Runnable {
         override fun run() {
@@ -139,11 +144,59 @@ class MainActivity : Activity() {
             body.append(report.labels[i]).append(' ').append(report.values[i])
             if (i < report.labels.size - 1) body.append('\n')
         }
-        android.app.AlertDialog.Builder(this)
+        queryDialog = android.app.AlertDialog.Builder(this)
             .setTitle(report.header)
             .setMessage(body.toString())
             .setPositiveButton(android.R.string.ok, null)
+            .setOnDismissListener { queryDialog = null }
             .show()
+    }
+
+    override fun onBackPressed() {
+        // 1. Close the query dialog if it is open.
+        val dlg = queryDialog
+        if (dlg != null && dlg.isShowing) {
+            dlg.dismiss()
+            return
+        }
+        // 2. Close the tools drawer (portrait only; landscape's palette is permanent).
+        val toolsBar: View? = findViewById(R.id.toolsBar)
+        val paletteScroll: View? = findViewById(R.id.paletteScroll)
+        if (toolsBar != null && paletteScroll != null && paletteScroll.visibility == View.VISIBLE) {
+            paletteScroll.visibility = View.GONE
+            return
+        }
+        // 3. Nothing open: three presses within 2s ask to exit; fewer just hint.
+        val now = SystemClock.uptimeMillis()
+        if (backCount == 0 || now - firstBackAt > BACK_WINDOW_MS) {
+            backCount = 1
+            firstBackAt = now
+        } else {
+            backCount++
+        }
+        if (backCount >= 3) {
+            backCount = 0
+            confirmExit()
+        } else {
+            Toast.makeText(this, R.string.back_hint, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun confirmExit() {
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.exit_title)
+            .setPositiveButton(R.string.exit_yes) { _, _ -> exitApp() }
+            .setNegativeButton(R.string.exit_no) { d, _ -> d.dismiss() }
+            .setCancelable(true) // back / tap-outside means Stay
+            .create()
+        dialog.show()
+        // Stay is the default: focus it so Enter/centre keeps the city.
+        dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
+    }
+
+    /** The single exit point (Phase 7 will show the exit splash here). */
+    private fun exitApp() {
+        finish()
     }
 
     private fun pumpTicker(now: Long) {
@@ -166,5 +219,6 @@ class MainActivity : Activity() {
     companion object {
         private const val TICK_MS = 250L
         private const val MESSAGE_MS = 4000L
+        private const val BACK_WINDOW_MS = 2000L
     }
 }

@@ -67,7 +67,12 @@ Created by Nieto Software
       + new landscape bottom bar; desktop status area with icon + X); "Pan" when
       nothing is selected. Two-finger pan and long-press query unchanged. JUnit
       (ToolGuardTest): one-shot clears on success, stays on failure, stroke stays, kinds.
-- [ ] 4. Android back button: query dialog -> tools drawer -> three-press exit confirm.
+- [x] 4. Android back button (MainActivity.onBackPressed): closes the query dialog
+      first, then the open tools drawer (portrait only; landscape palette is
+      permanent). With nothing open, three presses within 2s show a cancelable
+      "Exit NietoCity?" dialog (Exit / Stay, Stay focused as default); one or two
+      presses show a "Press back 3 times to exit" toast. Never exits without the
+      dialog; exitApp() is the single exit point (Phase 7 splash hook).
 - [ ] 5. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug; quote tail + test count; fresh artefacts.
 - [ ] 6. Docs: TASKS/CHANGES/README/CLAUDE updates.
 
