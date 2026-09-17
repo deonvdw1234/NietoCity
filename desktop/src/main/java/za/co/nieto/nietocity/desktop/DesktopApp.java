@@ -14,6 +14,7 @@
  */
 package za.co.nieto.nietocity.desktop;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -95,6 +96,10 @@ public class DesktopApp extends Application
 	private double lastX, lastY, pressX, pressY;
 	private boolean panning, strokeActive, spaceDown;
 	private int strokeOriginX, strokeOriginY, strokeCurX, strokeCurY;
+	// The mouse's tile waypoints, so a bent drag lays a road that follows the path
+	// (GameController splits it into axis-aligned strokes on release).
+	private final List<Integer> pathX = new ArrayList<Integer>();
+	private final List<Integer> pathY = new ArrayList<Integer>();
 	private ToolPreview preview;
 
 	@Override
@@ -332,6 +337,10 @@ public class DesktopApp extends Application
 		strokeOriginY = viewport.tileYAt((int) py);
 		strokeCurX = strokeOriginX;
 		strokeCurY = strokeOriginY;
+		pathX.clear();
+		pathY.clear();
+		pathX.add(strokeOriginX);
+		pathY.add(strokeOriginY);
 		strokeActive = true;
 		updatePreview();
 	}
@@ -343,25 +352,41 @@ public class DesktopApp extends Application
 		if (tx != strokeCurX || ty != strokeCurY) {
 			strokeCurX = tx;
 			strokeCurY = ty;
+			pathX.add(tx);
+			pathY.add(ty);
 			updatePreview();
 		}
 	}
 
+	private int[] pathXs() { return toIntArray(pathX); }
+	private int[] pathYs() { return toIntArray(pathY); }
+
+	private static int[] toIntArray(List<Integer> list)
+	{
+		int[] a = new int[list.size()];
+		for (int i = 0; i < a.length; i++) {
+			a[i] = list.get(i);
+		}
+		return a;
+	}
+
 	private void updatePreview()
 	{
-		preview = controller.preview(strokeOriginX, strokeOriginY, strokeCurX, strokeCurY);
+		preview = controller.previewPath(pathXs(), pathYs());
 		redraw();
 	}
 
 	private void applyStroke()
 	{
-		controller.apply(strokeOriginX, strokeOriginY, strokeCurX, strokeCurY, null);
+		controller.applyPath(pathXs(), pathYs(), null);
 	}
 
 	private void cancelStroke()
 	{
 		strokeActive = false;
 		preview = null;
+		pathX.clear();
+		pathY.clear();
 		redraw();
 	}
 

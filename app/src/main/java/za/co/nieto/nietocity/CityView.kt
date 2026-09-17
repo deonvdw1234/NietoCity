@@ -78,6 +78,10 @@ class CityView @JvmOverloads constructor(
     private var strokeOriginY = 0
     private var strokeCurX = 0
     private var strokeCurY = 0
+    // The finger's tile waypoints, so a bent drag lays a road that follows the
+    // path (GameController splits it into axis-aligned strokes on release).
+    private val pathX = ArrayList<Int>()
+    private val pathY = ArrayList<Int>()
     private var panning = false
     private var lastPanX = 0f
     private var lastPanY = 0f
@@ -209,6 +213,10 @@ class CityView @JvmOverloads constructor(
         strokeOriginY = vp.tileYAt(py.toInt())
         strokeCurX = strokeOriginX
         strokeCurY = strokeOriginY
+        pathX.clear()
+        pathY.clear()
+        pathX.add(strokeOriginX)
+        pathY.add(strokeOriginY)
         strokeActive = true
         updatePreview()
     }
@@ -220,23 +228,27 @@ class CityView @JvmOverloads constructor(
         if (tx != strokeCurX || ty != strokeCurY) {
             strokeCurX = tx
             strokeCurY = ty
+            pathX.add(tx)
+            pathY.add(ty)
             updatePreview()
         }
     }
 
     private fun updatePreview() {
-        preview = controller?.preview(strokeOriginX, strokeOriginY, strokeCurX, strokeCurY)
+        preview = controller?.previewPath(pathX.toIntArray(), pathY.toIntArray())
         requestRender()
     }
 
     private fun applyStroke() {
-        controller?.apply(strokeOriginX, strokeOriginY, strokeCurX, strokeCurY, null)
+        controller?.applyPath(pathX.toIntArray(), pathY.toIntArray(), null)
     }
 
     private fun cancelStroke() {
         if (strokeActive || preview != null) {
             strokeActive = false
             preview = null
+            pathX.clear()
+            pathY.clear()
             requestRender()
         }
     }

@@ -10,6 +10,8 @@
  */
 package za.co.nieto.nietocity.game;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import micropolisj.engine.CityLocation;
@@ -23,6 +25,7 @@ import micropolisj.engine.MicropolisTool;
 import micropolisj.engine.Sound;
 import micropolisj.engine.Sprite;
 import micropolisj.engine.Speed;
+import micropolisj.engine.TileConstants;
 import micropolisj.engine.ToolPreview;
 import micropolisj.engine.ToolResult;
 import micropolisj.engine.ToolStroke;
@@ -195,6 +198,164 @@ public final class GameController
 		ToolStroke stroke = t.beginStroke(engine, x0, y0);
 		stroke.dragTo(x1, y1);
 		return stroke.apply();
+	}
+
+	// --- path following (the finger's drag path, not just press->release) ---
+	//
+	// The engine's ToolStroke snaps a single stroke to one straight axis, so a bent
+	// drag would end away from the finger and a later stroke could leave a gap. We
+	// keep the finger's tile waypoints and, on release, lay the road along that path
+	// as a chain of axis-aligned engine strokes. Each shared corner tile is a road
+	// by the time the next segment runs, so the engine lays (and charges) each tile
+	// once. The engine (ToolStroke) is not modified.
+
+	/** A read-only preview of the whole path (merged from its segments). Null if no tool. */
+	public ToolPreview previewPath(int[] xs, int[] ys)
+	{
+		MicropolisTool t = tool;
+		if (t == null || xs == null || xs.length == 0) {
+			return null;
+		}
+		synchronized (engine) {
+			// ToolPreview has no public constructor, so we use the first segment's
+			// engine-made preview as the base and merge the rest into it (setTile is
+			// public). The first segment's origin is the path origin, so offsets line up.
+			int ox = xs[0];
+			int oy = ys[0];
+			ToolPreview merged = null;
+			int laid = 0;
+			boolean anyUhOh = false;
+			for (int[] seg : pathSegments(xs, ys)) {
+				ToolStroke stroke = t.beginStroke(engine, seg[0], seg[1]);
+				stroke.dragTo(seg[2], seg[3]);
+				ToolPreview sp = stroke.getPreview();
+				if (sp.toolResult == ToolResult.UH_OH) {
+					anyUhOh = true;
+				}
+				if (merged == null) {
+					merged = sp;
+					laid += countTiles(sp);
+				} else {
+					laid += mergePreview(merged, sp, seg[0], seg[1], ox, oy);
+				}
+			}
+			if (merged == null) {
+				return null;
+			}
+			// Only flag the whole path bad if nothing at all could be laid.
+			if (laid == 0 && anyUhOh) {
+				merged.toolResult = ToolResult.UH_OH;
+			}
+			return merged;
+		}
+	}
+
+	/** Apply the current tool along the path on the engine thread; deliver the result. */
+	public void applyPath(final int[] xs, final int[] ys, final ResultCallback cb)
+	{
+		final MicropolisTool t = tool;
+		if (t == null || xs == null || xs.length == 0) {
+			if (cb != null) cb.onResult(ToolResult.NONE);
+			return;
+		}
+		clock.post(new Runnable() {
+			public void run() {
+				ToolResult r = applyPathStroke(t, xs, ys);
+				noteResult(r);
+				if (cb != null) cb.onResult(r);
+			}
+		});
+	}
+
+	/** Apply a tool along a path synchronously under the engine lock (tests/simple callers). */
+	public ToolResult applyPathNow(MicropolisTool t, int[] xs, int[] ys)
+	{
+		synchronized (engine) {
+			return applyPathStroke(t, xs, ys);
+		}
+	}
+
+	private ToolResult applyPathStroke(MicropolisTool t, int[] xs, int[] ys)
+	{
+		ToolResult best = ToolResult.NONE;
+		for (int[] seg : pathSegments(xs, ys)) {
+			ToolStroke stroke = t.beginStroke(engine, seg[0], seg[1]);
+			stroke.dragTo(seg[2], seg[3]);
+			best = combineResult(best, stroke.apply());
+		}
+		return best;
+	}
+
+	/**
+	 * Split a chain of tile waypoints into axis-aligned segments (each {sx,sy,ex,ey}).
+	 * A diagonal step between two waypoints becomes a horizontal then a vertical leg
+	 * (an L), so the laid road always follows the finger with no diagonal gaps.
+	 */
+	private static List<int[]> pathSegments(int[] xs, int[] ys)
+	{
+		List<int[]> segs = new ArrayList<int[]>();
+		int n = Math.min(xs.length, ys.length);
+		for (int i = 1; i < n; i++) {
+			int x0 = xs[i - 1], y0 = ys[i - 1];
+			int x1 = xs[i], y1 = ys[i];
+			if (x0 == x1 && y0 == y1) {
+				continue;
+			}
+			if (x0 == x1 || y0 == y1) {
+				segs.add(new int[] { x0, y0, x1, y1 });
+			} else {
+				segs.add(new int[] { x0, y0, x1, y0 }); // horizontal leg
+				segs.add(new int[] { x1, y0, x1, y1 }); // vertical leg
+			}
+		}
+		if (segs.isEmpty()) {
+			// A single waypoint (a tap): place the one tile at the origin.
+			segs.add(new int[] { xs[0], ys[0], xs[0], ys[0] });
+		}
+		return segs;
+	}
+
+	/** Count the non-CLEAR tiles in a preview. */
+	private static int countTiles(ToolPreview sp)
+	{
+		int n = 0;
+		for (short[] row : sp.tiles) {
+			for (short value : row) {
+				if (value != TileConstants.CLEAR) {
+					n++;
+				}
+			}
+		}
+		return n;
+	}
+
+	/** Copy a segment preview's tiles into the merged preview; returns tiles copied. */
+	private static int mergePreview(ToolPreview merged, ToolPreview sp,
+		int segX, int segY, int originX, int originY)
+	{
+		int copied = 0;
+		for (int r = 0; r < sp.tiles.length; r++) {
+			short[] row = sp.tiles[r];
+			for (int c = 0; c < row.length; c++) {
+				short value = row[c];
+				if (value == TileConstants.CLEAR) {
+					continue;
+				}
+				int mapX = segX + (c - sp.offsetX);
+				int mapY = segY + (r - sp.offsetY);
+				merged.setTile(mapX - originX, mapY - originY, value);
+				copied++;
+			}
+		}
+		return copied;
+	}
+
+	private static ToolResult combineResult(ToolResult a, ToolResult b)
+	{
+		if (a == ToolResult.SUCCESS || b == ToolResult.SUCCESS) {
+			return ToolResult.SUCCESS;
+		}
+		return (a == ToolResult.NONE) ? b : a;
 	}
 
 	private void noteResult(ToolResult r)

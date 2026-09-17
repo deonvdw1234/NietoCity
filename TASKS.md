@@ -37,6 +37,25 @@ Created by Nieto Software
 - [x] A. Palette rebuilt as finger-sized grid cells (>=56dp, 3x nearest-neighbour icons, name + cost, highlight border); portrait bottom sheet (4-col grid + Tools bar), landscape 72dp left column; desktop icons 3x. Never covers the status bar.
 - [x] B. New cities start with the level's funds (easy 20000 default) via GameController.newGame(); JUnit added (game tests now 5). Gate: 17 engine tests, 0 fail/err.
 
+## Phase 4a: Play feedback from the first real city
+- [x] 0. Road join. CAUSE: the engine already joins orthogonally-adjacent roads
+      in separate strokes (its fixZone fixes each laid tile AND its 4 neighbours,
+      reaching into the previous stroke); proven green by RoadJoinTest (H->66/66,
+      V->67/67). The engine is NOT modified. The real gap came from our layer
+      applying a drag as ONE axis-snapped stroke, so a bent drag ended away from
+      the finger. FIX (per Andre, option 1): GameController now keeps the finger's
+      tile waypoints and lays the road along them as axis-aligned engine strokes on
+      release (previewPath/applyPath); the engine charges each tile once (re-laying
+      on an existing road is a no-op). JUnit: L-drag 40,40->43,40->43,42 lays 6
+      connected tiles for 60; gap-proof documents the old single-stroke behaviour.
+      Both renderers (Android + desktop) record the path and use previewPath/applyPath.
+- [ ] 1. Power indicator: blinking LIGHTNINGBOLT on unpowered zone centres (shared render core).
+- [ ] 2. Currency: South African rand, "R" prefix, no space, locale grouping; one CurrencyFormat helper in :engine.
+- [ ] 3. Tool guard: STROKE vs ONE-SHOT tools; selected-tool bar with large X to Pan; two-finger pan; query = long press.
+- [ ] 4. Android back button: query dialog -> tools drawer -> three-press exit confirm.
+- [ ] 5. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug; quote tail + test count; fresh artefacts.
+- [ ] 6. Docs: TASKS/CHANGES/README/CLAUDE updates.
+
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar
 - Phase 4: Speed, budget, evaluation, graphs, mini map
