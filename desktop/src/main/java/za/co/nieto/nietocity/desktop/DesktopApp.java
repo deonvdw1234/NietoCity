@@ -174,6 +174,9 @@ public class DesktopApp extends Application
 		this.soundPlayer.setMuted(prefs.getBoolean("muted", false));
 		controller.setSoundPlayer(soundPlayer);
 
+		// Random disasters: default on, persisted, applied to the engine's flag.
+		controller.setRandomDisastersEnabled(prefs.getBoolean("randomDisasters", true));
+
 		final int startW = 1024;
 		final int startH = 720;
 
@@ -307,6 +310,13 @@ public class DesktopApp extends Application
 			}
 		});
 
+		CheckMenuItem randomDisasters = new CheckMenuItem("Random disasters");
+		randomDisasters.setSelected(controller.isRandomDisastersEnabled());
+		randomDisasters.setOnAction(e -> {
+			controller.setRandomDisastersEnabled(randomDisasters.isSelected());
+			prefs.putBoolean("randomDisasters", randomDisasters.isSelected());
+		});
+
 		Menu overlayMenu = new Menu("Overlay");
 		ToggleGroup group = new ToggleGroup();
 		for (final MapOverlay ov : MapOverlay.values()) {
@@ -320,7 +330,7 @@ public class DesktopApp extends Application
 		Menu disasters = buildDisastersMenu();
 
 		mb.getItems().addAll(budget, eval, graphs, disasters, new SeparatorMenuItem(),
-			miniToggle, overlayMenu, mute);
+			miniToggle, overlayMenu, randomDisasters, mute);
 		return mb;
 	}
 

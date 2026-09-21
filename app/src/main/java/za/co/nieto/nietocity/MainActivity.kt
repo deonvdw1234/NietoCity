@@ -139,6 +139,9 @@ class MainActivity : Activity() {
         controller.setSoundPlayer(player)
         soundPlayer = player
 
+        // Random disasters: default on, persisted, applied to the engine's own flag.
+        controller.setRandomDisastersEnabled(prefs().getBoolean(PREF_RANDOM, true))
+
         refreshSpeed()
         refreshTool()
     }
@@ -181,7 +184,11 @@ class MainActivity : Activity() {
             "(Plane crash & shipwreck happen during play)")
         note.isEnabled = false
 
-        val muteItem = menu.add(0, ID_MUTE, 7, "Mute sound")
+        val randomItem = menu.add(0, ID_RANDOM_DISASTERS, 8, "Random disasters")
+        randomItem.isCheckable = true
+        randomItem.isChecked = controller.isRandomDisastersEnabled
+
+        val muteItem = menu.add(0, ID_MUTE, 9, "Mute sound")
         muteItem.isCheckable = true
         muteItem.isChecked = soundPlayer?.isMuted == true
 
@@ -206,6 +213,7 @@ class MainActivity : Activity() {
             ID_GRAPHS -> { AppDialogs.showGraphs(this, controller); return true }
             ID_MINIMAP -> { toggleMiniMap(); return true }
             ID_MUTE -> { toggleMute(); return true }
+            ID_RANDOM_DISASTERS -> { toggleRandomDisasters(); return true }
         }
         val dIdx = item.itemId - ID_DISASTER_BASE
         if (dIdx in DISASTER_NAMES.indices) {
@@ -242,6 +250,12 @@ class MainActivity : Activity() {
         val newMuted = !player.isMuted
         player.isMuted = newMuted
         prefs().edit().putBoolean(PREF_MUTED, newMuted).apply()
+    }
+
+    private fun toggleRandomDisasters() {
+        val enabled = !controller.isRandomDisastersEnabled
+        controller.setRandomDisastersEnabled(enabled)
+        prefs().edit().putBoolean(PREF_RANDOM, enabled).apply()
     }
 
     private fun toggleMiniMap() {
@@ -403,6 +417,7 @@ class MainActivity : Activity() {
         private const val ID_EVALUATION = 4
         private const val ID_GRAPHS = 5
         private const val ID_MUTE = 6
+        private const val ID_RANDOM_DISASTERS = 8
         private const val ID_MINIMAP = 1
         private const val ID_OVERLAY_SUB = 2
         private const val GROUP_OVERLAY = 10
@@ -415,5 +430,6 @@ class MainActivity : Activity() {
         )
         private const val PREF_AUTO_BUDGET = "autoBudget"
         private const val PREF_MUTED = "muted"
+        private const val PREF_RANDOM = "randomDisasters"
     }
 }

@@ -530,6 +530,26 @@ public final class GameController
 		});
 	}
 
+	/**
+	 * Whether the engine's random disasters are enabled. This reads the engine's
+	 * own {@code noDisasters} flag (the field its doDisasters() checks); enabled
+	 * means noDisasters is false.
+	 */
+	public boolean isRandomDisastersEnabled()
+	{
+		synchronized (engine) {
+			return !engine.noDisasters;
+		}
+	}
+
+	/** Enable or disable the engine's random disasters (sets its noDisasters flag). */
+	public void setRandomDisastersEnabled(boolean enabled)
+	{
+		synchronized (engine) {
+			engine.noDisasters = !enabled;
+		}
+	}
+
 	private void postDisaster(final Runnable action, final Sound sound)
 	{
 		clock.post(new Runnable() {

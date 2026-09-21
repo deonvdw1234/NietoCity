@@ -172,8 +172,10 @@ Created by Nieto Software
       use the engine's own explosions). Meltdown with no nuclear plant shows a
       note. Plane crash & shipwreck are natural-only and labelled as such, not
       faked - their sprites/explosions still render when the engine spawns them.
-- [ ] 4. Random-disasters toggle: menu checkbox wired to the engine flag
-      (investigate/report which), default ON, persisted; no engine logic change.
+- [x] 4. Random-disasters toggle: a persisted menu checkbox ("Random disasters",
+      default ON) wired via GameController.set/isRandomDisastersEnabled to the
+      engine's own noDisasters field - the flag doDisasters() checks (enabled ==
+      noDisasters false). No engine logic changed; only the flag is set.
 - [ ] 5. Earthquake shake: subtle decaying view shake in each renderer while a
       quake is active; purely visual, never moves map coordinates.
 - [ ] 6. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +
