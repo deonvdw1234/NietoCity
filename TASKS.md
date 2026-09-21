@@ -146,6 +146,30 @@ Created by Nieto Software
       Controls section gained speed, mini map, overlays, dialogs and the menu (and
       the space=pause/1..4 keys); CLAUDE.md notes the overlay accessors.
 
+## Phase 5: Disasters, sprites and sound
+- [x] 0. Sprite frames: copied the 61 obj<id>-<frame>.png into
+      engine/src/main/resources/sprites/ (per-kind counts match SpriteKind:
+      1/5,2/8,3/11,4/8,5/16,6/3,7/6,8/4); scripts/copy-sprites.cmd records the
+      provenance; THIRD_PARTY.md gained a sprite-artwork entry.
+- [ ] 1. Sprite rendering: shared render.SpriteImages (classpath frame paths);
+      renderers draw live engine sprites each tick (integer zoom, nn, snapshot
+      under lock, no tearing). JUnit: every SpriteKind resolves all frames.
+- [ ] 2. Sound engine: copy the 14 wavs; game.SoundPlayer interface fed by the
+      engine citySound listener; Android SoundPool, desktop AudioClip; preload;
+      default ON + Mute menu item (persisted); best-effort (never throws).
+      JUnit: every Sound maps to a bundled wav that exists.
+- [ ] 3. Disaster menu: Disasters submenu triggers Fire/Flood/Tornado/Earthquake/
+      Monster/Nuclear meltdown via the engine's make*; ticker message + sound.
+      Plane crash / shipwreck are natural only (noted, not faked).
+- [ ] 4. Random-disasters toggle: menu checkbox wired to the engine flag
+      (investigate/report which), default ON, persisted; no engine logic change.
+- [ ] 5. Earthquake shake: subtle decaying view shake in each renderer while a
+      quake is active; purely visual, never moves map coordinates.
+- [ ] 6. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +
+      engine test count; fresh APK + JAR; note APK size change.
+- [ ] 7. Docs: TASKS final; CHANGES top; README (disasters/sound/mute, triggered
+      vs natural); THIRD_PARTY (sprites + sounds); CLAUDE one line.
+
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar
 - Phase 4: Speed, budget, evaluation, graphs, mini map

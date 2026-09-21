@@ -27,6 +27,16 @@ The tool palette icons in `engine/src/main/resources/tools/` are MicropolisJ's
 `MicropolisTool` names (`<NAME>.png` and `<NAME>_hi.png` for the highlighted
 selected state). Open-sourced Micropolis artwork; no Maxis trademark art.
 
+## Sprite artwork
+
+The mobile-sprite frame images in `engine/src/main/resources/sprites/`
+(`obj<id>-<frame>.png`, 61 files: train, car, helicopter, aeroplane, ship,
+monster, tornado and explosion) are the Micropolis sprite artwork from the
+open-source Micropolis release, via MicropolisJ (Jason Long), under GPLv3. They
+are copied unchanged from the MicropolisJ `resources/` folder (see
+`scripts/copy-sprites.cmd`). Open-sourced Micropolis art, not SimCity/Maxis
+trademark artwork; no Maxis trademark art is used.
+
 ## Strings
 
 The English string bundles in `engine/src/main/resources/micropolisj/`
