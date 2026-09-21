@@ -510,24 +510,54 @@ public class DesktopApp extends Application
 		gc.strokeRect(left, top, dw, dh);
 	}
 
-	/** Guard the swap: the running city is lost (no save/load yet), so confirm first. */
+	/** Guard the swap: the running city is discarded, so confirm (offering Save first). */
 	private void confirmNewCity(int level, long seed, TerrainConfig cfg)
+	{
+		int choice = discardChoice("Start a new city?", "Your current city will be discarded.", "Start");
+		if (choice == DISCARD_SAVE_FIRST && !quickSave()) {
+			return; // save failed; keep the city
+		}
+		if (choice == DISCARD_PROCEED || choice == DISCARD_SAVE_FIRST) {
+			startNewCity(level, seed, cfg);
+		}
+	}
+
+	private static final int DISCARD_CANCEL = 0, DISCARD_PROCEED = 1, DISCARD_SAVE_FIRST = 2;
+
+	/** A Proceed / Save first / Cancel choice for a swap that discards the city. */
+	private int discardChoice(String title, String message, String proceed)
 	{
 		Alert a = new Alert(Alert.AlertType.CONFIRMATION);
 		a.initOwner(stage);
-		a.setTitle("Start a new city?");
-		a.setHeaderText("Start a new city?");
-		a.setContentText("Your current city will be discarded.");
-		javafx.scene.control.ButtonType start =
-			new javafx.scene.control.ButtonType("Start", javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
+		a.setTitle(title);
+		a.setHeaderText(title);
+		a.setContentText(message);
+		javafx.scene.control.ButtonType proceedBtn =
+			new javafx.scene.control.ButtonType(proceed, javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
+		javafx.scene.control.ButtonType saveBtn =
+			new javafx.scene.control.ButtonType("Save first", javafx.scene.control.ButtonBar.ButtonData.OTHER);
 		javafx.scene.control.ButtonType cancel =
 			new javafx.scene.control.ButtonType("Cancel", javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
-		a.getButtonTypes().setAll(start, cancel);
-		// Cancel is the default (keep the current city).
+		a.getButtonTypes().setAll(proceedBtn, saveBtn, cancel);
 		a.getDialogPane().lookupButton(cancel).requestFocus();
-		java.util.Optional<javafx.scene.control.ButtonType> result = a.showAndWait();
-		if (result.isPresent() && result.get() == start) {
-			startNewCity(level, seed, cfg);
+		java.util.Optional<javafx.scene.control.ButtonType> r = a.showAndWait();
+		if (!r.isPresent()) {
+			return DISCARD_CANCEL;
+		}
+		if (r.get() == proceedBtn) return DISCARD_PROCEED;
+		if (r.get() == saveBtn) return DISCARD_SAVE_FIRST;
+		return DISCARD_CANCEL;
+	}
+
+	/** Quick-save the current city under its current name; returns success. */
+	private boolean quickSave()
+	{
+		try {
+			saveStore.save(cityName, controller);
+			return true;
+		} catch (Exception ex) {
+			errorAlert("Could not save", ex);
+			return false;
 		}
 	}
 
@@ -735,9 +765,14 @@ public class DesktopApp extends Application
 		}
 	}
 
+	/** Confirm a load that discards the running city (offering Save first). */
 	private boolean confirmLoadDiscard()
 	{
-		return confirmYesNo("Load a city?", "Unsaved changes will be lost.", "Load");
+		int choice = discardChoice("Load a city?", "Unsaved changes will be lost.", "Load");
+		if (choice == DISCARD_SAVE_FIRST) {
+			return quickSave(); // proceed to load only if the save worked
+		}
+		return choice == DISCARD_PROCEED;
 	}
 
 	private boolean confirmYesNo(String title, String message, String yes)

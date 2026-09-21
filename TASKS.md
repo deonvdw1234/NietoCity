@@ -263,8 +263,10 @@ Created by Nieto Software
       name field (defaults to the current name) with an overwrite confirm. Desktop
       adds "Open .cty…" and "Save as…" via a FileChooser; its slot thumbnails are
       rendered live from each .cty.
-- [ ] 5. Wire New City + Save/Load: title follows the name; the 6a discard guard
-      also offers Save first.
+- [x] 5. Wired together: the city name follows after Start or Load (desktop title
+      shows it; used as the Save default). The discard guard (New City and Load)
+      now offers Save first / Proceed / Cancel (Cancel default); Save first quick-
+      saves under the current name and only proceeds if the save succeeds.
 - [ ] 6. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +
       engine test count; fresh APK + JAR.
 - [ ] 7. Docs: TASKS; CHANGES top (format + writer); README (save/load, where

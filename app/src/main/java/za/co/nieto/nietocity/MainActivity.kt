@@ -250,18 +250,37 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Guard the swap: the running city is lost (no save/load yet), so confirm. */
     private fun confirmNewCity(level: Int, seed: Long, cfg: za.co.nieto.nietocity.game.TerrainConfig) {
+        confirmDiscard("Start a new city?", "Your current city will be discarded.", "Start") {
+            applyNewCity(level, seed, cfg)
+        }
+    }
+
+    /**
+     * Guard a swap that discards the running city, offering to Save first (a
+     * quick save under the current name), Proceed, or Cancel (the default).
+     */
+    private fun confirmDiscard(title: String, message: String, proceed: String, onProceed: () -> Unit) {
         val dialog = android.app.AlertDialog.Builder(this)
-            .setTitle("Start a new city?")
-            .setMessage("Your current city will be discarded.")
-            .setPositiveButton("Start") { _, _ -> applyNewCity(level, seed, cfg) }
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(proceed) { _, _ -> onProceed() }
+            .setNeutralButton("Save first") { _, _ -> if (quickSave()) onProceed() }
             .setNegativeButton("Cancel") { d, _ -> d.dismiss() }
-            .setCancelable(true) // Back / tap-outside means Cancel
+            .setCancelable(true)
             .create()
         dialog.show()
-        // Cancel is the default (keep the current city).
         dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
+    }
+
+    /** Save the current city under its current name; returns whether it succeeded. */
+    private fun quickSave(): Boolean = try {
+        saveStore.save(cityName, controller)
+        Toast.makeText(this, "Saved \"$cityName\"", Toast.LENGTH_SHORT).show()
+        true
+    } catch (e: Exception) {
+        Toast.makeText(this, "Could not save: ${e.message}", Toast.LENGTH_LONG).show()
+        false
     }
 
     private fun applyNewCity(level: Int, seed: Long, cfg: za.co.nieto.nietocity.game.TerrainConfig) {
@@ -306,12 +325,7 @@ class MainActivity : Activity() {
     }
 
     private fun confirmLoad(slot: SaveSlot) {
-        android.app.AlertDialog.Builder(this)
-            .setTitle("Load a city?")
-            .setMessage("Unsaved changes will be lost.")
-            .setPositiveButton("Load") { _, _ -> applyLoad(slot) }
-            .setNegativeButton("Cancel", null)
-            .show()
+        confirmDiscard("Load a city?", "Unsaved changes will be lost.", "Load") { applyLoad(slot) }
     }
 
     private fun applyLoad(slot: SaveSlot) {
