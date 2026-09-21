@@ -251,8 +251,12 @@ Created by Nieto Software
       save() snapshots under the engine lock (no tick tears it) and writes to a
       .tmp then renames (atomic), load() delegates to the engine's load();
       GameController.loadGame(File) builds a fresh controller from a .cty.
-- [ ] 3. Storage: Android <filesDir>/saves/<name>.cty + .png thumbnail + meta;
-      desktop saves under user home + a file chooser. Never write into the repo.
+- [x] 3. Storage: game.SaveMeta (name/date/pop/funds .properties sidecar).
+      Android SaveStore writes <filesDir>/saves/<base>.cty + <base>.png thumbnail
+      + <base>.meta; list() newest-first with thumbnails; delete removes all
+      three. Desktop DesktopSaveStore writes <user.home>/NietoCity/saves/<base>.cty
+      + .meta (thumbnails rendered live; file chooser is task 4). Never writes
+      into the repo or Dropbox.
 - [ ] 4. Save/Load screens from the menu (slot list w/ thumbnail/name/date/pop,
       load confirm; save name + overwrite confirm; delete confirm; desktop
       Open/Save-as chooser).
