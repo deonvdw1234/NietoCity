@@ -156,10 +156,14 @@ Created by Nieto Software
       size) under the engine lock. Both renderers preload the frame PNGs and draw
       each sprite over the tiles at (x+offx)*zoom-scroll, integer zoom, nearest-
       neighbour. JUnit SpriteImagesTest (2): every SpriteKind resolves all frames.
-- [ ] 2. Sound engine: copy the 14 wavs; game.SoundPlayer interface fed by the
-      engine citySound listener; Android SoundPool, desktop AudioClip; preload;
-      default ON + Mute menu item (persisted); best-effort (never throws).
-      JUnit: every Sound maps to a bundled wav that exists.
+- [x] 2. Sound engine: copied the 14 wavs to engine resources/sounds/. New
+      game.SoundPlayer interface (play/setMuted/isMuted/release); GameController
+      routes engine citySound events and playSound() to it. Android
+      AndroidSoundPlayer (SoundPool; wavs extracted from the classpath to cache
+      files, since SoundPool can't read a jar entry), desktop DesktopSoundPlayer
+      (AudioClip). Both preload all clips, default ON, best-effort (never throw),
+      with a persisted Mute item in the overflow menu. JUnit SoundTest (1): every
+      Sound maps to a bundled wav (BULLDOZE is intentionally silent).
 - [ ] 3. Disaster menu: Disasters submenu triggers Fire/Flood/Tornado/Earthquake/
       Monster/Nuclear meltdown via the engine's make*; ticker message + sound.
       Plane crash / shipwreck are natural only (noted, not faked).

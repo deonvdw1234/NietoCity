@@ -37,6 +37,16 @@ are copied unchanged from the MicropolisJ `resources/` folder (see
 `scripts/copy-sprites.cmd`). Open-sourced Micropolis art, not SimCity/Maxis
 trademark artwork; no Maxis trademark art is used.
 
+## Sounds
+
+The sound effects in `engine/src/main/resources/sounds/` (14 `*.wav` files:
+explosions, sirens, honks, heavy traffic, the zone-laid chime and the monster
+roar) are the Micropolis sound effects from the open-source Micropolis release,
+via MicropolisJ (Jason Long), under GPLv3, copied unchanged from the MicropolisJ
+`resources/sounds/` folder. They are played best-effort by the app (Android
+SoundPool, desktop JavaFX AudioClip) and are bundled for fully offline use.
+Open-sourced Micropolis audio; no Maxis trademark material.
+
 ## Strings
 
 The English string bundles in `engine/src/main/resources/micropolisj/`

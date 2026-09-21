@@ -32,6 +32,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
@@ -134,6 +135,8 @@ public class DesktopApp extends Application
 	private int lastBudgetYear;
 	private boolean budgetOpen;
 
+	private DesktopSoundPlayer soundPlayer;
+
 	private Label dateLbl, fundsLbl, popLbl, toolLbl, costLbl, tickerLbl;
 	private ImageView selIconView;
 	private Button clearToolBtn, pauseBtn, speedBtn;
@@ -164,6 +167,12 @@ public class DesktopApp extends Application
 
 		this.controller = GameController.newGame();
 		Micropolis city = controller.getEngine();
+
+		// Sound: default on, best-effort. Created before the menu so its Mute item
+		// reflects the persisted state.
+		this.soundPlayer = new DesktopSoundPlayer();
+		this.soundPlayer.setMuted(prefs.getBoolean("muted", false));
+		controller.setSoundPlayer(soundPlayer);
 
 		final int startW = 1024;
 		final int startH = 720;
@@ -213,6 +222,9 @@ public class DesktopApp extends Application
 	{
 		if (controller != null) {
 			controller.stop();
+		}
+		if (soundPlayer != null) {
+			soundPlayer.release();
 		}
 	}
 
@@ -286,6 +298,15 @@ public class DesktopApp extends Application
 		MenuItem miniToggle = new MenuItem("Mini map");
 		miniToggle.setOnAction(e -> toggleMiniMap());
 
+		CheckMenuItem mute = new CheckMenuItem("Mute sound");
+		mute.setSelected(soundPlayer != null && soundPlayer.isMuted());
+		mute.setOnAction(e -> {
+			if (soundPlayer != null) {
+				soundPlayer.setMuted(mute.isSelected());
+				prefs.putBoolean("muted", mute.isSelected());
+			}
+		});
+
 		Menu overlayMenu = new Menu("Overlay");
 		ToggleGroup group = new ToggleGroup();
 		for (final MapOverlay ov : MapOverlay.values()) {
@@ -297,7 +318,7 @@ public class DesktopApp extends Application
 		}
 
 		mb.getItems().addAll(budget, eval, graphs, new SeparatorMenuItem(),
-			miniToggle, overlayMenu);
+			miniToggle, overlayMenu, mute);
 		return mb;
 	}
 

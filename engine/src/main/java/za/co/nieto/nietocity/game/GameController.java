@@ -59,6 +59,11 @@ public final class GameController
 	private volatile Speed chosenSpeed = Speed.NORMAL;
 	private volatile boolean paused;
 
+	// Best-effort sound. The platform sets a player; engine citySound events and
+	// disaster triggers route to it. Null means silent (e.g. before the UI wires
+	// one up, or in tests).
+	private volatile SoundPlayer soundPlayer;
+
 	/** Create a fresh random city at the default (easy) level with its funds. */
 	public static GameController newGame()
 	{
@@ -176,6 +181,22 @@ public final class GameController
 
 	/** The renderer sets this to be called (on the engine thread) after each frame. */
 	public void setFrameCallback(Runnable r) { this.frameCallback = r; }
+
+	// --- sound ---
+
+	/** Set the platform sound player (null to silence). */
+	public void setSoundPlayer(SoundPlayer player) { this.soundPlayer = player; }
+
+	public SoundPlayer getSoundPlayer() { return soundPlayer; }
+
+	/** Play a sound now (best-effort; no-op if there is no player). */
+	public void playSound(Sound sound)
+	{
+		SoundPlayer sp = soundPlayer;
+		if (sp != null && sound != null) {
+			sp.play(sound);
+		}
+	}
 
 	// --- tool selection ---
 
@@ -497,7 +518,7 @@ public final class GameController
 		{
 			messages.add(GameStrings.cityMessage(message));
 		}
-		public void citySound(Sound sound, CityLocation loc) { }
+		public void citySound(Sound sound, CityLocation loc) { playSound(sound); }
 		public void censusChanged() { }
 		public void demandChanged() { }
 		public void evaluationChanged() { }

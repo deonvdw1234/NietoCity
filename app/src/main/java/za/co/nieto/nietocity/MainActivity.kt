@@ -22,6 +22,7 @@ import micropolisj.engine.MicropolisTool
 import za.co.nieto.nietocity.game.CurrencyFormat
 import za.co.nieto.nietocity.game.GameController
 import za.co.nieto.nietocity.game.GameStrings
+import za.co.nieto.nietocity.game.SoundPlayer
 import za.co.nieto.nietocity.render.MapOverlay
 
 /**
@@ -50,6 +51,8 @@ class MainActivity : Activity() {
     private var autoShowBudget = true
     private var lastBudgetYear = 0
     private var budgetDialogOpen = false
+
+    private var soundPlayer: SoundPlayer? = null
 
     private val pump = object : Runnable {
         override fun run() {
@@ -128,6 +131,14 @@ class MainActivity : Activity() {
         autoShowBudget = prefs().getBoolean(PREF_AUTO_BUDGET, true)
         lastBudgetYear = currentYear()
 
+        // Sound: default on, best-effort. The controller is retained across
+        // rotation, so release any player from the previous activity first.
+        controller.soundPlayer?.release()
+        val player = AndroidSoundPlayer(applicationContext)
+        player.isMuted = prefs().getBoolean(PREF_MUTED, false)
+        controller.setSoundPlayer(player)
+        soundPlayer = player
+
         refreshSpeed()
         refreshTool()
     }
@@ -162,6 +173,10 @@ class MainActivity : Activity() {
         val miniOn = miniMap.visibility == View.VISIBLE
         menu.add(0, ID_MINIMAP, 4, if (miniOn) "Hide mini map" else "Show mini map")
 
+        val muteItem = menu.add(0, ID_MUTE, 6, "Mute sound")
+        muteItem.isCheckable = true
+        muteItem.isChecked = soundPlayer?.isMuted == true
+
         val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 5, "Overlay")
         val current = cityView.getMapOverlay()
         val overlays = MapOverlay.values()
@@ -182,6 +197,7 @@ class MainActivity : Activity() {
             ID_EVALUATION -> { AppDialogs.showEvaluation(this, controller); return true }
             ID_GRAPHS -> { AppDialogs.showGraphs(this, controller); return true }
             ID_MINIMAP -> { toggleMiniMap(); return true }
+            ID_MUTE -> { toggleMute(); return true }
         }
         val idx = item.itemId - ID_OVERLAY_BASE
         val overlays = MapOverlay.values()
@@ -195,6 +211,13 @@ class MainActivity : Activity() {
     private fun selectOverlay(overlay: MapOverlay) {
         cityView.setMapOverlay(overlay)
         miniMap.setOverlay(overlay)
+    }
+
+    private fun toggleMute() {
+        val player = soundPlayer ?: return
+        val newMuted = !player.isMuted
+        player.isMuted = newMuted
+        prefs().edit().putBoolean(PREF_MUTED, newMuted).apply()
     }
 
     private fun toggleMiniMap() {
@@ -250,6 +273,12 @@ class MainActivity : Activity() {
         ui.removeCallbacks(pump)
         controller.stop()
         super.onPause()
+    }
+
+    override fun onDestroy() {
+        // Release this activity's sound player (a new one is made on recreate).
+        soundPlayer?.release()
+        super.onDestroy()
     }
 
     private fun showQuery(x: Int, y: Int) {
@@ -349,10 +378,12 @@ class MainActivity : Activity() {
         private const val ID_BUDGET = 3
         private const val ID_EVALUATION = 4
         private const val ID_GRAPHS = 5
+        private const val ID_MUTE = 6
         private const val ID_MINIMAP = 1
         private const val ID_OVERLAY_SUB = 2
         private const val GROUP_OVERLAY = 10
         private const val ID_OVERLAY_BASE = 100
         private const val PREF_AUTO_BUDGET = "autoBudget"
+        private const val PREF_MUTED = "muted"
     }
 }
