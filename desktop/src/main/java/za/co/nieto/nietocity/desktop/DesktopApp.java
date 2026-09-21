@@ -31,10 +31,12 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -43,19 +45,25 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.util.prefs.Preferences;
+
+import micropolisj.engine.BudgetNumbers;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.MicropolisTool;
 import micropolisj.engine.Speed;
 import micropolisj.engine.TileConstants;
 import micropolisj.engine.ToolPreview;
 import micropolisj.engine.ToolResult;
+import za.co.nieto.nietocity.game.BudgetControl;
 import za.co.nieto.nietocity.game.CurrencyFormat;
 import za.co.nieto.nietocity.game.GameController;
 import za.co.nieto.nietocity.game.GameStrings;
@@ -106,6 +114,12 @@ public class DesktopApp extends Application
 	private WritableImage miniImage;
 	private int miniMapW, miniMapH;
 	private MapOverlay overlay = MapOverlay.NONE;
+
+	// Budget auto-show once a year (persisted preference).
+	private final Preferences prefs = Preferences.userNodeForPackage(DesktopApp.class);
+	private boolean autoShowBudget = true;
+	private int lastBudgetYear;
+	private boolean budgetOpen;
 
 	private Label dateLbl, fundsLbl, popLbl, toolLbl, costLbl, tickerLbl;
 	private ImageView selIconView;
@@ -169,6 +183,8 @@ public class DesktopApp extends Application
 		controller.start();
 		refreshPalette();
 		refreshSpeed();
+		autoShowBudget = prefs.getBoolean("autoBudget", true);
+		lastBudgetYear = currentYear();
 
 		Timeline ui = new Timeline(new KeyFrame(Duration.millis(250), e -> onUiTick()));
 		ui.setCycleCount(Animation.INDEFINITE);
@@ -227,8 +243,11 @@ public class DesktopApp extends Application
 
 		MenuButton overlayBtn = buildOverlayMenu();
 
+		Button budgetBtn = topButton("Budget");
+		budgetBtn.setOnAction(e -> showBudgetDialog());
+
 		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, selIconView, toolLbl, costLbl,
-			clearToolBtn, pauseBtn, speedBtn, mapBtn, overlayBtn);
+			clearToolBtn, pauseBtn, speedBtn, mapBtn, overlayBtn, budgetBtn);
 		status.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 		status.setPadding(new Insets(4, 8, 4, 8));
 		status.setStyle("-fx-background-color: #202020;");
@@ -516,6 +535,136 @@ public class DesktopApp extends Application
 		});
 	}
 
+	private static Button topButton(String text)
+	{
+		Button b = new Button(text);
+		b.setFocusTraversable(false);
+		b.setStyle("-fx-text-fill: white; -fx-background-color: #444;");
+		return b;
+	}
+
+	private int currentYear()
+	{
+		Micropolis city = controller.getEngine();
+		synchronized (city) {
+			return city.cityTime / 48;
+		}
+	}
+
+	/** Show the budget dialog automatically when a new city year begins. */
+	private void maybeAutoBudget()
+	{
+		int year = currentYear();
+		if (year > lastBudgetYear) {
+			lastBudgetYear = year;
+			if (autoShowBudget && !budgetOpen) {
+				showBudgetDialog();
+			}
+		}
+	}
+
+	/**
+	 * The budget dialog: tax-rate slider (0..20), road/fire/police funding sliders,
+	 * live read-outs of tax revenue, expenses and cash flow in rand, and a "don't
+	 * show automatically" checkbox (persisted). Apply writes back to the engine.
+	 */
+	private void showBudgetDialog()
+	{
+		if (budgetOpen) {
+			return;
+		}
+		budgetOpen = true;
+		final Micropolis city = controller.getEngine();
+		int tax0;
+		double road0, fire0, police0;
+		synchronized (city) {
+			tax0 = city.cityTax;
+			road0 = city.roadPercent;
+			fire0 = city.firePercent;
+			police0 = city.policePercent;
+		}
+
+		final Slider taxS = new Slider(0, BudgetControl.MAX_TAX, tax0);
+		final Slider roadS = new Slider(0, 100, road0 * 100);
+		final Slider fireS = new Slider(0, 100, fire0 * 100);
+		final Slider policeS = new Slider(0, 100, police0 * 100);
+
+		final Label taxL = new Label();
+		final Label roadL = new Label();
+		final Label fireL = new Label();
+		final Label policeL = new Label();
+		final Label revenueL = new Label();
+		final Label expensesL = new Label();
+		final Label cashL = new Label();
+
+		Runnable refresh = () -> {
+			int tax = (int) Math.round(taxS.getValue());
+			double road = roadS.getValue() / 100.0;
+			double fire = fireS.getValue() / 100.0;
+			double police = policeS.getValue() / 100.0;
+			taxL.setText("Tax rate: " + tax + "%");
+			roadL.setText("Road funding: " + (int) Math.round(road * 100) + "%");
+			fireL.setText("Fire funding: " + (int) Math.round(fire * 100) + "%");
+			policeL.setText("Police funding: " + (int) Math.round(police * 100) + "%");
+			BudgetNumbers b = BudgetControl.preview(city, tax, road, fire, police);
+			revenueL.setText("Tax revenue: " + CurrencyFormat.format(b.taxIncome));
+			expensesL.setText("Expenses: " + CurrencyFormat.format(b.operatingExpenses));
+			cashL.setText("Cash flow: " + CurrencyFormat.format(b.taxIncome - b.operatingExpenses));
+		};
+		taxS.valueProperty().addListener((o, a, b) -> refresh.run());
+		roadS.valueProperty().addListener((o, a, b) -> refresh.run());
+		fireS.valueProperty().addListener((o, a, b) -> refresh.run());
+		policeS.valueProperty().addListener((o, a, b) -> refresh.run());
+		refresh.run();
+
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(6);
+		grid.setPadding(new Insets(12));
+		grid.addRow(0, taxL, taxS);
+		grid.addRow(1, roadL, roadS);
+		grid.addRow(2, fireL, fireS);
+		grid.addRow(3, policeL, policeS);
+
+		CheckBox dontShow = new CheckBox("Don't show automatically");
+		dontShow.setSelected(!autoShowBudget);
+
+		Button applyBtn = new Button("Apply");
+		Button cancelBtn = new Button("Cancel");
+		HBox buttons = new HBox(8, applyBtn, cancelBtn);
+		buttons.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+
+		VBox content = new VBox(8, grid, new javafx.scene.control.Separator(),
+			revenueL, expensesL, cashL, dontShow, buttons);
+		content.setPadding(new Insets(12));
+
+		final Stage dlg = new Stage();
+		dlg.initOwner(stage);
+		dlg.initModality(Modality.WINDOW_MODAL);
+		dlg.setTitle("City Budget");
+		dlg.setScene(new Scene(content));
+		dlg.setOnHidden(e -> budgetOpen = false);
+
+		applyBtn.setOnAction(e -> {
+			int tax = (int) Math.round(taxS.getValue());
+			BudgetControl.apply(city, tax, roadS.getValue() / 100.0,
+				fireS.getValue() / 100.0, policeS.getValue() / 100.0);
+			setAutoShowBudget(!dontShow.isSelected());
+			dlg.close();
+		});
+		cancelBtn.setOnAction(e -> {
+			setAutoShowBudget(!dontShow.isSelected());
+			dlg.close();
+		});
+		dlg.show();
+	}
+
+	private void setAutoShowBudget(boolean v)
+	{
+		autoShowBudget = v;
+		prefs.putBoolean("autoBudget", v);
+	}
+
 	private static Speed speedForKey(KeyCode c)
 	{
 		if (c == KeyCode.DIGIT1 || c == KeyCode.NUMPAD1) return Speed.SLOW;
@@ -626,6 +775,7 @@ public class DesktopApp extends Application
 		if (miniVisible) {
 			refreshMiniMap();
 		}
+		maybeAutoBudget();
 		String latest = null;
 		String m = controller.pollMessage();
 		while (m != null) {

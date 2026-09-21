@@ -46,6 +46,11 @@ class MainActivity : Activity() {
     private var backCount = 0
     private var firstBackAt = 0L
 
+    // Budget auto-show: once a year unless the player turned it off (persisted).
+    private var autoShowBudget = true
+    private var lastBudgetYear = 0
+    private var budgetDialogOpen = false
+
     private val pump = object : Runnable {
         override fun run() {
             val now = SystemClock.uptimeMillis()
@@ -57,6 +62,7 @@ class MainActivity : Activity() {
                 miniMap.setViewport(cityView.getViewport())
                 miniMap.rebuild()
             }
+            maybeAutoBudget()
             pumpTicker(now)
             ui.postDelayed(this, TICK_MS)
         }
@@ -118,18 +124,43 @@ class MainActivity : Activity() {
         statusBar.setMenuVisible(true)
         statusBar.onMenuClick = { showMenu() }
 
+        // Budget auto-show once a year (persisted preference).
+        autoShowBudget = prefs().getBoolean(PREF_AUTO_BUDGET, true)
+        lastBudgetYear = currentYear()
+
         refreshSpeed()
         refreshTool()
+    }
+
+    private fun prefs() = getSharedPreferences("nietocity", MODE_PRIVATE)
+
+    private fun currentYear(): Int {
+        val city = controller.engine
+        return synchronized(city) { city.cityTime / 48 }
+    }
+
+    private fun showBudget() {
+        if (budgetDialogOpen) return
+        budgetDialogOpen = true
+        AppDialogs.showBudget(
+            this, controller, autoShowBudget,
+            onAutoShowChanged = { auto ->
+                autoShowBudget = auto
+                prefs().edit().putBoolean(PREF_AUTO_BUDGET, auto).apply()
+            },
+            onDismiss = { budgetDialogOpen = false }
+        )
     }
 
     /** The overflow menu: mini map toggle and the data-overlay picker. */
     private fun showMenu() {
         val popup = PopupMenu(this, statusBar)
         val menu = popup.menu
+        menu.add(0, ID_BUDGET, 0, "Budget…")
         val miniOn = miniMap.visibility == View.VISIBLE
-        menu.add(0, ID_MINIMAP, 0, if (miniOn) "Hide mini map" else "Show mini map")
+        menu.add(0, ID_MINIMAP, 2, if (miniOn) "Hide mini map" else "Show mini map")
 
-        val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 1, "Overlay")
+        val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 3, "Overlay")
         val current = cityView.getMapOverlay()
         val overlays = MapOverlay.values()
         for (idx in overlays.indices) {
@@ -144,9 +175,9 @@ class MainActivity : Activity() {
     }
 
     private fun onMenuItem(item: android.view.MenuItem): Boolean {
-        if (item.itemId == ID_MINIMAP) {
-            toggleMiniMap()
-            return true
+        when (item.itemId) {
+            ID_BUDGET -> { showBudget(); return true }
+            ID_MINIMAP -> { toggleMiniMap(); return true }
         }
         val idx = item.itemId - ID_OVERLAY_BASE
         val overlays = MapOverlay.values()
@@ -279,6 +310,17 @@ class MainActivity : Activity() {
         finish()
     }
 
+    /** Show the budget dialog automatically when a new city year begins. */
+    private fun maybeAutoBudget() {
+        val year = currentYear()
+        if (year > lastBudgetYear) {
+            lastBudgetYear = year
+            if (autoShowBudget && !budgetDialogOpen) {
+                showBudget()
+            }
+        }
+    }
+
     private fun pumpTicker(now: Long) {
         // Drain to the newest message so the ticker shows the latest event.
         var latest: String? = null
@@ -300,9 +342,11 @@ class MainActivity : Activity() {
         private const val TICK_MS = 250L
         private const val MESSAGE_MS = 4000L
         private const val BACK_WINDOW_MS = 2000L
+        private const val ID_BUDGET = 3
         private const val ID_MINIMAP = 1
         private const val ID_OVERLAY_SUB = 2
         private const val GROUP_OVERLAY = 10
         private const val ID_OVERLAY_BASE = 100
+        private const val PREF_AUTO_BUDGET = "autoBudget"
     }
 }

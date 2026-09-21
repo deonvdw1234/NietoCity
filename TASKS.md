@@ -108,9 +108,15 @@ Created by Nieto Software
       power grid shows powered zones red, unpowered blue, lines grey. Phone: an
       Overlay submenu in the status-bar overflow (with the mini map toggle).
       Desktop: an Overlay MenuButton beside the Map toggle. Off by default.
-- [ ] 4. Budget dialog (tax + funding sliders, R read-outs, apply writes back;
-      auto once a year with a persisted "don't show" checkbox; menu button).
-      JUnit: setting tax + percents updates the engine budget fields.
+- [x] 4. Budget dialog: shared game.BudgetControl (current/preview/apply over the
+      engine's generateBudget + public budget fields; preview restores fields so
+      read-outs don't disturb the sim). Tax slider (0..20), road/fire/police
+      funding sliders, live R read-outs (revenue, expenses, cash flow); Apply
+      writes back. Auto-shows on the annual tick unless the persisted "Don't show
+      automatically" checkbox is set (Android SharedPreferences, desktop
+      Preferences); always reachable from the menu/Budget button. JUnit
+      BudgetControlTest (4): apply writes + clamps the fields; preview is
+      side-effect-free and reflects the proposed tax rate.
 - [ ] 5. Evaluation dialog (approval, score+delta, pop+delta, class, top four
       problems + votes; read-only, menu button, closes on tap/Esc).
 - [ ] 6. Graphs dialog (res/com/ind/crime/pollution/money line graphs, 10y/120y
