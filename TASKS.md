@@ -267,8 +267,14 @@ Created by Nieto Software
       shows it; used as the Save default). The discard guard (New City and Load)
       now offers Save first / Proceed / Cancel (Cancel default); Save first quick-
       saves under the current name and only proceeds if the save succeeds.
-- [ ] 6. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +
-      engine test count; fresh APK + JAR.
+- [x] 6. Gate green. `gradlew --rerun-tasks :engine:test :desktop:jar
+      assembleDebug` raw tail:
+        "BUILD SUCCESSFUL in 5s
+         43 actionable tasks: 43 executed"
+      Engine tests (XML reports): 54 total, 0 failures, 0 errors (Phase 6a's 52 +
+      CityFileV1RoundTripTest 2, incl. the 27120-byte count + golden fixpoint).
+      NietoCity-debug.apk (3 271 276 B) and NietoCity-desktop.jar refreshed in the
+      root (stamped 2026-09-21 13:44).
 - [ ] 7. Docs: TASKS; CHANGES top (format + writer); README (save/load, where
       saves live, .cty interchange); CLAUDE one line.
 
