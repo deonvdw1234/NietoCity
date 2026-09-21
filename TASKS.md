@@ -223,8 +223,13 @@ Created by Nieto Software
       since there is no save/load yet. On confirm the platform builds the new
       GameController, carries over the session settings, swaps it in and recentres
       the view; Cancel keeps the running city.
-- [ ] 5. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +
-      engine test count; fresh APK + JAR.
+- [x] 5. Gate green. `gradlew --rerun-tasks :engine:test :desktop:jar
+      assembleDebug` raw tail:
+        "BUILD SUCCESSFUL in 5s
+         43 actionable tasks: 43 executed"
+      Engine tests (XML reports): 52 total, 0 failures, 0 errors (Phase 5's 48 +
+      MapGenTest 4). NietoCity-debug.apk (3 259 252 B) and NietoCity-desktop.jar
+      refreshed in the root (stamped 2026-09-21 13:18).
 - [ ] 6. Docs: TASKS final; CHANGES top; README (New City, terrain, seeds);
       CLAUDE one line (scenarios/save-load deferred and why).
 
