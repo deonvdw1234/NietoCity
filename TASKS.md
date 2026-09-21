@@ -132,8 +132,16 @@ Created by Nieto Software
       loose buttons are consolidated into one "Menu" MenuButton with the same
       items (Budget/Evaluation/Graphs, mini map toggle, Overlay submenu), leaving
       only the pause/play and speed controls beside it, so the bar stays tidy.
-- [ ] 8. Gate. --rerun-tasks :engine:test :desktop:jar assembleDebug; quote the
-      raw tail + engine test count; confirm fresh APK + JAR in the root.
+- [x] 8. Gate green. `gradlew --rerun-tasks :engine:test :desktop:jar
+      assembleDebug` raw tail:
+        "BUILD SUCCESSFUL in 5s
+         43 actionable tasks: 43 executed"
+      Engine tests (from the XML reports): 45 total, 0 failures, 0 errors
+      (EngineSmoke 1 + Currency 4 + GameController 5 + RoadJoin 5 + Speed 5 +
+      ToolGuard 4 + Budget 4 + AnimationClock 3 + MiniMap 4 + PowerOverlay 2 +
+      TileIndex 4 + Viewport 4). NietoCity-debug.apk and NietoCity-desktop.jar in
+      the project root were refreshed by the build's publish tasks (both stamped
+      2026-09-21 09:21).
 - [ ] 9. Docs (TASKS final, CHANGES top, README controls, CLAUDE one line).
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
