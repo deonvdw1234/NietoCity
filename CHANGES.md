@@ -3,6 +3,24 @@
 Changes made to the imported Micropolis / MicropolisJ source, most recent first.
 Created by Nieto Software.
 
+## 2026-09-21 - Phase 6a map generator and New City screen
+
+Engine change: added a small public terrain-config API to
+`micropolisj/engine/MapGenerator.java` so the New City screen can configure a
+generate. These only set fields the class already has; the generation algorithms
+are unchanged and the GPL header is kept. Methods added (most recent first):
+
+- `setTreeLevel(int)` - tree level (-1 auto / 0 none / >0 amount).
+- `setCurveLevel(int)` - river curviness (-1 auto / 0 none / >0 level).
+- `setLakeLevel(int)` - lake level (-1 auto / 0 none / >0 amount).
+- `setCreateIslandMode(int)` - island mode (0 never / 1 seldom / 2 always); maps
+  to the existing package-private CreateIsland enum without exposing it.
+
+The New City flow lives in the game layer: `game.TerrainConfig` (island +
+Auto/None/Low/High lake/river/tree levels) maps these to the engine values, and
+`GameController.newGame(level, seed, terrain)` / `buildCity(...)` generate
+deterministically from a seed (the same seed and settings reproduce the map).
+
 ## 2026-09-21 - Phase 5 disasters, sprites and sound
 
 - Sprite artwork: copied the 61 MicropolisJ sprite frame images (obj<id>-<frame>

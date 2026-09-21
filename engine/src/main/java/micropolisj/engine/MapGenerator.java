@@ -64,6 +64,32 @@ public class MapGenerator
 		engine.fireWholeMapChanged();
 	}
 
+	// --- Public terrain configuration (added by Nieto Software, Phase 6a) ---
+	//
+	// Minimal read-only-ish setters that expose the terrain settings this class
+	// already has, so the New City screen can configure a generate. They only set
+	// existing fields; the generation algorithms are unchanged. Call these before
+	// generateSomeCity(seed).
+
+	/** Island mode: 0 = never, 1 = seldom (10% chance), 2 = always. */
+	public void setCreateIslandMode(int mode)
+	{
+		switch (mode) {
+		case 0:  this.createIsland = CreateIsland.NEVER;  break;
+		case 2:  this.createIsland = CreateIsland.ALWAYS; break;
+		default: this.createIsland = CreateIsland.SELDOM; break;
+		}
+	}
+
+	/** Lake level: -1 = auto, 0 = none, &gt;0 = amount. */
+	public void setLakeLevel(int level) { this.lakeLevel = level; }
+
+	/** River curviness: -1 = auto, 0 = none, &gt;0 = level. */
+	public void setCurveLevel(int level) { this.curveLevel = level; }
+
+	/** Tree level: -1 = auto, 0 = none, &gt;0 = amount. */
+	public void setTreeLevel(int level) { this.treeLevel = level; }
+
 	/**
 	 * Level for tree creation.
 	 * If positive, this is (roughly) the number of trees to randomly place.

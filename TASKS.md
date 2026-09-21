@@ -196,6 +196,27 @@ Created by Nieto Software
       entries (tasks 0 and 2); CLAUDE.md notes sprites/audio are bundled GPL
       assets, offline only.
 
+## Phase 6a: Map generator and New City screen
+- [x] 0. Engine generator API: added public setters to MapGenerator
+      (setCreateIslandMode 0/1/2, setLakeLevel, setCurveLevel, setTreeLevel) that
+      only expose existing fields; generation algorithms unchanged; GPL header
+      kept; recorded in CHANGES.md.
+- [x] 1. GameController.newGame(level, seed, terrain) + buildCity() (deterministic
+      by seed), remembers seed/terrain; newGame(level) uses a random seed;
+      getSeed/getTerrainConfig/getGameLevel; game.TerrainConfig (Island +
+      Auto/None/Low/High levels). JUnit MapGenTest (4): same seed+settings ->
+      identical map, different seeds differ, seed remembered, trees-off removes
+      trees.
+- [ ] 2. New City screen (menu "New City"): difficulty, terrain controls, seed
+      field + Reroll; phone scrollable form, landscape/desktop two-column.
+- [ ] 3. Live preview: mini-map thumbnail regenerated off-thread on any change.
+- [ ] 4. Start + discard guard (confirm before discarding a running city); swap
+      the controller and reset the viewport to centre.
+- [ ] 5. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +
+      engine test count; fresh APK + JAR.
+- [ ] 6. Docs: TASKS final; CHANGES top; README (New City, terrain, seeds);
+      CLAUDE one line (scenarios/save-load deferred and why).
+
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar
 - Phase 4: Speed, budget, evaluation, graphs, mini map
