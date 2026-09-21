@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import micropolisj.engine.CityLocation;
+import micropolisj.engine.EarthquakeListener;
 import micropolisj.engine.GameLevel;
 import micropolisj.engine.MapGenerator;
 import micropolisj.engine.MapListener;
@@ -98,6 +99,27 @@ public final class GameController
 		});
 		engine.addListener(new EngineListener());
 		engine.addMapListener(new FrameListener());
+		engine.addEarthquakeListener(new EarthquakeListener() {
+			public void earthquakeStarted() { quakeUntil = System.currentTimeMillis() + QUAKE_MS; }
+		});
+	}
+
+	// --- earthquake shake (purely visual) ---
+	//
+	// The engine's earthquake is instantaneous but fires earthquakeStarted(); we
+	// note the time and let the renderers apply a small, decaying view shake for a
+	// short while after. This never moves map coordinates.
+	private static final long QUAKE_MS = 1200;
+	private volatile long quakeUntil;
+
+	/** Shake strength right now, 1.0 just after a quake decaying to 0. */
+	public double shakeIntensity()
+	{
+		long remain = quakeUntil - System.currentTimeMillis();
+		if (remain <= 0) {
+			return 0.0;
+		}
+		return remain / (double) QUAKE_MS;
 	}
 
 	private void fireFrame()

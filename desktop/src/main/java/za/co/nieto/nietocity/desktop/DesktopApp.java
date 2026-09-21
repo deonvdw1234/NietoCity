@@ -1019,6 +1019,7 @@ public class DesktopApp extends Application
 	private boolean[] boltSnapshot = new boolean[0];
 	private int[] overlaySnapshot = new int[0];
 	private static final double OVERLAY_ALPHA = 0xB0 / 255.0;
+	private static final double SHAKE_MAX_PX = 6.0;
 
 	private void redraw()
 	{
@@ -1059,6 +1060,18 @@ public class DesktopApp extends Application
 			spriteFrames = SpriteImages.capture(city);
 		}
 
+		// Earthquake: a small, decaying, purely-visual shake of everything drawn
+		// (map coordinates untouched; the black fill above hides the edges).
+		double shake = controller.shakeIntensity();
+		boolean shaking = shake > 0.0;
+		if (shaking) {
+			gc.save();
+			double mag = shake * SHAKE_MAX_PX;
+			double dx = (Math.random() - 0.5) * 2.0 * mag;
+			double dy = (Math.random() - 0.5) * 2.0 * mag;
+			gc.translate(dx, dy);
+		}
+
 		int zoom = viewport.getZoom();
 		int tp = viewport.tilePx();
 		boolean boltImage = tileIndex.hasImage(PowerOverlay.LIGHTNINGBOLT);
@@ -1089,6 +1102,9 @@ public class DesktopApp extends Application
 
 		drawSprites(gc, zoom);
 		drawPreview(gc, zoom, cycle, firstCol, lastCol, firstRow, lastRow);
+		if (shaking) {
+			gc.restore();
+		}
 	}
 
 	private void drawPreview(GraphicsContext gc, int zoom, int cycle,

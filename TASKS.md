@@ -176,8 +176,11 @@ Created by Nieto Software
       default ON) wired via GameController.set/isRandomDisastersEnabled to the
       engine's own noDisasters field - the flag doDisasters() checks (enabled ==
       noDisasters false). No engine logic changed; only the flag is set.
-- [ ] 5. Earthquake shake: subtle decaying view shake in each renderer while a
-      quake is active; purely visual, never moves map coordinates.
+- [x] 5. Earthquake shake: GameController listens for the engine's
+      earthquakeStarted() and exposes shakeIntensity() (1.0 decaying to 0 over
+      ~1.2s). Each renderer offsets the whole drawing by a few decaying random
+      pixels while active (translate only; map coordinates untouched; the black
+      fill hides the edges). Driven by the sim's per-tick frames, so no busy loop.
 - [ ] 6. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +
       engine test count; fresh APK + JAR; note APK size change.
 - [ ] 7. Docs: TASKS final; CHANGES top; README (disasters/sound/mute, triggered

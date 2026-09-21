@@ -371,6 +371,18 @@ class CityView @JvmOverloads constructor(
             spriteFrames = SpriteImages.capture(c)
         }
 
+        // Earthquake: a small, decaying, purely-visual shake of everything drawn
+        // (the map coordinates are untouched; the black fill above hides the edges).
+        val shake = gc.shakeIntensity()
+        val shaking = shake > 0.0
+        if (shaking) {
+            canvas.save()
+            val mag = (shake * SHAKE_MAX_PX).toFloat()
+            val dx = ((Math.random() - 0.5) * 2.0).toFloat() * mag
+            val dy = ((Math.random() - 0.5) * 2.0).toFloat() * mag
+            canvas.translate(dx, dy)
+        }
+
         val tp = vp.tilePx()
         val boltImage = tileIndex.hasImage(PowerOverlay.LIGHTNINGBOLT)
         var i = 0
@@ -406,6 +418,11 @@ class CityView @JvmOverloads constructor(
 
         drawSprites(canvas, vp)
         drawPreview(canvas, vp, cycle, firstCol, lastCol, firstRow, lastRow)
+        if (shaking) {
+            canvas.restore()
+            // The sim fires a frame every tick, so the shake re-jitters and decays
+            // without a busy redraw loop here.
+        }
     }
 
     private fun drawSprites(canvas: Canvas, vp: Viewport) {
@@ -547,5 +564,6 @@ class CityView @JvmOverloads constructor(
         const val DEFAULT_ZOOM = 3
         private const val ZOOM_STEP_IN = 1.30f
         private const val ZOOM_STEP_OUT = 0.77f
+        private const val SHAKE_MAX_PX = 6.0
     }
 }
