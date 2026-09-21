@@ -3,6 +3,32 @@
 Changes made to the imported Micropolis / MicropolisJ source, most recent first.
 Created by Nieto Software.
 
+## 2026-09-21 - Phase 6b save and load (classic binary .cty)
+
+Confirmed the exact classic binary v1 `.cty` layout by reading the engine's own
+upstream reader (`load_v1` / `loadHistoryArray_v1` / `loadMisc_v1` / `loadMap_v1`),
+which is our independent check for the writer we add. The stream is big-endian
+(Data{Input,Output}Stream), exactly 27120 bytes, with NO 128-byte header
+(`load()` only skips a header when the file is larger than 27120):
+
+1. Six history arrays, in this order: res, com, ind, crime, pollution, money -
+   each 240 shorts (2 bytes each) = 2880 bytes.
+2. misc: 120 shorts (240 bytes) in `loadMisc_v1` field order:
+   [0] unused, [1] externalMarket(unused), [2] resPop, [3] comPop, [4] indPop,
+   [5] resValve, [6] comValve, [7] indValve, [8-9] cityTime (int),
+   [10] crimeRamp, [11] polluteRamp, [12] landValueAverage, [13] crimeAverage,
+   [14] pollutionAverage, [15] gameLevel, [16] evaluation.cityClass,
+   [17] evaluation.cityScore, [18-49] unused (32 shorts), [50-51] totalFunds
+   (int), [52] autoBulldoze, [53] autoBudget, [54] autoGo, [55] userSoundOn
+   (unused), [56] cityTax, [57] simSpeed (ordinal), [58-59] policePercent*65536
+   (int), [60-61] firePercent*65536 (int), [62-63] roadPercent*65536 (int),
+   [64-119] unused (56 shorts).
+3. map: DEFAULT_WIDTH(120) x DEFAULT_HEIGHT(100) shorts, COLUMN-MAJOR (x outer
+   0..119, y inner 0..99) = 24000 bytes. The full 16-bit tile char is written;
+   on load the reader clears ZONEBIT|ANIMBIT|BULLBIT|BURNBIT|CONDBIT and rescans
+   power (`checkPowerMap`), so a loaded city differs from the original on those
+   transient bits by design - the tile's low ordinal (`z & LOMASK`) is preserved.
+
 ## 2026-09-21 - Phase 6a map generator and New City screen
 
 Engine change: added a small public terrain-config API to

@@ -236,6 +236,26 @@ Created by Nieto Software
       scenarios and save/load are later phases and why (no scenario data in the
       engine source; Android lacks StAX so save/load will use classic binary .cty).
 
+## Phase 6b: Save and load (classic binary .cty)
+- [x] 0. Confirm + record the exact v1 layout in CHANGES.md (history x6, misc
+      field order, column-major map, 27120 bytes, no header). Reader is upstream.
+- [ ] 1. Golden round-trip test FIRST, proven RED (row-major / misc-dropping
+      writer) then GREEN. Load-fixpoint byte-equal + tile-ordinal survival +
+      funds/pop/time/tax/level/eval/history equal.
+- [ ] 2. Writer (engine-package CityWriterV1, 27120 bytes) + game.CityFile
+      facade; save paused/on the engine thread; load via engine load().
+- [ ] 3. Storage: Android <filesDir>/saves/<name>.cty + .png thumbnail + meta;
+      desktop saves under user home + a file chooser. Never write into the repo.
+- [ ] 4. Save/Load screens from the menu (slot list w/ thumbnail/name/date/pop,
+      load confirm; save name + overwrite confirm; delete confirm; desktop
+      Open/Save-as chooser).
+- [ ] 5. Wire New City + Save/Load: title follows the name; the 6a discard guard
+      also offers Save first.
+- [ ] 6. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +
+      engine test count; fresh APK + JAR.
+- [ ] 7. Docs: TASKS; CHANGES top (format + writer); README (save/load, where
+      saves live, .cty interchange); CLAUDE one line.
+
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar
 - Phase 4: Speed, budget, evaluation, graphs, mini map
