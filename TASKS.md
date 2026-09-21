@@ -190,8 +190,11 @@ Created by Nieto Software
       refreshed in the root (stamped 2026-09-21 10:08). APK size: 2 401 168 B
       before Phase 5 -> 3 247 832 B after (+846 664 B, ~0.81 MiB) from the 61
       sprite PNGs and 14 wavs.
-- [ ] 7. Docs: TASKS final; CHANGES top; README (disasters/sound/mute, triggered
-      vs natural); THIRD_PARTY (sprites + sounds); CLAUDE one line.
+- [x] 7. Docs: TASKS.md finalised; CHANGES.md Phase 5 entry at the top; README
+      gained a Disasters and sound section (menu, mute, player-triggered vs
+      natural plane crash/shipwreck); THIRD_PARTY.md has the sprite-art and sounds
+      entries (tasks 0 and 2); CLAUDE.md notes sprites/audio are bundled GPL
+      assets, offline only.
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar

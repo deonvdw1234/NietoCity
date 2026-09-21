@@ -104,6 +104,21 @@ large X that returns to Pan (it shows "Pan" when nothing is selected).
   population, crime, pollution and cash flow, with a 10-year / 120-year toggle and
   a colour legend.
 
+### Disasters and sound
+
+- Disasters menu: the menu's Disasters submenu triggers Fire, Flood, Tornado,
+  Earthquake, Monster and Nuclear meltdown (meltdown needs a nuclear plant). Each
+  shows its message in the ticker and plays a sound, and its sprites and effects
+  animate on the map. An earthquake gives a brief, gentle screen shake.
+- Plane crash and shipwreck are not on the menu: they happen naturally during
+  play (a plane or ship colliding), and their sprites and explosions render when
+  the engine spawns them.
+- Random disasters: on by default; turn them off with the "Random disasters" menu
+  checkbox (your choice is remembered).
+- Sound: on by default and bundled for offline play (the city's honks, sirens,
+  explosions and the monster's roar). Silence everything with the "Mute sound"
+  menu item (remembered).
+
 Tools come in two kinds:
 - Stroke tools (bulldozer, wire, road, rail, park, and the R/C/I zones) stay
   selected so you can keep drawing. Roads, rail and wire follow your drag path, so

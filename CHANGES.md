@@ -3,6 +3,35 @@
 Changes made to the imported Micropolis / MicropolisJ source, most recent first.
 Created by Nieto Software.
 
+## 2026-09-21 - Phase 5 disasters, sprites and sound
+
+- Sprite artwork: copied the 61 MicropolisJ sprite frame images (obj<id>-<frame>
+  .png) into `engine/src/main/resources/sprites/` (see `scripts/copy-sprites.cmd`
+  and THIRD_PARTY.md).
+- Sprite rendering: shared `render.SpriteImages` resolves the per-kind frame
+  images on the classpath (never decoding them, so the engine module stays free of
+  awt/android) and snapshots the engine's visible sprites under the engine lock.
+  Both renderers preload the frames and draw the live sprites over the tiles at
+  integer zoom, nearest-neighbour, no tearing.
+- Sound: copied the 14 MicropolisJ wavs into `engine/src/main/resources/sounds/`.
+  New `game.SoundPlayer` interface, fed by the engine's `citySound` listener via
+  GameController; Android uses SoundPool (wavs extracted from the classpath to
+  cache files), desktop uses JavaFX AudioClip. All clips preload, sound is on by
+  default and best-effort (never throws), with a persisted Mute item in the menu.
+- Disasters menu: a Disasters submenu triggers the engine's own make* methods
+  (Fire/Flood/Tornado/Earthquake/Monster/Nuclear meltdown) on the engine thread;
+  each shows its engine message in the ticker and plays a sound. Plane crash and
+  shipwreck are natural-only (they arise from traffic and air/sea travel) and are
+  not faked; their sprites and explosions render when the engine spawns them.
+- Random disasters: a persisted menu checkbox toggles the engine's own
+  `noDisasters` flag (the field its `doDisasters()` checks), default on. No engine
+  logic changed - only the flag is set.
+- Earthquake shake: GameController notes the engine's `earthquakeStarted()` and
+  exposes a decaying `shakeIntensity()`; each renderer applies a small, decaying,
+  purely-visual view shake (translate only; map coordinates untouched).
+- No `micropolisj.*` source files were changed this phase (the sprite/sound assets
+  are added resources, and the disaster/flag wiring uses existing public API).
+
 ## 2026-09-21 - Phase 4b speed, mini map, overlays and dialogs
 
 - Speed control: `GameController` owns a chosen run speed (SLOW/NORMAL/FAST/
