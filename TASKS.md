@@ -127,8 +127,11 @@ Created by Nieto Software
       (120..239) window, newest first, each auto-scaled to 0..1. Drawn natively
       (Android GraphView, desktop Canvas): axes, six colour-coded polylines, a
       legend, and a 10y/120y toggle. No chart library.
-- [ ] 7. Menu (overflow holding Budget, Evaluation, Graphs, mini map toggle,
-      overlay picker; phone status-bar button; desktop top menu/buttons).
+- [x] 7. Menu: phone has a status-bar ⋮ overflow (PopupMenu) holding Budget,
+      Evaluation, Graphs, the mini map toggle and an Overlay submenu. Desktop's
+      loose buttons are consolidated into one "Menu" MenuButton with the same
+      items (Budget/Evaluation/Graphs, mini map toggle, Overlay submenu), leaving
+      only the pause/play and speed controls beside it, so the bar stays tidy.
 - [ ] 8. Gate. --rerun-tasks :engine:test :desktop:jar assembleDebug; quote the
       raw tail + engine test count; confirm fresh APK + JAR in the root.
 - [ ] 9. Docs (TASKS final, CHANGES top, README controls, CLAUDE one line).

@@ -33,9 +33,12 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
@@ -238,24 +241,10 @@ public class DesktopApp extends Application
 		speedBtn.setStyle("-fx-text-fill: white; -fx-background-color: #444;");
 		speedBtn.setOnAction(e -> { controller.cycleSpeed(); refreshSpeed(); });
 
-		Button mapBtn = new Button("Map");
-		mapBtn.setFocusTraversable(false);
-		mapBtn.setStyle("-fx-text-fill: white; -fx-background-color: #444;");
-		mapBtn.setOnAction(e -> toggleMiniMap());
-
-		MenuButton overlayBtn = buildOverlayMenu();
-
-		Button budgetBtn = topButton("Budget");
-		budgetBtn.setOnAction(e -> showBudgetDialog());
-
-		Button evalBtn = topButton("Evaluation");
-		evalBtn.setOnAction(e -> showEvaluationDialog());
-
-		Button graphsBtn = topButton("Graphs");
-		graphsBtn.setOnAction(e -> showGraphsDialog());
+		MenuButton menuBtn = buildMenu();
 
 		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, selIconView, toolLbl, costLbl,
-			clearToolBtn, pauseBtn, speedBtn, mapBtn, overlayBtn, budgetBtn, evalBtn, graphsBtn);
+			clearToolBtn, pauseBtn, speedBtn, menuBtn);
 		status.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 		status.setPadding(new Insets(4, 8, 4, 8));
 		status.setStyle("-fx-background-color: #202020;");
@@ -268,19 +257,37 @@ public class DesktopApp extends Application
 		return new VBox(status, tickerLbl);
 	}
 
-	private MenuButton buildOverlayMenu()
+	/**
+	 * The overflow menu: the classic dialogs, the mini map toggle and the overlay
+	 * picker, so the status bar stays uncluttered.
+	 */
+	private MenuButton buildMenu()
 	{
-		MenuButton mb = new MenuButton("Overlay");
+		MenuButton mb = new MenuButton("Menu");
 		mb.setFocusTraversable(false);
 		mb.setStyle("-fx-text-fill: white;");
+
+		MenuItem budget = new MenuItem("Budget…");
+		budget.setOnAction(e -> showBudgetDialog());
+		MenuItem eval = new MenuItem("Evaluation…");
+		eval.setOnAction(e -> showEvaluationDialog());
+		MenuItem graphs = new MenuItem("Graphs…");
+		graphs.setOnAction(e -> showGraphsDialog());
+		MenuItem miniToggle = new MenuItem("Mini map");
+		miniToggle.setOnAction(e -> toggleMiniMap());
+
+		Menu overlayMenu = new Menu("Overlay");
 		ToggleGroup group = new ToggleGroup();
 		for (final MapOverlay ov : MapOverlay.values()) {
 			RadioMenuItem item = new RadioMenuItem(ov.label());
 			item.setToggleGroup(group);
 			item.setSelected(ov == overlay);
 			item.setOnAction(e -> selectOverlay(ov));
-			mb.getItems().add(item);
+			overlayMenu.getItems().add(item);
 		}
+
+		mb.getItems().addAll(budget, eval, graphs, new SeparatorMenuItem(),
+			miniToggle, overlayMenu);
 		return mb;
 	}
 
@@ -541,14 +548,6 @@ public class DesktopApp extends Application
 		scene.setOnKeyReleased(e -> {
 			if (e.getCode() == KeyCode.SPACE) spaceDown = false;
 		});
-	}
-
-	private static Button topButton(String text)
-	{
-		Button b = new Button(text);
-		b.setFocusTraversable(false);
-		b.setStyle("-fx-text-fill: white; -fx-background-color: #444;");
-		return b;
 	}
 
 	private int currentYear()
