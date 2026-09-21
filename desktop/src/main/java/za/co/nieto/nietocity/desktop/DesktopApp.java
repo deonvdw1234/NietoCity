@@ -68,6 +68,7 @@ import za.co.nieto.nietocity.game.CurrencyFormat;
 import za.co.nieto.nietocity.game.EvaluationReport;
 import za.co.nieto.nietocity.game.GameController;
 import za.co.nieto.nietocity.game.GameStrings;
+import za.co.nieto.nietocity.game.GraphData;
 import za.co.nieto.nietocity.game.QueryReport;
 import za.co.nieto.nietocity.game.StatusSnapshot;
 import za.co.nieto.nietocity.render.MapOverlay;
@@ -250,8 +251,11 @@ public class DesktopApp extends Application
 		Button evalBtn = topButton("Evaluation");
 		evalBtn.setOnAction(e -> showEvaluationDialog());
 
+		Button graphsBtn = topButton("Graphs");
+		graphsBtn.setOnAction(e -> showGraphsDialog());
+
 		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, selIconView, toolLbl, costLbl,
-			clearToolBtn, pauseBtn, speedBtn, mapBtn, overlayBtn, budgetBtn, evalBtn);
+			clearToolBtn, pauseBtn, speedBtn, mapBtn, overlayBtn, budgetBtn, evalBtn, graphsBtn);
 		status.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 		status.setPadding(new Insets(4, 8, 4, 8));
 		status.setStyle("-fx-background-color: #202020;");
@@ -700,6 +704,93 @@ public class DesktopApp extends Application
 	private static String signed(int v)
 	{
 		return v >= 0 ? "+" + v : Integer.toString(v);
+	}
+
+	/** The graphs dialog: six history line graphs with a 10-year / 120-year toggle. */
+	private void showGraphsDialog()
+	{
+		final Canvas gcanvas = new Canvas(640, 360);
+		final boolean[] longRange = { false };
+		final Runnable draw = () -> drawGraphs(gcanvas, longRange[0]);
+
+		final Button toggle = new Button("Show 120 years");
+		toggle.setFocusTraversable(false);
+		toggle.setOnAction(e -> {
+			longRange[0] = !longRange[0];
+			toggle.setText(longRange[0] ? "Show 10 years" : "Show 120 years");
+			draw.run();
+		});
+
+		VBox content = new VBox(8, toggle, gcanvas);
+		content.setPadding(new Insets(10));
+
+		Stage dlg = new Stage();
+		dlg.initOwner(stage);
+		dlg.initModality(Modality.WINDOW_MODAL);
+		dlg.setTitle("City Graphs");
+		dlg.setScene(new Scene(content));
+		draw.run();
+		dlg.show();
+	}
+
+	private void drawGraphs(Canvas gcanvas, boolean longRange)
+	{
+		Micropolis city = controller.getEngine();
+		GraphicsContext gc = gcanvas.getGraphicsContext2D();
+		double w = gcanvas.getWidth();
+		double h = gcanvas.getHeight();
+		gc.setFill(Color.rgb(24, 24, 24));
+		gc.fillRect(0, 0, w, h);
+
+		GraphData.Series[] series = GraphData.Series.values();
+
+		// Legend row.
+		double pad = 10;
+		double swatch = 12;
+		double x = pad;
+		double y = pad + swatch;
+		gc.setTextAlign(javafx.scene.text.TextAlignment.LEFT);
+		for (GraphData.Series s : series) {
+			gc.setFill(colorOf(s));
+			gc.fillRect(x, y - swatch, swatch, swatch);
+			gc.setFill(Color.WHITE);
+			gc.fillText(s.label(), x + swatch + 4, y);
+			x += swatch + 4 + s.label().length() * 8 + 14;
+		}
+		gc.setFill(Color.WHITE);
+		String title = longRange ? "120 years" : "10 years";
+		gc.fillText(title, w - pad - title.length() * 7, y);
+
+		double plotLeft = pad;
+		double plotTop = y + 16;
+		double plotRight = w - pad;
+		double plotBottom = h - pad;
+		gc.setStroke(Color.rgb(255, 255, 255, 0.6));
+		gc.setLineWidth(1.5);
+		gc.strokeLine(plotLeft, plotBottom, plotRight, plotBottom);
+		gc.strokeLine(plotLeft, plotTop, plotLeft, plotBottom);
+
+		int n = GraphData.POINTS;
+		double stepX = (plotRight - plotLeft) / (n - 1);
+		double plotH = plotBottom - plotTop;
+		gc.setLineWidth(2.0);
+		for (GraphData.Series s : series) {
+			float[] vals = GraphData.normalized(city, s, longRange);
+			gc.setStroke(colorOf(s));
+			gc.beginPath();
+			for (int i = 0; i < n; i++) {
+				double px = plotRight - i * stepX;
+				double py = plotBottom - vals[i] * plotH;
+				if (i == 0) gc.moveTo(px, py); else gc.lineTo(px, py);
+			}
+			gc.stroke();
+		}
+	}
+
+	private static Color colorOf(GraphData.Series s)
+	{
+		int c = s.colorArgb();
+		return Color.rgb((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
 	}
 
 	private static Speed speedForKey(KeyCode c)

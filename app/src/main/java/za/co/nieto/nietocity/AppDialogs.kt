@@ -12,6 +12,7 @@ import android.content.Context
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
+import android.widget.Button
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -138,6 +139,35 @@ object AppDialogs {
     }
 
     private fun signed(v: Int): String = if (v >= 0) "+$v" else v.toString()
+
+    /** The graphs dialog: six history line graphs with a 10-year / 120-year toggle. */
+    fun showGraphs(context: Context, controller: GameController) {
+        val root = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+
+        val graph = GraphView(context).apply {
+            bind(controller)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(context, 260)
+            )
+        }
+
+        val toggle = Button(context).apply {
+            text = "Show 120 years"
+            setOnClickListener {
+                graph.setLongRange(!graph.isLongRange())
+                text = if (graph.isLongRange()) "Show 10 years" else "Show 120 years"
+            }
+        }
+
+        root.addView(toggle)
+        root.addView(graph)
+
+        AlertDialog.Builder(context)
+            .setTitle("City Graphs")
+            .setView(root)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
 
     // --- small view helpers ---
 

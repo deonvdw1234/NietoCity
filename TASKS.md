@@ -122,8 +122,11 @@ Created by Nieto Software
       problems + votes). Read-only dialog on both platforms (menu/Evaluation
       button); closes on OK/Back/Esc. Class and problem names are provided in
       GameStrings (the original CityStrings bundle was not imported).
-- [ ] 6. Graphs dialog (res/com/ind/crime/pollution/money line graphs, 10y/120y
-      toggle, native draw, legend).
+- [x] 6. Graphs dialog: shared game.GraphData extracts the six history series
+      (res/com/ind/crime/pollution/cash flow) for the 10-year (0..119) or 120-year
+      (120..239) window, newest first, each auto-scaled to 0..1. Drawn natively
+      (Android GraphView, desktop Canvas): axes, six colour-coded polylines, a
+      legend, and a 10y/120y toggle. No chart library.
 - [ ] 7. Menu (overflow holding Budget, Evaluation, Graphs, mini map toggle,
       overlay picker; phone status-bar button; desktop top menu/buttons).
 - [ ] 8. Gate. --rerun-tasks :engine:test :desktop:jar assembleDebug; quote the

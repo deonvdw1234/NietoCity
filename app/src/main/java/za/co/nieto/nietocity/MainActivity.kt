@@ -158,10 +158,11 @@ class MainActivity : Activity() {
         val menu = popup.menu
         menu.add(0, ID_BUDGET, 0, "Budget…")
         menu.add(0, ID_EVALUATION, 1, "Evaluation…")
+        menu.add(0, ID_GRAPHS, 2, "Graphs…")
         val miniOn = miniMap.visibility == View.VISIBLE
-        menu.add(0, ID_MINIMAP, 3, if (miniOn) "Hide mini map" else "Show mini map")
+        menu.add(0, ID_MINIMAP, 4, if (miniOn) "Hide mini map" else "Show mini map")
 
-        val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 4, "Overlay")
+        val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 5, "Overlay")
         val current = cityView.getMapOverlay()
         val overlays = MapOverlay.values()
         for (idx in overlays.indices) {
@@ -179,6 +180,7 @@ class MainActivity : Activity() {
         when (item.itemId) {
             ID_BUDGET -> { showBudget(); return true }
             ID_EVALUATION -> { AppDialogs.showEvaluation(this, controller); return true }
+            ID_GRAPHS -> { AppDialogs.showGraphs(this, controller); return true }
             ID_MINIMAP -> { toggleMiniMap(); return true }
         }
         val idx = item.itemId - ID_OVERLAY_BASE
@@ -346,6 +348,7 @@ class MainActivity : Activity() {
         private const val BACK_WINDOW_MS = 2000L
         private const val ID_BUDGET = 3
         private const val ID_EVALUATION = 4
+        private const val ID_GRAPHS = 5
         private const val ID_MINIMAP = 1
         private const val ID_OVERLAY_SUB = 2
         private const val GROUP_OVERLAY = 10
