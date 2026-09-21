@@ -83,6 +83,34 @@ Created by Nieto Software
       updated (rand, selected-tool bar + X, tool kinds, path-following, back button,
       power bolt); CLAUDE.md gained the currency rule and the tool-kind rule.
 
+## Phase 4b: Speed control, mini map with overlays, and the classic dialogs
+- [x] 0. Speed control: GameController owns a chosen run speed (SLOW/NORMAL/FAST/
+      SUPER_FAST) + a separate pause; the clock runs at PAUSED while paused else
+      the chosen speed (uses Speed.animationDelay). Status bar: pause/play toggle
+      + tap-cycle speed label. Desktop: same + keys (space=pause, 1..4=speeds;
+      Space+drag pan dropped). Chosen speed persists on the retained controller
+      for the session. JUnit SpeedTest (5): interval per speed, cycle order,
+      pause separate, PAUSED stops ticks, null/PAUSED ignored by setChosenSpeed.
+- [ ] 1. Engine overlay accessors (small read-only per-coordinate accessors on
+      Micropolis; GPL header kept; recorded in CHANGES.md; no logic change).
+- [ ] 2. Mini map panel (shared overview bitmap, viewport rect, tap/drag to
+      re-centre; phone corner overlay, desktop docked side panel). JUnit:
+      overview tap maps to the matching tile within one tile.
+- [ ] 3. Overlay layer (None + 8 overlays tint the main map and mini map; power
+      grid powered vs unpowered; picker in the same menu; off by default).
+- [ ] 4. Budget dialog (tax + funding sliders, R read-outs, apply writes back;
+      auto once a year with a persisted "don't show" checkbox; menu button).
+      JUnit: setting tax + percents updates the engine budget fields.
+- [ ] 5. Evaluation dialog (approval, score+delta, pop+delta, class, top four
+      problems + votes; read-only, menu button, closes on tap/Esc).
+- [ ] 6. Graphs dialog (res/com/ind/crime/pollution/money line graphs, 10y/120y
+      toggle, native draw, legend).
+- [ ] 7. Menu (overflow holding Budget, Evaluation, Graphs, mini map toggle,
+      overlay picker; phone status-bar button; desktop top menu/buttons).
+- [ ] 8. Gate. --rerun-tasks :engine:test :desktop:jar assembleDebug; quote the
+      raw tail + engine test count; confirm fresh APK + JAR in the root.
+- [ ] 9. Docs (TASKS final, CHANGES top, README controls, CLAUDE one line).
+
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar
 - Phase 4: Speed, budget, evaluation, graphs, mini map

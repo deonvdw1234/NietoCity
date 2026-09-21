@@ -15,9 +15,26 @@ import java.util.ResourceBundle;
 
 import micropolisj.engine.MicropolisMessage;
 import micropolisj.engine.MicropolisTool;
+import micropolisj.engine.Speed;
 
 public final class GameStrings
 {
+	/** Short display name for a simulation speed (status bar speed label). */
+	public static String speedName(Speed speed)
+	{
+		if (speed == null) {
+			return "";
+		}
+		switch (speed) {
+		case PAUSED:     return "Paused";
+		case SLOW:       return "Slow";
+		case NORMAL:     return "Normal";
+		case FAST:       return "Fast";
+		case SUPER_FAST: return "Ultra";
+		default:         return speed.name();
+		}
+	}
+
 	private static final ResourceBundle GUI = ResourceBundle.getBundle("micropolisj.GuiStrings");
 	private static final ResourceBundle CITY = ResourceBundle.getBundle("micropolisj.CityMessages");
 	private static final ResourceBundle STATUS = ResourceBundle.getBundle("micropolisj.StatusMessages");

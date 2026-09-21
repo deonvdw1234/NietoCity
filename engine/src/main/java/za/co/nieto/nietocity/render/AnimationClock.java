@@ -144,6 +144,20 @@ public final class AnimationClock
 	}
 
 	/**
+	 * One scheduler step for tests: animate the engine only when not paused,
+	 * exactly as {@link #loop()} decides. Returns whether it ticked.
+	 */
+	public boolean pumpForTest()
+	{
+		Speed s = speed;
+		if (s == Speed.PAUSED) {
+			return false;
+		}
+		tickOnce(s);
+		return true;
+	}
+
+	/**
 	 * Perform one timer fire's worth of animation. Package-visible and separate
 	 * from the thread loop so it can be driven directly from tests.
 	 */

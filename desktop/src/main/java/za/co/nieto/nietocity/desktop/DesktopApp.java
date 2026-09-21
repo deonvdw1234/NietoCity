@@ -49,11 +49,13 @@ import javafx.util.Duration;
 
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.MicropolisTool;
+import micropolisj.engine.Speed;
 import micropolisj.engine.TileConstants;
 import micropolisj.engine.ToolPreview;
 import micropolisj.engine.ToolResult;
 import za.co.nieto.nietocity.game.CurrencyFormat;
 import za.co.nieto.nietocity.game.GameController;
+import za.co.nieto.nietocity.game.GameStrings;
 import za.co.nieto.nietocity.game.QueryReport;
 import za.co.nieto.nietocity.game.StatusSnapshot;
 import za.co.nieto.nietocity.render.PowerOverlay;
@@ -93,7 +95,7 @@ public class DesktopApp extends Application
 
 	private Label dateLbl, fundsLbl, popLbl, toolLbl, costLbl, tickerLbl;
 	private ImageView selIconView;
-	private Button clearToolBtn;
+	private Button clearToolBtn, pauseBtn, speedBtn;
 	private long tickerHideAt;
 
 	// input state
@@ -151,6 +153,7 @@ public class DesktopApp extends Application
 
 		controller.start();
 		refreshPalette();
+		refreshSpeed();
 
 		Timeline ui = new Timeline(new KeyFrame(Duration.millis(250), e -> onUiTick()));
 		ui.setCycleCount(Animation.INDEFINITE);
@@ -192,7 +195,18 @@ public class DesktopApp extends Application
 		clearToolBtn.setVisible(false);
 		clearToolBtn.setManaged(false);
 
-		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, selIconView, toolLbl, costLbl, clearToolBtn);
+		// Speed control: pause/play toggle and a tap-cycle speed label.
+		pauseBtn = new Button("❚❚");
+		pauseBtn.setFocusTraversable(false);
+		pauseBtn.setStyle("-fx-text-fill: white; -fx-background-color: #444;");
+		pauseBtn.setOnAction(e -> { controller.togglePause(); refreshSpeed(); });
+		speedBtn = new Button("Normal");
+		speedBtn.setFocusTraversable(false);
+		speedBtn.setStyle("-fx-text-fill: white; -fx-background-color: #444;");
+		speedBtn.setOnAction(e -> { controller.cycleSpeed(); refreshSpeed(); });
+
+		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, selIconView, toolLbl, costLbl,
+			clearToolBtn, pauseBtn, speedBtn);
 		status.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 		status.setPadding(new Insets(4, 8, 4, 8));
 		status.setStyle("-fx-background-color: #202020;");
@@ -291,7 +305,7 @@ public class DesktopApp extends Application
 			pressX = e.getX();
 			pressY = e.getY();
 			MicropolisTool tool = controller.getTool();
-			if (e.getButton() == MouseButton.SECONDARY || spaceDown) {
+			if (e.getButton() == MouseButton.SECONDARY) {
 				panning = true;
 			} else if (e.getButton() == MouseButton.PRIMARY) {
 				if (tool != null) {
@@ -334,12 +348,25 @@ public class DesktopApp extends Application
 		});
 
 		scene.setOnKeyPressed(e -> {
-			if (e.getCode() == KeyCode.SPACE) {
-				spaceDown = true;
+			KeyCode c = e.getCode();
+			// Space toggles pause (guard the key-repeat while held).
+			if (c == KeyCode.SPACE) {
+				if (!spaceDown) {
+					spaceDown = true;
+					controller.togglePause();
+					refreshSpeed();
+				}
+				return;
+			}
+			// 1..4 set the run speed (SLOW/NORMAL/FAST/SUPER_FAST) and resume.
+			Speed picked = speedForKey(c);
+			if (picked != null) {
+				controller.setChosenSpeed(picked);
+				controller.setPaused(false);
+				refreshSpeed();
 				return;
 			}
 			int step = TS * viewport.getZoom();
-			KeyCode c = e.getCode();
 			if (c == KeyCode.LEFT) viewport.panBy(-step, 0);
 			else if (c == KeyCode.RIGHT) viewport.panBy(step, 0);
 			else if (c == KeyCode.UP) viewport.panBy(0, -step);
@@ -350,6 +377,22 @@ public class DesktopApp extends Application
 		scene.setOnKeyReleased(e -> {
 			if (e.getCode() == KeyCode.SPACE) spaceDown = false;
 		});
+	}
+
+	private static Speed speedForKey(KeyCode c)
+	{
+		if (c == KeyCode.DIGIT1 || c == KeyCode.NUMPAD1) return Speed.SLOW;
+		if (c == KeyCode.DIGIT2 || c == KeyCode.NUMPAD2) return Speed.NORMAL;
+		if (c == KeyCode.DIGIT3 || c == KeyCode.NUMPAD3) return Speed.FAST;
+		if (c == KeyCode.DIGIT4 || c == KeyCode.NUMPAD4) return Speed.SUPER_FAST;
+		return null;
+	}
+
+	/** Reflect the controller's pause state and chosen speed on the toolbar. */
+	private void refreshSpeed()
+	{
+		pauseBtn.setText(controller.isPaused() ? "▶" : "❚❚");
+		speedBtn.setText(GameStrings.speedName(controller.getChosenSpeed()));
 	}
 
 	private void beginStroke(double px, double py)

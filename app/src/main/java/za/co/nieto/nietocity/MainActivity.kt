@@ -93,7 +93,24 @@ class MainActivity : Activity() {
         }
         // A one-shot tool clears itself after placing; refresh the bar and palette.
         cityView.placementListener = { refreshTool() }
+
+        // Speed control: pause/play toggle and a tap-cycle speed label.
+        statusBar.onPauseClick = {
+            controller.togglePause()
+            refreshSpeed()
+        }
+        statusBar.onSpeedClick = {
+            controller.cycleSpeed()
+            refreshSpeed()
+        }
+        statusBar.setMenuVisible(false) // wired in Phase 4b task 7
+        refreshSpeed()
         refreshTool()
+    }
+
+    /** Reflect the controller's pause state and chosen speed in the status bar. */
+    private fun refreshSpeed() {
+        statusBar.setSpeedState(controller.isPaused, controller.chosenSpeed)
     }
 
     /** Sync the status bar, the palette highlight and the selected-tool bar to the

@@ -52,6 +52,13 @@ public final class GameController
 	private volatile Runnable frameCallback;     // renderer redraw hook
 	private final ConcurrentLinkedQueue<String> messages = new ConcurrentLinkedQueue<String>();
 
+	// Speed control. The player picks one of SLOW/NORMAL/FAST/SUPER_FAST (the
+	// "chosen" speed) and can pause separately, so unpausing returns to the chosen
+	// speed. Kept here (on the retained controller) so the choice survives rotation
+	// for the session. The engine clock runs at PAUSED while paused, else chosen.
+	private volatile Speed chosenSpeed = Speed.NORMAL;
+	private volatile boolean paused;
+
 	/** Create a fresh random city at the default (easy) level with its funds. */
 	public static GameController newGame()
 	{
@@ -102,9 +109,70 @@ public final class GameController
 
 	public void start() { clock.start(); }
 	public void stop() { clock.stop(); }
-	public void setSpeed(Speed speed) { clock.setSpeed(speed); }
-	public Speed getSpeed() { return clock.getSpeed(); }
 	public int animationCycle() { return clock.animationCycle(); }
+
+	// --- speed / pause ---
+
+	/** The player's chosen run speed (never PAUSED); unpausing returns to it. */
+	public Speed getChosenSpeed() { return chosenSpeed; }
+
+	/** Set the chosen run speed. PAUSED/null are ignored (use {@link #setPaused}). */
+	public void setChosenSpeed(Speed speed)
+	{
+		if (speed == null || speed == Speed.PAUSED) {
+			return;
+		}
+		chosenSpeed = speed;
+		if (!paused) {
+			clock.setSpeed(speed);
+		}
+	}
+
+	/** Advance the chosen speed SLOW->NORMAL->FAST->SUPER_FAST->SLOW; returns it. */
+	public Speed cycleSpeed()
+	{
+		setChosenSpeed(nextSpeed(chosenSpeed));
+		return chosenSpeed;
+	}
+
+	private static Speed nextSpeed(Speed s)
+	{
+		switch (s) {
+		case SLOW:       return Speed.NORMAL;
+		case NORMAL:     return Speed.FAST;
+		case FAST:       return Speed.SUPER_FAST;
+		default:         return Speed.SLOW; // SUPER_FAST (or PAUSED) wraps to SLOW
+		}
+	}
+
+	public boolean isPaused() { return paused; }
+
+	/** Pause or resume; resuming runs at the chosen speed. */
+	public void setPaused(boolean p)
+	{
+		paused = p;
+		clock.setSpeed(p ? Speed.PAUSED : chosenSpeed);
+	}
+
+	/** Flip pause; returns the new paused state. */
+	public boolean togglePause()
+	{
+		setPaused(!paused);
+		return paused;
+	}
+
+	/** The speed the clock is actually running at (PAUSED when paused). */
+	public Speed getEffectiveSpeed() { return paused ? Speed.PAUSED : chosenSpeed; }
+
+	/** The current tick interval in ms (the effective speed's animationDelay). */
+	public int tickIntervalMs() { return getEffectiveSpeed().animationDelay; }
+
+	/**
+	 * One scheduler step, for tests: animates the engine only when not paused.
+	 * Returns whether it ticked. Mirrors the clock loop's pause decision so a test
+	 * can prove PAUSED stops ticks without depending on the timing thread.
+	 */
+	public boolean pumpOnceForTest() { return clock.pumpForTest(); }
 
 	/** The renderer sets this to be called (on the engine thread) after each frame. */
 	public void setFrameCallback(Runnable r) { this.frameCallback = r; }
