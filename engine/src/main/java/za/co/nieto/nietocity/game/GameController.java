@@ -12,6 +12,7 @@ package za.co.nieto.nietocity.game;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import micropolisj.engine.CityLocation;
@@ -65,6 +66,11 @@ public final class GameController
 	// one up, or in tests).
 	private volatile SoundPlayer soundPlayer;
 
+	// The seed and terrain that produced this city, so the New City screen can show
+	// the seed and reproduce a map. Remembered for the session.
+	private volatile long seed;
+	private volatile TerrainConfig terrainConfig = TerrainConfig.defaults();
+
 	/** Create a fresh random city at the default (easy) level with its funds. */
 	public static GameController newGame()
 	{
@@ -72,18 +78,58 @@ public final class GameController
 	}
 
 	/**
-	 * Create a fresh random city at the given level and apply that level's
-	 * starting funds (easy 20000, medium 10000, hard 5000). The engine
-	 * constructor leaves funds at 0; the original applies them when a city is
-	 * created, which is what this does.
+	 * Create a fresh random city at the given level with a random seed and the
+	 * default terrain, and apply that level's starting funds (easy 20000, medium
+	 * 10000, hard 5000). The engine constructor leaves funds at 0; the original
+	 * applies them when a city is created, which is what this does.
 	 */
 	public static GameController newGame(int gameLevel)
 	{
+		return newGame(gameLevel, new Random().nextLong(), TerrainConfig.defaults());
+	}
+
+	/**
+	 * Create a fresh city at the given level from a specific seed and terrain, and
+	 * remember them. The same seed and terrain reproduce an identical map.
+	 */
+	public static GameController newGame(int gameLevel, long seed, TerrainConfig terrain)
+	{
+		TerrainConfig cfg = terrain != null ? terrain : TerrainConfig.defaults();
+		Micropolis city = buildCity(gameLevel, seed, cfg);
+		GameController gc = new GameController(city);
+		gc.seed = seed;
+		gc.terrainConfig = cfg;
+		return gc;
+	}
+
+	/**
+	 * Build a fresh city with the given level, seed and terrain. Deterministic: the
+	 * same arguments produce the same map. Also used to render New City previews.
+	 */
+	public static Micropolis buildCity(int gameLevel, long seed, TerrainConfig terrain)
+	{
+		TerrainConfig cfg = terrain != null ? terrain : TerrainConfig.defaults();
 		Micropolis city = new Micropolis();
-		new MapGenerator(city).generateNewCity();
+		MapGenerator gen = new MapGenerator(city);
+		cfg.applyTo(gen);
+		gen.generateSomeCity(seed);
 		city.setGameLevel(gameLevel);
 		city.setFunds(GameLevel.getStartingFunds(gameLevel));
-		return new GameController(city);
+		return city;
+	}
+
+	/** The seed that generated this city's map. */
+	public long getSeed() { return seed; }
+
+	/** The terrain settings that generated this city's map. */
+	public TerrainConfig getTerrainConfig() { return terrainConfig; }
+
+	/** This city's difficulty level (GameLevel). */
+	public int getGameLevel()
+	{
+		synchronized (engine) {
+			return engine.gameLevel;
+		}
 	}
 
 	public GameController(Micropolis engine)
