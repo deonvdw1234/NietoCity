@@ -151,9 +151,11 @@ Created by Nieto Software
       engine/src/main/resources/sprites/ (per-kind counts match SpriteKind:
       1/5,2/8,3/11,4/8,5/16,6/3,7/6,8/4); scripts/copy-sprites.cmd records the
       provenance; THIRD_PARTY.md gained a sprite-artwork entry.
-- [ ] 1. Sprite rendering: shared render.SpriteImages (classpath frame paths);
-      renderers draw live engine sprites each tick (integer zoom, nn, snapshot
-      under lock, no tearing). JUnit: every SpriteKind resolves all frames.
+- [x] 1. Sprite rendering: shared render.SpriteImages resolves frame classpath
+      paths and snapshots visible sprites (Frame: objectId, frameIndex, x/y/off/
+      size) under the engine lock. Both renderers preload the frame PNGs and draw
+      each sprite over the tiles at (x+offx)*zoom-scroll, integer zoom, nearest-
+      neighbour. JUnit SpriteImagesTest (2): every SpriteKind resolves all frames.
 - [ ] 2. Sound engine: copy the 14 wavs; game.SoundPlayer interface fed by the
       engine citySound listener; Android SoundPool, desktop AudioClip; preload;
       default ON + Mute menu item (persisted); best-effort (never throws).

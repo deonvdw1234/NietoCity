@@ -23,9 +23,11 @@ import android.view.SurfaceView
 import micropolisj.engine.TileConstants
 import micropolisj.engine.ToolPreview
 import micropolisj.engine.ToolResult
+import micropolisj.engine.SpriteKind
 import za.co.nieto.nietocity.game.GameController
 import za.co.nieto.nietocity.render.MapOverlay
 import za.co.nieto.nietocity.render.PowerOverlay
+import za.co.nieto.nietocity.render.SpriteImages
 import za.co.nieto.nietocity.render.TileIndex
 import za.co.nieto.nietocity.render.Viewport
 
@@ -46,6 +48,7 @@ class CityView @JvmOverloads constructor(
     private val clear = TileConstants.CLEAR.toInt()
     private val tileIndex = TileIndex.loadDefault()
     private val atlas: Bitmap = loadAtlas()
+    private val spriteBitmaps: Map<Int, Bitmap> = loadSprites()
 
     private val tilePaint = Paint().apply {
         isFilterBitmap = false
@@ -100,6 +103,10 @@ class CityView @JvmOverloads constructor(
     private var boltSnapshot = BooleanArray(0)
     private var overlaySnapshot = IntArray(0)
 
+    // Live engine sprites, snapshotted under the engine lock so drawing never
+    // reads a sprite the sim thread is moving.
+    @Volatile private var spriteFrames: List<SpriteImages.Frame> = emptyList()
+
     // The active data overlay (None by default). Its translucent tint is drawn
     // over the tile art (the shared MapOverlay computes the colour per tile).
     @Volatile private var overlay: MapOverlay = MapOverlay.NONE
@@ -121,6 +128,26 @@ class CityView @JvmOverloads constructor(
                 ?: error("Could not decode /16x16/tiles.png")
         }
     }
+
+    /** Preload every sprite frame, keyed by objectId*100 + frameIndex. */
+    private fun loadSprites(): Map<Int, Bitmap> {
+        val map = HashMap<Int, Bitmap>()
+        val opts = BitmapFactory.Options().apply { inScaled = false }
+        for (kind in SpriteKind.values()) {
+            for (i in 0 until kind.numFrames) {
+                val stream = SpriteImages::class.java.getResourceAsStream(
+                    SpriteImages.resourcePath(kind, i)
+                ) ?: continue
+                stream.use {
+                    val bmp = BitmapFactory.decodeStream(it, null, opts)
+                    if (bmp != null) map[spriteKey(kind.objectId, i)] = bmp
+                }
+            }
+        }
+        return map
+    }
+
+    private fun spriteKey(objectId: Int, frameIndex: Int): Int = objectId * 100 + frameIndex
 
     fun setController(controller: GameController) {
         this.controller = controller
@@ -341,6 +368,7 @@ class CityView @JvmOverloads constructor(
                     i++
                 }
             }
+            spriteFrames = SpriteImages.capture(c)
         }
 
         val tp = vp.tilePx()
@@ -376,7 +404,26 @@ class CityView @JvmOverloads constructor(
             }
         }
 
+        drawSprites(canvas, vp)
         drawPreview(canvas, vp, cycle, firstCol, lastCol, firstRow, lastRow)
+    }
+
+    private fun drawSprites(canvas: Canvas, vp: Viewport) {
+        val frames = spriteFrames
+        if (frames.isEmpty()) return
+        val z = vp.zoom
+        val viewW = vp.viewWidthPx
+        val viewH = vp.viewHeightPx
+        for (f in frames) {
+            val bmp = spriteBitmaps[spriteKey(f.objectId, f.frameIndex)] ?: continue
+            val sx = (f.x + f.offx) * z - vp.scrollX
+            val sy = (f.y + f.offy) * z - vp.scrollY
+            val w = bmp.width * z
+            val h = bmp.height * z
+            if (sx + w < 0 || sy + h < 0 || sx > viewW || sy > viewH) continue
+            dst.set(sx, sy, sx + w, sy + h)
+            canvas.drawBitmap(bmp, null, dst, tilePaint)
+        }
     }
 
     private fun drawPreview(

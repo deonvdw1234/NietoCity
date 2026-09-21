@@ -63,6 +63,7 @@ import micropolisj.engine.BudgetNumbers;
 import micropolisj.engine.Micropolis;
 import micropolisj.engine.MicropolisTool;
 import micropolisj.engine.Speed;
+import micropolisj.engine.SpriteKind;
 import micropolisj.engine.TileConstants;
 import micropolisj.engine.ToolPreview;
 import micropolisj.engine.ToolResult;
@@ -77,6 +78,7 @@ import za.co.nieto.nietocity.game.StatusSnapshot;
 import za.co.nieto.nietocity.render.MapOverlay;
 import za.co.nieto.nietocity.render.MiniMap;
 import za.co.nieto.nietocity.render.PowerOverlay;
+import za.co.nieto.nietocity.render.SpriteImages;
 import za.co.nieto.nietocity.render.TileIndex;
 import za.co.nieto.nietocity.render.Viewport;
 
@@ -98,6 +100,12 @@ public class DesktopApp extends Application
 
 	private final TileIndex tileIndex = TileIndex.loadDefault();
 	private final Map<Integer, Image> tileCache = new HashMap<Integer, Image>();
+	// Sprite base pixels + dimensions per (objectId*100+frame), and a nearest-
+	// neighbour scaled-image cache keyed by that key and the zoom.
+	private final Map<Integer, int[]> spritePixels = new HashMap<Integer, int[]>();
+	private final Map<Integer, int[]> spriteDims = new HashMap<Integer, int[]>();
+	private final Map<Long, Image> spriteCache = new HashMap<Long, Image>();
+	private java.util.List<SpriteImages.Frame> spriteFrames = java.util.Collections.emptyList();
 	private final Map<MicropolisTool, Button> toolButtons = new HashMap<MicropolisTool, Button>();
 	private final Map<MicropolisTool, Image> plainIcons = new HashMap<MicropolisTool, Image>();
 	private final Map<MicropolisTool, Image> hiIcons = new HashMap<MicropolisTool, Image>();
@@ -151,6 +159,8 @@ public class DesktopApp extends Application
 		this.atlasPixels = new int[atlasWidth * atlasHeight];
 		atlas.getPixelReader().getPixels(0, 0, atlasWidth, atlasHeight,
 			PixelFormat.getIntArgbInstance(), atlasPixels, 0, atlasWidth);
+
+		loadSprites();
 
 		this.controller = GameController.newGame();
 		Micropolis city = controller.getEngine();
@@ -991,6 +1001,7 @@ public class DesktopApp extends Application
 					i++;
 				}
 			}
+			spriteFrames = SpriteImages.capture(city);
 		}
 
 		int zoom = viewport.getZoom();
@@ -1021,6 +1032,7 @@ public class DesktopApp extends Application
 			}
 		}
 
+		drawSprites(gc, zoom);
 		drawPreview(gc, zoom, cycle, firstCol, lastCol, firstRow, lastRow);
 	}
 
@@ -1055,6 +1067,87 @@ public class DesktopApp extends Application
 				gc.fillRect(sx, sy, tp, tp);
 			}
 		}
+	}
+
+	private void loadSprites()
+	{
+		for (SpriteKind kind : SpriteKind.values()) {
+			for (int i = 0; i < kind.numFrames; i++) {
+				java.io.InputStream in = DesktopApp.class.getResourceAsStream(
+					SpriteImages.resourcePath(kind, i));
+				if (in == null) {
+					continue;
+				}
+				Image img = new Image(in);
+				int w = (int) img.getWidth();
+				int h = (int) img.getHeight();
+				if (w <= 0 || h <= 0) {
+					continue;
+				}
+				int[] px = new int[w * h];
+				img.getPixelReader().getPixels(0, 0, w, h,
+					PixelFormat.getIntArgbInstance(), px, 0, w);
+				int key = kind.objectId * 100 + i;
+				spritePixels.put(key, px);
+				spriteDims.put(key, new int[] { w, h });
+			}
+		}
+	}
+
+	private void drawSprites(GraphicsContext gc, int zoom)
+	{
+		if (spriteFrames.isEmpty()) {
+			return;
+		}
+		double cw = canvas.getWidth();
+		double ch = canvas.getHeight();
+		for (SpriteImages.Frame f : spriteFrames) {
+			int key = f.objectId * 100 + f.frameIndex;
+			Image img = spriteImage(key, zoom);
+			if (img == null) {
+				continue;
+			}
+			int sx = (f.x + f.offx) * zoom - viewport.getScrollX();
+			int sy = (f.y + f.offy) * zoom - viewport.getScrollY();
+			if (sx + img.getWidth() < 0 || sy + img.getHeight() < 0 || sx > cw || sy > ch) {
+				continue;
+			}
+			gc.drawImage(img, sx, sy);
+		}
+	}
+
+	/** A sprite frame scaled by the integer zoom (nearest-neighbour), cached. */
+	private Image spriteImage(int key, int zoom)
+	{
+		long ck = (long) key * (Viewport.MAX_ZOOM + 1) + zoom;
+		Image cached = spriteCache.get(ck);
+		if (cached != null) {
+			return cached;
+		}
+		int[] px = spritePixels.get(key);
+		int[] dim = spriteDims.get(key);
+		if (px == null || dim == null) {
+			return null;
+		}
+		int w = dim[0], h = dim[1];
+		int zw = w * zoom, zh = h * zoom;
+		int[] out = new int[zw * zh];
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
+				int p = px[y * w + x];
+				int baseIdx = (y * zoom) * zw + x * zoom;
+				for (int dy = 0; dy < zoom; dy++) {
+					int rowIdx = baseIdx + dy * zw;
+					for (int dx = 0; dx < zoom; dx++) {
+						out[rowIdx + dx] = p;
+					}
+				}
+			}
+		}
+		WritableImage wi = new WritableImage(zw, zh);
+		wi.getPixelWriter().setPixels(0, 0, zw, zh, PixelFormat.getIntArgbInstance(), out, 0, zw);
+		spriteCache.put(ck, wi);
+		return wi;
 	}
 
 	private Image tileImage(int yOff, int zoom)
