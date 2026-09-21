@@ -218,8 +218,11 @@ Created by Nieto Software
       executor; desktop a daemon executor + Platform.runLater), with a generation
       counter dropping stale results so the UI never blocks and only the newest
       map is painted.
-- [ ] 4. Start + discard guard (confirm before discarding a running city); swap
-      the controller and reset the viewport to centre.
+- [x] 4. Start + discard guard: Start now asks "Start a new city? Your current
+      city will be discarded." (Start / Cancel, Cancel default) before swapping,
+      since there is no save/load yet. On confirm the platform builds the new
+      GameController, carries over the session settings, swaps it in and recentres
+      the view; Cancel keeps the running city.
 - [ ] 5. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +
       engine test count; fresh APK + JAR.
 - [ ] 6. Docs: TASKS final; CHANGES top; README (New City, terrain, seeds);

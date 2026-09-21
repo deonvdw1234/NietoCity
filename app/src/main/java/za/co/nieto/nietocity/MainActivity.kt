@@ -238,8 +238,22 @@ class MainActivity : Activity() {
 
     private fun showNewCityScreen() {
         AppDialogs.showNewCity(this, controller) { level, seed, cfg ->
-            applyNewCity(level, seed, cfg)
+            confirmNewCity(level, seed, cfg)
         }
+    }
+
+    /** Guard the swap: the running city is lost (no save/load yet), so confirm. */
+    private fun confirmNewCity(level: Int, seed: Long, cfg: za.co.nieto.nietocity.game.TerrainConfig) {
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle("Start a new city?")
+            .setMessage("Your current city will be discarded.")
+            .setPositiveButton("Start") { _, _ -> applyNewCity(level, seed, cfg) }
+            .setNegativeButton("Cancel") { d, _ -> d.dismiss() }
+            .setCancelable(true) // Back / tap-outside means Cancel
+            .create()
+        dialog.show()
+        // Cancel is the default (keep the current city).
+        dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
     }
 
     /** Replace the running city with a freshly generated one (task 4 adds the guard). */

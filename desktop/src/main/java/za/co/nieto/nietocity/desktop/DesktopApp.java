@@ -443,7 +443,7 @@ public class DesktopApp extends Application
 			long seed = readSeed(seedField);
 			TerrainConfig cfg = readConfig(island, lake, river, trees);
 			dlg.close();
-			startNewCity(level, seed, cfg);
+			confirmNewCity(level, seed, cfg);
 		});
 		cancelBtn.setOnAction(e -> dlg.close());
 		dlg.setOnHidden(e -> exec.shutdownNow());
@@ -500,7 +500,28 @@ public class DesktopApp extends Application
 		gc.strokeRect(left, top, dw, dh);
 	}
 
-	/** Replace the running city with a freshly generated one (task 4 adds the guard). */
+	/** Guard the swap: the running city is lost (no save/load yet), so confirm first. */
+	private void confirmNewCity(int level, long seed, TerrainConfig cfg)
+	{
+		Alert a = new Alert(Alert.AlertType.CONFIRMATION);
+		a.initOwner(stage);
+		a.setTitle("Start a new city?");
+		a.setHeaderText("Start a new city?");
+		a.setContentText("Your current city will be discarded.");
+		javafx.scene.control.ButtonType start =
+			new javafx.scene.control.ButtonType("Start", javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
+		javafx.scene.control.ButtonType cancel =
+			new javafx.scene.control.ButtonType("Cancel", javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
+		a.getButtonTypes().setAll(start, cancel);
+		// Cancel is the default (keep the current city).
+		a.getDialogPane().lookupButton(cancel).requestFocus();
+		java.util.Optional<javafx.scene.control.ButtonType> result = a.showAndWait();
+		if (result.isPresent() && result.get() == start) {
+			startNewCity(level, seed, cfg);
+		}
+	}
+
+	/** Replace the running city with a freshly generated one. */
 	private void startNewCity(int level, long seed, TerrainConfig cfg)
 	{
 		GameController fresh = GameController.newGame(level, seed, cfg);
