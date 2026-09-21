@@ -24,6 +24,7 @@ import micropolisj.engine.TileConstants
 import micropolisj.engine.ToolPreview
 import micropolisj.engine.ToolResult
 import za.co.nieto.nietocity.game.GameController
+import za.co.nieto.nietocity.render.MapOverlay
 import za.co.nieto.nietocity.render.PowerOverlay
 import za.co.nieto.nietocity.render.TileIndex
 import za.co.nieto.nietocity.render.Viewport
@@ -97,6 +98,13 @@ class CityView @JvmOverloads constructor(
     private var renderThread: RenderThread? = null
     private var snapshot = IntArray(0)
     private var boltSnapshot = BooleanArray(0)
+    private var overlaySnapshot = IntArray(0)
+
+    // The active data overlay (None by default). Its translucent tint is drawn
+    // over the tile art (the shared MapOverlay computes the colour per tile).
+    @Volatile private var overlay: MapOverlay = MapOverlay.NONE
+    private val overlayPaint = Paint().apply { isAntiAlias = false }
+    private val overlayAlpha = 0xB0
 
     init {
         holder.addCallback(this)
@@ -124,6 +132,14 @@ class CityView @JvmOverloads constructor(
     }
 
     fun getViewport(): Viewport? = viewport
+
+    /** Set the data overlay tinting the map (MapOverlay.NONE turns it off). */
+    fun setMapOverlay(o: MapOverlay) {
+        overlay = o
+        requestRender()
+    }
+
+    fun getMapOverlay(): MapOverlay = overlay
 
     fun requestRender() {
         synchronized(renderLock) {
@@ -310,13 +326,18 @@ class CityView @JvmOverloads constructor(
             if (snapshot.size < cols * rows) {
                 snapshot = IntArray(cols * rows)
                 boltSnapshot = BooleanArray(cols * rows)
+                overlaySnapshot = IntArray(cols * rows)
             }
+            val ov = overlay
+            val overlayOn = ov != MapOverlay.NONE
             var i = 0
             for (row in firstRow..lastRow) {
                 for (col in firstCol..lastCol) {
-                    snapshot[i] = c.getTile(col, row).code and loMask
+                    val tile = c.getTile(col, row).code and loMask
+                    snapshot[i] = tile
                     // Blink a lightning bolt over unpowered zone centres (shared core).
                     boltSnapshot[i] = PowerOverlay.showBolt(c, col, row, cycle)
+                    overlaySnapshot[i] = if (overlayOn) ov.colorAt(c, col, row, tile) else 0
                     i++
                 }
             }
@@ -330,6 +351,7 @@ class CityView @JvmOverloads constructor(
             for (col in firstCol..lastCol) {
                 val tile = snapshot[i]
                 val bolt = boltSnapshot[i]
+                val ovColor = overlaySnapshot[i]
                 i++
                 val screenX = vp.tileScreenX(col)
                 if (tileIndex.hasImage(tile)) {
@@ -343,6 +365,13 @@ class CityView @JvmOverloads constructor(
                     src.set(0, yOff, TileIndex.TILE_SIZE, yOff + TileIndex.TILE_SIZE)
                     dst.set(screenX, screenY, screenX + tp, screenY + tp)
                     canvas.drawBitmap(atlas, src, dst, tilePaint)
+                }
+                if (ovColor != 0) {
+                    overlayPaint.color = (ovColor and 0x00FFFFFF) or (overlayAlpha shl 24)
+                    canvas.drawRect(
+                        screenX.toFloat(), screenY.toFloat(),
+                        (screenX + tp).toFloat(), (screenY + tp).toFloat(), overlayPaint
+                    )
                 }
             }
         }

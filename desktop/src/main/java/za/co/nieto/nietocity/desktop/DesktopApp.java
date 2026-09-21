@@ -32,7 +32,10 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelFormat;
@@ -222,8 +225,10 @@ public class DesktopApp extends Application
 		mapBtn.setStyle("-fx-text-fill: white; -fx-background-color: #444;");
 		mapBtn.setOnAction(e -> toggleMiniMap());
 
+		MenuButton overlayBtn = buildOverlayMenu();
+
 		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, selIconView, toolLbl, costLbl,
-			clearToolBtn, pauseBtn, speedBtn, mapBtn);
+			clearToolBtn, pauseBtn, speedBtn, mapBtn, overlayBtn);
 		status.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 		status.setPadding(new Insets(4, 8, 4, 8));
 		status.setStyle("-fx-background-color: #202020;");
@@ -234,6 +239,29 @@ public class DesktopApp extends Application
 		tickerLbl.setVisible(false);
 
 		return new VBox(status, tickerLbl);
+	}
+
+	private MenuButton buildOverlayMenu()
+	{
+		MenuButton mb = new MenuButton("Overlay");
+		mb.setFocusTraversable(false);
+		mb.setStyle("-fx-text-fill: white;");
+		ToggleGroup group = new ToggleGroup();
+		for (final MapOverlay ov : MapOverlay.values()) {
+			RadioMenuItem item = new RadioMenuItem(ov.label());
+			item.setToggleGroup(group);
+			item.setSelected(ov == overlay);
+			item.setOnAction(e -> selectOverlay(ov));
+			mb.getItems().add(item);
+		}
+		return mb;
+	}
+
+	private void selectOverlay(MapOverlay ov)
+	{
+		overlay = ov;
+		redraw();
+		refreshMiniMap();
 	}
 
 	private Label statusLabel()
@@ -647,6 +675,8 @@ public class DesktopApp extends Application
 
 	private int[] snapshot = new int[0];
 	private boolean[] boltSnapshot = new boolean[0];
+	private int[] overlaySnapshot = new int[0];
+	private static final double OVERLAY_ALPHA = 0xB0 / 255.0;
 
 	private void redraw()
 	{
@@ -670,13 +700,17 @@ public class DesktopApp extends Application
 			if (snapshot.length < cols * rows) {
 				snapshot = new int[cols * rows];
 				boltSnapshot = new boolean[cols * rows];
+				overlaySnapshot = new int[cols * rows];
 			}
+			boolean overlayOn = overlay != MapOverlay.NONE;
 			int i = 0;
 			for (int row = firstRow; row <= lastRow; row++) {
 				for (int col = firstCol; col <= lastCol; col++) {
-					snapshot[i] = city.getTile(col, row) & LOMASK;
+					int tile = city.getTile(col, row) & LOMASK;
+					snapshot[i] = tile;
 					// Blink a lightning bolt over unpowered zone centres (shared core).
 					boltSnapshot[i] = PowerOverlay.showBolt(city, col, row, cycle);
+					overlaySnapshot[i] = overlayOn ? overlay.colorAt(city, col, row, tile) : 0;
 					i++;
 				}
 			}
@@ -691,6 +725,7 @@ public class DesktopApp extends Application
 			for (int col = firstCol; col <= lastCol; col++) {
 				int tile = snapshot[i];
 				boolean bolt = boltSnapshot[i];
+				int ovColor = overlaySnapshot[i];
 				i++;
 				int screenX = viewport.tileScreenX(col);
 				if (tileIndex.hasImage(tile)) {
@@ -700,6 +735,11 @@ public class DesktopApp extends Application
 				if (bolt && boltImage) {
 					int yOff = tileIndex.frameOffsetY(PowerOverlay.LIGHTNINGBOLT, cycle);
 					gc.drawImage(tileImage(yOff, zoom), screenX, screenY);
+				}
+				if (ovColor != 0) {
+					gc.setFill(Color.rgb((ovColor >> 16) & 0xFF, (ovColor >> 8) & 0xFF,
+						ovColor & 0xFF, OVERLAY_ALPHA));
+					gc.fillRect(screenX, screenY, tp, tp);
 				}
 			}
 		}

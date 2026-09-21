@@ -15,12 +15,14 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.View
 import android.widget.ImageView
+import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import micropolisj.engine.MicropolisTool
 import za.co.nieto.nietocity.game.CurrencyFormat
 import za.co.nieto.nietocity.game.GameController
 import za.co.nieto.nietocity.game.GameStrings
+import za.co.nieto.nietocity.render.MapOverlay
 
 /**
  * Phase 3: a new random map shown in CityView, with a top status bar, a message
@@ -114,10 +116,50 @@ class MainActivity : Activity() {
         miniMap.bind(controller, cityView.getViewport())
         miniMap.onRecenter = { cityView.requestRender() }
         statusBar.setMenuVisible(true)
-        statusBar.onMenuClick = { toggleMiniMap() }
+        statusBar.onMenuClick = { showMenu() }
 
         refreshSpeed()
         refreshTool()
+    }
+
+    /** The overflow menu: mini map toggle and the data-overlay picker. */
+    private fun showMenu() {
+        val popup = PopupMenu(this, statusBar)
+        val menu = popup.menu
+        val miniOn = miniMap.visibility == View.VISIBLE
+        menu.add(0, ID_MINIMAP, 0, if (miniOn) "Hide mini map" else "Show mini map")
+
+        val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 1, "Overlay")
+        val current = cityView.getMapOverlay()
+        val overlays = MapOverlay.values()
+        for (idx in overlays.indices) {
+            val item = sub.add(GROUP_OVERLAY, ID_OVERLAY_BASE + idx, idx, overlays[idx].label())
+            item.isCheckable = true
+            item.isChecked = overlays[idx] == current
+        }
+        sub.setGroupCheckable(GROUP_OVERLAY, true, true)
+
+        popup.setOnMenuItemClickListener { item -> onMenuItem(item) }
+        popup.show()
+    }
+
+    private fun onMenuItem(item: android.view.MenuItem): Boolean {
+        if (item.itemId == ID_MINIMAP) {
+            toggleMiniMap()
+            return true
+        }
+        val idx = item.itemId - ID_OVERLAY_BASE
+        val overlays = MapOverlay.values()
+        if (idx in overlays.indices) {
+            selectOverlay(overlays[idx])
+            return true
+        }
+        return false
+    }
+
+    private fun selectOverlay(overlay: MapOverlay) {
+        cityView.setMapOverlay(overlay)
+        miniMap.setOverlay(overlay)
     }
 
     private fun toggleMiniMap() {
@@ -258,5 +300,9 @@ class MainActivity : Activity() {
         private const val TICK_MS = 250L
         private const val MESSAGE_MS = 4000L
         private const val BACK_WINDOW_MS = 2000L
+        private const val ID_MINIMAP = 1
+        private const val ID_OVERLAY_SUB = 2
+        private const val GROUP_OVERLAY = 10
+        private const val ID_OVERLAY_BASE = 100
     }
 }

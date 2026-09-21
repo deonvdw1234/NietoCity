@@ -102,8 +102,12 @@ Created by Nieto Software
       button, never over the top bar. Desktop: docked right panel toggled by the
       Map button. Both draw the viewport rectangle and re-centre on tap/drag.
       JUnit MiniMapTest (4): overview tap maps to the matching tile within one.
-- [ ] 3. Overlay layer (None + 8 overlays tint the main map and mini map; power
-      grid powered vs unpowered; picker in the same menu; off by default).
+- [x] 3. Overlay layer: render.MapOverlay (None + Population/Pollution/Crime/
+      Land value/Traffic/Power grid/Fire/Police) tints the MAIN map translucently
+      and replaces the mini map colours; ramp mirrors OverlayMapView (getCI);
+      power grid shows powered zones red, unpowered blue, lines grey. Phone: an
+      Overlay submenu in the status-bar overflow (with the mini map toggle).
+      Desktop: an Overlay MenuButton beside the Map toggle. Off by default.
 - [ ] 4. Budget dialog (tax + funding sliders, R read-outs, apply writes back;
       auto once a year with a persisted "don't show" checkbox; menu button).
       JUnit: setting tax + percents updates the engine budget fields.
