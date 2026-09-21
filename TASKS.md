@@ -181,8 +181,15 @@ Created by Nieto Software
       ~1.2s). Each renderer offsets the whole drawing by a few decaying random
       pixels while active (translate only; map coordinates untouched; the black
       fill hides the edges). Driven by the sim's per-tick frames, so no busy loop.
-- [ ] 6. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +
-      engine test count; fresh APK + JAR; note APK size change.
+- [x] 6. Gate green. `gradlew --rerun-tasks :engine:test :desktop:jar
+      assembleDebug` raw tail:
+        "BUILD SUCCESSFUL in 4s
+         43 actionable tasks: 43 executed"
+      Engine tests (XML reports): 48 total, 0 failures, 0 errors (Phase 4b's 45 +
+      SpriteImages 2 + Sound 1). NietoCity-debug.apk and NietoCity-desktop.jar
+      refreshed in the root (stamped 2026-09-21 10:08). APK size: 2 401 168 B
+      before Phase 5 -> 3 247 832 B after (+846 664 B, ~0.81 MiB) from the 61
+      sprite PNGs and 14 wavs.
 - [ ] 7. Docs: TASKS final; CHANGES top; README (disasters/sound/mute, triggered
       vs natural); THIRD_PARTY (sprites + sounds); CLAUDE one line.
 
