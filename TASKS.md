@@ -96,9 +96,12 @@ Created by Nieto Software
       getPoliceCoverage); GPL header kept; no logic change; recorded in
       CHANGES.md with a note that land value/traffic/fire/power were already
       publicly accessible so only these four were missing.
-- [ ] 2. Mini map panel (shared overview bitmap, viewport rect, tap/drag to
-      re-centre; phone corner overlay, desktop docked side panel). JUnit:
-      overview tap maps to the matching tile within one tile.
+- [x] 2. Mini map panel: shared render core (render.MiniMap builds the overview
+      ARGB pixels one-per-tile via render.TileColors; render.MapOverlay added for
+      task 3). Phone: MiniMapView corner overlay toggled from the status-bar ⋮
+      button, never over the top bar. Desktop: docked right panel toggled by the
+      Map button. Both draw the viewport rectangle and re-centre on tap/drag.
+      JUnit MiniMapTest (4): overview tap maps to the matching tile within one.
 - [ ] 3. Overlay layer (None + 8 overlays tint the main map and mini map; power
       grid powered vs unpowered; picker in the same menu; off by default).
 - [ ] 4. Budget dialog (tax + funding sliders, R read-outs, apply writes back;

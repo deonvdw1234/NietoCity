@@ -34,6 +34,7 @@ class MainActivity : Activity() {
     private lateinit var ticker: TextView
     private lateinit var cityView: CityView
     private lateinit var palette: ToolPaletteView
+    private lateinit var miniMap: MiniMapView
 
     private val ui = Handler(Looper.getMainLooper())
     private var lastStatusAt = 0L
@@ -50,6 +51,10 @@ class MainActivity : Activity() {
                 statusBar.update(controller.snapshot())
                 lastStatusAt = now
             }
+            if (miniMap.visibility == View.VISIBLE) {
+                miniMap.setViewport(cityView.getViewport())
+                miniMap.rebuild()
+            }
             pumpTicker(now)
             ui.postDelayed(this, TICK_MS)
         }
@@ -65,6 +70,7 @@ class MainActivity : Activity() {
         ticker = findViewById(R.id.ticker)
         cityView = findViewById(R.id.cityView)
         palette = findViewById(R.id.palette)
+        miniMap = findViewById(R.id.miniMap)
 
         val columns = if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) 1 else 4
         cityView.setController(controller)
@@ -103,9 +109,24 @@ class MainActivity : Activity() {
             controller.cycleSpeed()
             refreshSpeed()
         }
-        statusBar.setMenuVisible(false) // wired in Phase 4b task 7
+        // Mini map (overview) in a corner, toggled from the status bar. It re-centres
+        // the main view on tap/drag.
+        miniMap.bind(controller, cityView.getViewport())
+        miniMap.onRecenter = { cityView.requestRender() }
+        statusBar.setMenuVisible(true)
+        statusBar.onMenuClick = { toggleMiniMap() }
+
         refreshSpeed()
         refreshTool()
+    }
+
+    private fun toggleMiniMap() {
+        val show = miniMap.visibility != View.VISIBLE
+        miniMap.visibility = if (show) View.VISIBLE else View.GONE
+        if (show) {
+            miniMap.setViewport(cityView.getViewport())
+            miniMap.rebuild()
+        }
     }
 
     /** Reflect the controller's pause state and chosen speed in the status bar. */

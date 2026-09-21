@@ -58,6 +58,8 @@ import za.co.nieto.nietocity.game.GameController;
 import za.co.nieto.nietocity.game.GameStrings;
 import za.co.nieto.nietocity.game.QueryReport;
 import za.co.nieto.nietocity.game.StatusSnapshot;
+import za.co.nieto.nietocity.render.MapOverlay;
+import za.co.nieto.nietocity.render.MiniMap;
 import za.co.nieto.nietocity.render.PowerOverlay;
 import za.co.nieto.nietocity.render.TileIndex;
 import za.co.nieto.nietocity.render.Viewport;
@@ -92,6 +94,15 @@ public class DesktopApp extends Application
 	private Viewport viewport;
 	private Canvas canvas;
 	private Stage stage;
+	private BorderPane root;
+
+	// Mini map (docked overview panel).
+	private Canvas miniCanvas;
+	private VBox miniPanel;
+	private boolean miniVisible;
+	private WritableImage miniImage;
+	private int miniMapW, miniMapH;
+	private MapOverlay overlay = MapOverlay.NONE;
 
 	private Label dateLbl, fundsLbl, popLbl, toolLbl, costLbl, tickerLbl;
 	private ImageView selIconView;
@@ -132,10 +143,11 @@ public class DesktopApp extends Application
 		canvas.widthProperty().addListener((o, a, b) -> onResize());
 		canvas.heightProperty().addListener((o, a, b) -> onResize());
 
-		BorderPane root = new BorderPane();
+		this.root = new BorderPane();
 		root.setTop(buildTopBar());
 		root.setLeft(buildPalette());
 		root.setCenter(canvasPane);
+		buildMiniPanel();
 
 		Scene scene = new Scene(root, startW, startH, Color.BLACK);
 		installInput(scene);
@@ -205,8 +217,13 @@ public class DesktopApp extends Application
 		speedBtn.setStyle("-fx-text-fill: white; -fx-background-color: #444;");
 		speedBtn.setOnAction(e -> { controller.cycleSpeed(); refreshSpeed(); });
 
+		Button mapBtn = new Button("Map");
+		mapBtn.setFocusTraversable(false);
+		mapBtn.setStyle("-fx-text-fill: white; -fx-background-color: #444;");
+		mapBtn.setOnAction(e -> toggleMiniMap());
+
 		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, selIconView, toolLbl, costLbl,
-			clearToolBtn, pauseBtn, speedBtn);
+			clearToolBtn, pauseBtn, speedBtn, mapBtn);
 		status.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 		status.setPadding(new Insets(4, 8, 4, 8));
 		status.setStyle("-fx-background-color: #202020;");
@@ -251,6 +268,98 @@ public class DesktopApp extends Application
 		sp.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 		sp.setStyle("-fx-background: #101010;");
 		return sp;
+	}
+
+	// --- mini map (docked overview panel) ---
+
+	private static final int MINI_W = 220;
+	private static final int MINI_H = 190;
+
+	private void buildMiniPanel()
+	{
+		miniCanvas = new Canvas(MINI_W, MINI_H);
+		miniCanvas.setOnMousePressed(e -> recenterFromMini(e.getX(), e.getY()));
+		miniCanvas.setOnMouseDragged(e -> recenterFromMini(e.getX(), e.getY()));
+
+		Label title = new Label("Overview");
+		title.setStyle("-fx-text-fill: white;");
+		miniPanel = new VBox(4, title, miniCanvas);
+		miniPanel.setPadding(new Insets(6));
+		miniPanel.setStyle("-fx-background-color: #101010;");
+	}
+
+	private void toggleMiniMap()
+	{
+		miniVisible = !miniVisible;
+		root.setRight(miniVisible ? miniPanel : null);
+		if (miniVisible) {
+			refreshMiniMap();
+		}
+	}
+
+	/** Rebuild the overview image from the map and redraw the panel. */
+	private void refreshMiniMap()
+	{
+		if (!miniVisible) {
+			return;
+		}
+		Micropolis city = controller.getEngine();
+		int[] px;
+		synchronized (city) {
+			miniMapW = city.getWidth();
+			miniMapH = city.getHeight();
+			px = MiniMap.overviewPixels(city, overlay);
+		}
+		if (miniMapW <= 0 || miniMapH <= 0) {
+			return;
+		}
+		if (miniImage == null || (int) miniImage.getWidth() != miniMapW
+			|| (int) miniImage.getHeight() != miniMapH) {
+			miniImage = new WritableImage(miniMapW, miniMapH);
+		}
+		miniImage.getPixelWriter().setPixels(0, 0, miniMapW, miniMapH,
+			PixelFormat.getIntArgbInstance(), px, 0, miniMapW);
+
+		GraphicsContext gc = miniCanvas.getGraphicsContext2D();
+		gc.setFill(Color.BLACK);
+		gc.fillRect(0, 0, MINI_W, MINI_H);
+
+		double[] r = miniContentRect();
+		double left = r[0], top = r[1], w = r[2], h = r[3];
+		gc.drawImage(miniImage, left, top, w, h);
+
+		// Viewport rectangle.
+		double sx = w / miniMapW;
+		double sy = h / miniMapH;
+		gc.setStroke(Color.YELLOW);
+		gc.setLineWidth(1.5);
+		double vx = left + viewport.firstVisibleCol() * sx;
+		double vy = top + viewport.firstVisibleRow() * sy;
+		double vw = (viewport.lastVisibleCol() + 1 - viewport.firstVisibleCol()) * sx;
+		double vh = (viewport.lastVisibleRow() + 1 - viewport.firstVisibleRow()) * sy;
+		gc.strokeRect(vx, vy, vw, vh);
+	}
+
+	/** {left, top, width, height} of the aspect-correct overview inside the canvas. */
+	private double[] miniContentRect()
+	{
+		double scale = Math.min((double) MINI_W / miniMapW, (double) MINI_H / miniMapH);
+		double w = miniMapW * scale;
+		double h = miniMapH * scale;
+		return new double[] { (MINI_W - w) / 2, (MINI_H - h) / 2, w, h };
+	}
+
+	private void recenterFromMini(double px, double py)
+	{
+		if (miniMapW <= 0) {
+			return;
+		}
+		double[] r = miniContentRect();
+		int tileX = MiniMap.tileXForOverview((int) (px - r[0]), (int) r[2], miniMapW);
+		int tileY = MiniMap.tileYForOverview((int) (py - r[1]), (int) r[3], miniMapH);
+		viewport.centreOnTile(tileX, tileY);
+		redraw();
+		refreshMiniMap();
 	}
 
 	private Image icon(String fileName)
@@ -485,6 +594,9 @@ public class DesktopApp extends Application
 		if (now - lastStatusAt >= 1000) {
 			updateStatus();
 			lastStatusAt = now;
+		}
+		if (miniVisible) {
+			refreshMiniMap();
 		}
 		String latest = null;
 		String m = controller.pollMessage();
