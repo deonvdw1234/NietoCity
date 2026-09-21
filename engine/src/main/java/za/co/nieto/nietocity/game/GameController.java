@@ -118,6 +118,17 @@ public final class GameController
 		return city;
 	}
 
+	/**
+	 * Load a city from a classic binary .cty file into a fresh controller. The
+	 * seed/terrain are unknown for a loaded city (they are not stored in the file).
+	 */
+	public static GameController loadGame(java.io.File file) throws java.io.IOException
+	{
+		Micropolis city = new Micropolis();
+		city.load(file);
+		return new GameController(city);
+	}
+
 	/** The seed that generated this city's map. */
 	public long getSeed() { return seed; }
 

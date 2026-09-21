@@ -246,8 +246,11 @@ Created by Nieto Software
       - row-major writer: "fixpoint ... first differed at element [3125]"; drop
       resPop: "resPop expected:<1> but was:<0>" - then GREEN with the correct
       writer. Engine tests: 54 total, 0 failures.
-- [ ] 2. Writer (engine-package CityWriterV1, 27120 bytes) + game.CityFile
-      facade; save paused/on the engine thread; load via engine load().
+- [x] 2. Writer landed in task 1 (micropolisj.engine.CityWriterV1, 27120 bytes,
+      package-private access, no upstream file changed). game.CityFile facade:
+      save() snapshots under the engine lock (no tick tears it) and writes to a
+      .tmp then renames (atomic), load() delegates to the engine's load();
+      GameController.loadGame(File) builds a fresh controller from a .cty.
 - [ ] 3. Storage: Android <filesDir>/saves/<name>.cty + .png thumbnail + meta;
       desktop saves under user home + a file chooser. Never write into the repo.
 - [ ] 4. Save/Load screens from the menu (slot list w/ thumbnail/name/date/pop,
