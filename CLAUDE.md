@@ -18,6 +18,9 @@
 - Tool kinds: STROKE tools stay selected; ONE_SHOT tools (police, fire, stadium,
   seaport, coal, nuclear, airport) return to Pan after one successful placement
   (GameController.kindOf / maybeAutoClear).
+- Engine accessors: Phase 4b added four small read-only per-tile getters to
+  Micropolis (getPopulationDensityAt/getPollutionAt/getCrimeAt/getPoliceCoverage)
+  for the map overlays; no engine logic changed (see CHANGES.md).
 
 ## Toolchain (verified 2026-09-16)
 - JDK: 25.0.3 (Android Studio JBR at %JAVA_HOME%). Runs the Gradle daemon fine;

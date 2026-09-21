@@ -80,6 +80,30 @@ returns to pan mode.
 A selected-tool bar always shows the current tool's icon, name and cost with a
 large X that returns to Pan (it shows "Pan" when nothing is selected).
 
+### Speed, mini map, overlays and menu
+
+- Speed: the status bar has a pause/play toggle and a speed label you tap to
+  cycle Slow -> Normal -> Fast -> Ultra. Pause is separate, so resuming returns to
+  the chosen speed. On the PC, space pauses/plays and keys 1..4 pick the speed.
+- Mini map: an overview of the whole city (one pixel per tile) that shows the
+  current view as a rectangle; tap or drag on it to re-centre the main map. It is
+  a corner overlay on the phone and a docked side panel on the PC, toggled from
+  the menu.
+- Overlays: tint the map (and mini map) by population density, pollution, crime,
+  land value, traffic, the power grid (powered zones red, unpowered blue), or fire
+  and police coverage. Choose one - or None - from the menu. Off by default.
+- Menu: an overflow menu (the ⋮ button in the phone status bar; the "Menu" button
+  on the PC) holds the Budget, Evaluation and Graphs dialogs, the mini map toggle
+  and the overlay picker.
+- Budget dialog: sliders for the tax rate (0-20%) and road/fire/police funding,
+  with tax revenue, expenses and cash flow shown in rand; Apply saves them. It
+  opens automatically once a year unless you tick "Don't show automatically".
+- Evaluation dialog: the mayor's approval, city score and change, population and
+  change, city class, and the worst problems. Read-only.
+- Graphs dialog: line graphs of residential, commercial and industrial
+  population, crime, pollution and cash flow, with a 10-year / 120-year toggle and
+  a colour legend.
+
 Tools come in two kinds:
 - Stroke tools (bulldozer, wire, road, rail, park, and the R/C/I zones) stay
   selected so you can keep drawing. Roads, rail and wire follow your drag path, so
@@ -99,14 +123,18 @@ Tools come in two kinds:
 - Back button: closes the query dialog first, then the tools drawer; with nothing
   open, press Back three times within two seconds to be asked before exiting (one
   or two presses show a hint).
+- Status bar: the pause/play button and the speed label (tap to cycle), and the ⋮
+  button that opens the menu (Budget, Evaluation, Graphs, mini map, overlays).
 - An unpowered zone centre blinks a yellow lightning bolt until you wire it to
   power.
 
 ### PC (desktop)
 - Left-drag: place a tile or draw a stroke (with preview) when a tool is
   selected; pans when no tool is selected. Roads/rail/wire follow the drag path.
-- Right-drag or Space+drag: pan. Mouse wheel: zoom. Arrow keys: pan.
+- Right-drag: pan. Mouse wheel: zoom. Arrow keys: pan.
 - Right-click: query the tile (a dialog; Esc or OK to close).
 - The X in the status area returns to Pan.
-- Palette: a scrollable left column.
+- Space: pause/play. Keys 1-4: Slow / Normal / Fast / Ultra speed.
+- Palette: a scrollable left column. The "Menu" button opens Budget, Evaluation,
+  Graphs, the mini map and the overlay picker.
 - An unpowered zone centre blinks a yellow lightning bolt until it has power.

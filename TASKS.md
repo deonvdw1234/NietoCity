@@ -142,7 +142,9 @@ Created by Nieto Software
       TileIndex 4 + Viewport 4). NietoCity-debug.apk and NietoCity-desktop.jar in
       the project root were refreshed by the build's publish tasks (both stamped
       2026-09-21 09:21).
-- [ ] 9. Docs (TASKS final, CHANGES top, README controls, CLAUDE one line).
+- [x] 9. Docs: TASKS.md finalised; CHANGES.md Phase 4b entry at the top; README
+      Controls section gained speed, mini map, overlays, dialogs and the menu (and
+      the space=pause/1..4 keys); CLAUDE.md notes the overlay accessors.
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar

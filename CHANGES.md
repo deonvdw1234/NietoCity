@@ -5,6 +5,37 @@ Created by Nieto Software.
 
 ## 2026-09-21 - Phase 4b speed, mini map, overlays and dialogs
 
+- Speed control: `GameController` owns a chosen run speed (SLOW/NORMAL/FAST/
+  SUPER_FAST) and a separate pause; the engine clock runs at PAUSED while paused
+  else the chosen speed, using the `Speed` enum's animationDelay/simStepsPerUpdate
+  (no invented timings). Status bar gains a pause/play toggle and a tap-cycle
+  speed label; desktop adds keys (space = pause, 1..4 = speeds; Space+drag pan
+  dropped). The chosen speed persists on the retained controller for the session.
+- Mini map: shared `render.MiniMap` builds the whole-city overview one ARGB pixel
+  per tile from `render.TileColors` (a tile->colour classifier), and maps an
+  overview point back to a tile. Phone shows it as a corner overlay (never over
+  the status bar) toggled from the overflow menu; desktop docks it as a right-hand
+  panel. Both draw the viewport rectangle and re-centre the main view on tap/drag.
+- Overlays: shared `render.MapOverlay` (None + population, pollution, crime, land
+  value, traffic, power grid, fire and police coverage) tints the main map
+  translucently and recolours the mini map; the ramp mirrors MicropolisJ's
+  OverlayMapView. Picker lives in the overflow menu; off by default.
+- Budget dialog: shared `game.BudgetControl` reads (`generateBudget`) and writes
+  the engine's public budget fields; `preview` restores the fields so live
+  read-outs don't disturb the sim. Tax and funding sliders, R read-outs, Apply
+  writes back; auto-shows once a year unless a persisted "Don't show" checkbox is
+  set.
+- Evaluation dialog: shared `game.EvaluationReport` reads `CityEval` (approval,
+  score+delta, population+delta, class, top four problems + votes). Read-only.
+- Graphs dialog: shared `game.GraphData` extracts the six history series for the
+  10-year / 120-year windows, each auto-scaled; drawn natively (no chart library)
+  with a legend and a range toggle.
+- Menu: an overflow menu (phone status-bar button, desktop "Menu" MenuButton)
+  gathers the dialogs, the mini map toggle and the overlay picker.
+- City-class and problem display names, and the six graph series colours/labels,
+  are provided in the shared game layer (the original CityStrings bundle was not
+  part of the imported source; the graph colours match GuiStrings graph_color.*).
+
 Engine change (first time an imported `micropolisj.*` file is touched): added
 small READ-ONLY accessors to `micropolisj/engine/Micropolis.java` so the
 platform-neutral overlay / mini map render core can read the coarse overlay maps
