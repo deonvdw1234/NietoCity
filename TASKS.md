@@ -230,8 +230,11 @@ Created by Nieto Software
       Engine tests (XML reports): 52 total, 0 failures, 0 errors (Phase 5's 48 +
       MapGenTest 4). NietoCity-debug.apk (3 259 252 B) and NietoCity-desktop.jar
       refreshed in the root (stamped 2026-09-21 13:18).
-- [ ] 6. Docs: TASKS final; CHANGES top; README (New City, terrain, seeds);
-      CLAUDE one line (scenarios/save-load deferred and why).
+- [x] 6. Docs: TASKS.md finalised; CHANGES.md Phase 6a entry at the top (the
+      generator API + the New City screen); README gained a New City section
+      (screen, terrain controls, seeds, discard confirm); CLAUDE.md notes the
+      scenarios and save/load are later phases and why (no scenario data in the
+      engine source; Android lacks StAX so save/load will use classic binary .cty).
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar

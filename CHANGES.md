@@ -21,6 +21,13 @@ Auto/None/Low/High lake/river/tree levels) maps these to the engine values, and
 `GameController.newGame(level, seed, terrain)` / `buildCity(...)` generate
 deterministically from a seed (the same seed and settings reproduce the map).
 
+- New City screen: reached from the overflow menu on both platforms - difficulty,
+  the terrain controls, a seed field (shows the current seed; type one to
+  reproduce a map) and a Reroll button, with a live mini-map preview (shared
+  render.MiniMap / TileColors) regenerated off the UI thread on every change.
+  Start asks before discarding the running city (no save/load yet), then swaps the
+  controller to the new city and recentres the view.
+
 ## 2026-09-21 - Phase 5 disasters, sprites and sound
 
 - Sprite artwork: copied the 61 MicropolisJ sprite frame images (obj<id>-<frame>

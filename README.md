@@ -104,6 +104,18 @@ large X that returns to Pan (it shows "Pan" when nothing is selected).
   population, crime, pollution and cash flow, with a 10-year / 120-year toggle and
   a colour legend.
 
+### New City
+
+- Open "New City…" from the menu to generate a fresh map. Choose the difficulty
+  (Easy/Medium/Hard, which sets the starting funds), and the terrain: Island
+  (none/seldom/always) and the Lake, River and Trees amount (auto/none/low/high).
+- Every map has a seed. The seed field shows the current city's seed; type a seed
+  to reproduce that exact map, or press Reroll for a new random one. A live
+  preview thumbnail shows the map as you change the controls.
+- Start begins the new city. Because save/load is not available yet, it asks first
+  ("Start a new city? Your current city will be discarded.") - Cancel keeps your
+  current city.
+
 ### Disasters and sound
 
 - Disasters menu: the menu's Disasters submenu triggers Fire, Flood, Tornado,
