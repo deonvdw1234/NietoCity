@@ -19,12 +19,15 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
+import java.text.DateFormat
+import java.util.Date
 import za.co.nieto.nietocity.game.BudgetControl
 import za.co.nieto.nietocity.game.CurrencyFormat
 import za.co.nieto.nietocity.game.EvaluationReport
@@ -306,6 +309,128 @@ object AppDialogs {
             }
             .setNegativeButton("Cancel", null)
             .setOnDismissListener { preview.dispose() }
+            .show()
+    }
+
+    /** The Save screen: a name field (defaults to the current name), overwrite confirm. */
+    fun showSave(
+        context: Context,
+        defaultName: String,
+        exists: (String) -> Boolean,
+        onSave: (String) -> Unit
+    ) {
+        val field = EditText(context).apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            setText(defaultName)
+            setSelection(text.length)
+        }
+        val root = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            val p = dp(context, 16)
+            setPadding(p, dp(context, 8), p, dp(context, 8))
+            addView(label(context, "City name"))
+            addView(field)
+        }
+        AlertDialog.Builder(context)
+            .setTitle("Save City")
+            .setView(root)
+            .setPositiveButton("Save") { _, _ ->
+                val name = field.text.toString().trim().ifEmpty { defaultName }
+                if (exists(name)) {
+                    confirm(context, "Overwrite?", "A save named \"$name\" already exists. Overwrite it?",
+                        "Overwrite") { onSave(name) }
+                } else {
+                    onSave(name)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    /** The Load screen: a named-slot list with thumbnail, name, date and population. */
+    fun showLoad(
+        context: Context,
+        store: SaveStore,
+        onLoad: (SaveSlot) -> Unit
+    ) {
+        val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+        val scroll = ScrollView(context).apply { addView(container) }
+        val dialog = AlertDialog.Builder(context)
+            .setTitle("Load City")
+            .setView(scroll)
+            .setNegativeButton("Close", null)
+            .create()
+
+        fun rebuild() {
+            container.removeAllViews()
+            val slots = store.list()
+            if (slots.isEmpty()) {
+                container.addView(label(context, "No saved cities yet.").apply {
+                    setPadding(dp(context, 16), dp(context, 16), dp(context, 16), dp(context, 16))
+                })
+                return
+            }
+            for (slot in slots) {
+                container.addView(slotRow(context, slot,
+                    onClick = { dialog.dismiss(); onLoad(slot) },
+                    onDelete = {
+                        confirm(context, "Delete save?",
+                            "Delete \"${slot.meta.name}\"? This cannot be undone.", "Delete") {
+                            store.delete(slot.base)
+                            rebuild()
+                        }
+                    }))
+            }
+        }
+        rebuild()
+        dialog.show()
+    }
+
+    private fun slotRow(
+        context: Context, slot: SaveSlot, onClick: () -> Unit, onDelete: () -> Unit
+    ): View {
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(context, 8), dp(context, 8), dp(context, 8), dp(context, 8))
+            isClickable = true
+            setOnClickListener { onClick() }
+        }
+        val thumb = ImageView(context).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(context, 72), dp(context, 60))
+            if (slot.thumbnail != null) setImageBitmap(slot.thumbnail)
+            setBackgroundColor(0xFF000000.toInt())
+        }
+        row.addView(thumb)
+        val textCol = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            setPadding(dp(context, 10), 0, dp(context, 10), 0)
+        }
+        textCol.addView(label(context, slot.meta.name).apply { textSize = 16f })
+        val date = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
+            .format(Date(slot.meta.dateMillis))
+        textCol.addView(label(context, "$date · Pop ${slot.meta.population} · " +
+            CurrencyFormat.format(slot.meta.funds.toLong())).apply { textSize = 12f })
+        row.addView(textCol)
+        row.addView(TextView(context).apply {
+            text = "🗑"
+            textSize = 18f
+            setPadding(dp(context, 10), dp(context, 6), dp(context, 10), dp(context, 6))
+            isClickable = true
+            setOnClickListener { onDelete() }
+        })
+        return row
+    }
+
+    private fun confirm(
+        context: Context, title: String, message: String, positive: String, onYes: () -> Unit
+    ) {
+        AlertDialog.Builder(context)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(positive) { _, _ -> onYes() }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 

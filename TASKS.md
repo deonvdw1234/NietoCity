@@ -257,9 +257,12 @@ Created by Nieto Software
       three. Desktop DesktopSaveStore writes <user.home>/NietoCity/saves/<base>.cty
       + .meta (thumbnails rendered live; file chooser is task 4). Never writes
       into the repo or Dropbox.
-- [ ] 4. Save/Load screens from the menu (slot list w/ thumbnail/name/date/pop,
-      load confirm; save name + overwrite confirm; delete confirm; desktop
-      Open/Save-as chooser).
+- [x] 4. Save/Load screens from the overflow menu. Load: a named-slot list with
+      thumbnail/name/date/pop/funds; tap loads behind a "Load a city? Unsaved
+      changes will be lost." confirm; per-slot Delete behind a confirm. Save: a
+      name field (defaults to the current name) with an overwrite confirm. Desktop
+      adds "Open .cty…" and "Save as…" via a FileChooser; its slot thumbnails are
+      rendered live from each .cty.
 - [ ] 5. Wire New City + Save/Load: title follows the name; the 6a discard guard
       also offers Save first.
 - [ ] 6. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +

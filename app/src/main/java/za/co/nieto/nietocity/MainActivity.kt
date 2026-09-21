@@ -53,6 +53,8 @@ class MainActivity : Activity() {
     private var budgetDialogOpen = false
 
     private var soundPlayer: SoundPlayer? = null
+    private lateinit var saveStore: SaveStore
+    private var cityName = "My City"
 
     private val pump = object : Runnable {
         override fun run() {
@@ -142,6 +144,8 @@ class MainActivity : Activity() {
         // Random disasters: default on, persisted, applied to the engine's own flag.
         controller.setRandomDisastersEnabled(prefs().getBoolean(PREF_RANDOM, true))
 
+        saveStore = SaveStore(applicationContext)
+
         refreshSpeed()
         refreshTool()
     }
@@ -171,6 +175,8 @@ class MainActivity : Activity() {
         val popup = PopupMenu(this, statusBar)
         val menu = popup.menu
         menu.add(0, ID_NEW_CITY, 0, "New City…")
+        menu.add(0, ID_SAVE, 1, "Save…")
+        menu.add(0, ID_LOAD, 2, "Load…")
         menu.add(0, ID_BUDGET, 1, "Budget…")
         menu.add(0, ID_EVALUATION, 2, "Evaluation…")
         menu.add(0, ID_GRAPHS, 3, "Graphs…")
@@ -210,6 +216,8 @@ class MainActivity : Activity() {
     private fun onMenuItem(item: android.view.MenuItem): Boolean {
         when (item.itemId) {
             ID_NEW_CITY -> { showNewCityScreen(); return true }
+            ID_SAVE -> { showSaveScreen(); return true }
+            ID_LOAD -> { showLoadScreen(); return true }
             ID_BUDGET -> { showBudget(); return true }
             ID_EVALUATION -> { AppDialogs.showEvaluation(this, controller); return true }
             ID_GRAPHS -> { AppDialogs.showGraphs(this, controller); return true }
@@ -256,10 +264,14 @@ class MainActivity : Activity() {
         dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
     }
 
-    /** Replace the running city with a freshly generated one (task 4 adds the guard). */
     private fun applyNewCity(level: Int, seed: Long, cfg: za.co.nieto.nietocity.game.TerrainConfig) {
+        swapController(GameController.newGame(level, seed, cfg))
+        cityName = "New City"
+    }
+
+    /** Swap the running controller for a fresh one (new city or loaded city). */
+    private fun swapController(fresh: GameController) {
         val old = controller
-        val fresh = GameController.newGame(level, seed, cfg)
         // Carry over the player's session settings.
         fresh.setChosenSpeed(old.chosenSpeed)
         fresh.setPaused(old.isPaused)
@@ -275,6 +287,43 @@ class MainActivity : Activity() {
         controller.start()
         refreshSpeed()
         refreshTool()
+    }
+
+    private fun showSaveScreen() {
+        AppDialogs.showSave(this, cityName, { saveStore.exists(it) }) { name ->
+            try {
+                saveStore.save(name, controller)
+                cityName = name
+                Toast.makeText(this, "Saved \"$name\"", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "Could not save: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun showLoadScreen() {
+        AppDialogs.showLoad(this, saveStore) { slot -> confirmLoad(slot) }
+    }
+
+    private fun confirmLoad(slot: SaveSlot) {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Load a city?")
+            .setMessage("Unsaved changes will be lost.")
+            .setPositiveButton("Load") { _, _ -> applyLoad(slot) }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun applyLoad(slot: SaveSlot) {
+        val fresh = try {
+            GameController.loadGame(saveStore.ctyFile(slot.base))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Could not load: ${e.message}", Toast.LENGTH_LONG).show()
+            return
+        }
+        swapController(fresh)
+        cityName = slot.meta.name
+        Toast.makeText(this, "Loaded \"${slot.meta.name}\"", Toast.LENGTH_SHORT).show()
     }
 
     private fun triggerDisaster(index: Int) {
@@ -461,6 +510,8 @@ class MainActivity : Activity() {
         private const val ID_GRAPHS = 5
         private const val ID_MUTE = 6
         private const val ID_NEW_CITY = 11
+        private const val ID_SAVE = 12
+        private const val ID_LOAD = 13
         private const val ID_RANDOM_DISASTERS = 8
         private const val ID_MINIMAP = 1
         private const val ID_OVERLAY_SUB = 2

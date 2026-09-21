@@ -57,10 +57,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.util.prefs.Preferences;
 
 import micropolisj.engine.BudgetNumbers;
@@ -76,6 +78,7 @@ import za.co.nieto.nietocity.game.CurrencyFormat;
 import za.co.nieto.nietocity.game.EvaluationReport;
 import za.co.nieto.nietocity.game.GameController;
 import za.co.nieto.nietocity.game.GameStrings;
+import za.co.nieto.nietocity.game.CityFile;
 import za.co.nieto.nietocity.game.GraphData;
 import za.co.nieto.nietocity.game.QueryReport;
 import za.co.nieto.nietocity.game.TerrainConfig;
@@ -140,6 +143,9 @@ public class DesktopApp extends Application
 	private boolean budgetOpen;
 
 	private DesktopSoundPlayer soundPlayer;
+
+	private final DesktopSaveStore saveStore = new DesktopSaveStore();
+	private String cityName = "My City";
 
 	private Label dateLbl, fundsLbl, popLbl, toolLbl, costLbl, tickerLbl;
 	private ImageView selIconView;
@@ -298,6 +304,10 @@ public class DesktopApp extends Application
 
 		MenuItem newCity = new MenuItem("New City…");
 		newCity.setOnAction(e -> showNewCityDialog());
+		MenuItem save = new MenuItem("Save…");
+		save.setOnAction(e -> showSaveDialog());
+		MenuItem load = new MenuItem("Load…");
+		load.setOnAction(e -> showLoadDialog());
 		MenuItem budget = new MenuItem("Budget…");
 		budget.setOnAction(e -> showBudgetDialog());
 		MenuItem eval = new MenuItem("Evaluation…");
@@ -335,7 +345,7 @@ public class DesktopApp extends Application
 
 		Menu disasters = buildDisastersMenu();
 
-		mb.getItems().addAll(newCity, new SeparatorMenuItem(),
+		mb.getItems().addAll(newCity, save, load, new SeparatorMenuItem(),
 			budget, eval, graphs, disasters, new SeparatorMenuItem(),
 			miniToggle, overlayMenu, randomDisasters, mute);
 		return mb;
@@ -524,7 +534,14 @@ public class DesktopApp extends Application
 	/** Replace the running city with a freshly generated one. */
 	private void startNewCity(int level, long seed, TerrainConfig cfg)
 	{
-		GameController fresh = GameController.newGame(level, seed, cfg);
+		swapController(GameController.newGame(level, seed, cfg));
+		cityName = "New City";
+		updateStatus();
+	}
+
+	/** Swap the running controller for a fresh one (new city or loaded city). */
+	private void swapController(GameController fresh)
+	{
 		fresh.setChosenSpeed(controller.getChosenSpeed());
 		fresh.setPaused(controller.isPaused());
 		fresh.setRandomDisastersEnabled(controller.isRandomDisastersEnabled());
@@ -547,6 +564,213 @@ public class DesktopApp extends Application
 		if (miniVisible) {
 			refreshMiniMap();
 		}
+	}
+
+	// --- Save / Load ---
+
+	private void showSaveDialog()
+	{
+		TextField nameField = new TextField(cityName);
+		Button saveBtn = new Button("Save");
+		Button saveAsBtn = new Button("Save as…");
+		Button cancelBtn = new Button("Cancel");
+
+		HBox buttons = new HBox(8, saveBtn, saveAsBtn, cancelBtn);
+		buttons.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+		VBox content = new VBox(8, new Label("City name"), nameField, buttons);
+		content.setPadding(new Insets(12));
+
+		Stage dlg = new Stage();
+		dlg.initOwner(stage);
+		dlg.initModality(Modality.WINDOW_MODAL);
+		dlg.setTitle("Save City");
+		dlg.setScene(new Scene(content));
+
+		saveBtn.setOnAction(e -> {
+			String name = nameField.getText().trim();
+			if (name.isEmpty()) {
+				name = cityName;
+			}
+			final String fname = name;
+			if (saveStore.exists(fname) && !confirmYesNo("Overwrite?",
+				"A save named \"" + fname + "\" already exists. Overwrite it?", "Overwrite")) {
+				return;
+			}
+			try {
+				saveStore.save(fname, controller);
+				cityName = fname;
+				updateStatus();
+				dlg.close();
+			} catch (Exception ex) {
+				errorAlert("Could not save", ex);
+			}
+		});
+		saveAsBtn.setOnAction(e -> {
+			FileChooser fc = new FileChooser();
+			fc.setTitle("Save .cty");
+			fc.setInitialDirectory(saveStore.getDir());
+			fc.setInitialFileName(cityName + ".cty");
+			fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Classic city (*.cty)", "*.cty"));
+			File file = fc.showSaveDialog(stage);
+			if (file != null) {
+				try {
+					CityFile.save(controller.getEngine(), file);
+					dlg.close();
+				} catch (Exception ex) {
+					errorAlert("Could not save", ex);
+				}
+			}
+		});
+		cancelBtn.setOnAction(e -> dlg.close());
+		dlg.show();
+	}
+
+	private void showLoadDialog()
+	{
+		VBox list = new VBox(6);
+		ScrollPane scroll = new ScrollPane(list);
+		scroll.setFitToWidth(true);
+		scroll.setPrefSize(420, 360);
+
+		Button openBtn = new Button("Open .cty…");
+		Button closeBtn = new Button("Close");
+		HBox bottom = new HBox(8, openBtn, closeBtn);
+		bottom.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+
+		VBox content = new VBox(8, new Label("Saved cities"), scroll, bottom);
+		content.setPadding(new Insets(12));
+
+		Stage dlg = new Stage();
+		dlg.initOwner(stage);
+		dlg.initModality(Modality.WINDOW_MODAL);
+		dlg.setTitle("Load City");
+		dlg.setScene(new Scene(content));
+
+		Runnable rebuild = () -> populateSlots(list, dlg);
+		rebuild.run();
+
+		openBtn.setOnAction(e -> {
+			FileChooser fc = new FileChooser();
+			fc.setTitle("Open .cty");
+			fc.setInitialDirectory(saveStore.getDir());
+			fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Classic city (*.cty)", "*.cty"));
+			File file = fc.showOpenDialog(stage);
+			if (file != null && confirmLoadDiscard()) {
+				loadFile(file, baseName(file.getName()));
+				dlg.close();
+			}
+		});
+		closeBtn.setOnAction(e -> dlg.close());
+		dlg.show();
+	}
+
+	private void populateSlots(VBox list, Stage dlg)
+	{
+		list.getChildren().clear();
+		java.util.List<DesktopSaveStore.Slot> slots = saveStore.list();
+		if (slots.isEmpty()) {
+			list.getChildren().add(new Label("No saved cities yet."));
+			return;
+		}
+		for (final DesktopSaveStore.Slot slot : slots) {
+			ImageView thumb = new ImageView(thumbnailFor(slot.cty));
+			thumb.setFitWidth(72);
+			thumb.setFitHeight(60);
+			Label name = new Label(slot.meta.name);
+			name.setStyle("-fx-font-size: 14;");
+			String date = java.text.DateFormat.getDateTimeInstance(
+				java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT)
+				.format(new java.util.Date(slot.meta.dateMillis));
+			Label info = new Label(date + "  ·  Pop " + slot.meta.population
+				+ "  ·  " + CurrencyFormat.format(slot.meta.funds));
+			VBox text = new VBox(2, name, info);
+			Button loadBtn = new Button("Load");
+			loadBtn.setOnAction(e -> {
+				if (confirmLoadDiscard()) {
+					loadFile(slot.cty, slot.meta.name);
+					dlg.close();
+				}
+			});
+			Button delBtn = new Button("Delete");
+			delBtn.setOnAction(e -> {
+				if (confirmYesNo("Delete save?",
+					"Delete \"" + slot.meta.name + "\"? This cannot be undone.", "Delete")) {
+					saveStore.delete(slot.base);
+					populateSlots(list, dlg);
+				}
+			});
+			HBox row = new HBox(8, thumb, text, loadBtn, delBtn);
+			row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+			HBox.setHgrow(text, javafx.scene.layout.Priority.ALWAYS);
+			text.setMaxWidth(Double.MAX_VALUE);
+			list.getChildren().add(row);
+		}
+	}
+
+	/** A one-pixel-per-tile overview image for a .cty (loaded fresh), or null. */
+	private javafx.scene.image.Image thumbnailFor(File cty)
+	{
+		try {
+			Micropolis city = new Micropolis();
+			city.load(cty);
+			int w = city.getWidth(), h = city.getHeight();
+			int[] px = MiniMap.overviewPixels(city);
+			WritableImage img = new WritableImage(w, h);
+			img.getPixelWriter().setPixels(0, 0, w, h, PixelFormat.getIntArgbInstance(), px, 0, w);
+			return img;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	private void loadFile(File file, String name)
+	{
+		try {
+			GameController fresh = GameController.loadGame(file);
+			swapController(fresh);
+			cityName = name;
+			updateStatus();
+		} catch (Exception ex) {
+			errorAlert("Could not load", ex);
+		}
+	}
+
+	private boolean confirmLoadDiscard()
+	{
+		return confirmYesNo("Load a city?", "Unsaved changes will be lost.", "Load");
+	}
+
+	private boolean confirmYesNo(String title, String message, String yes)
+	{
+		Alert a = new Alert(Alert.AlertType.CONFIRMATION);
+		a.initOwner(stage);
+		a.setTitle(title);
+		a.setHeaderText(title);
+		a.setContentText(message);
+		javafx.scene.control.ButtonType yesBtn =
+			new javafx.scene.control.ButtonType(yes, javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
+		javafx.scene.control.ButtonType noBtn =
+			new javafx.scene.control.ButtonType("Cancel", javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
+		a.getButtonTypes().setAll(yesBtn, noBtn);
+		a.getDialogPane().lookupButton(noBtn).requestFocus();
+		java.util.Optional<javafx.scene.control.ButtonType> r = a.showAndWait();
+		return r.isPresent() && r.get() == yesBtn;
+	}
+
+	private void errorAlert(String title, Exception ex)
+	{
+		Alert a = new Alert(Alert.AlertType.ERROR);
+		a.initOwner(stage);
+		a.setTitle(title);
+		a.setHeaderText(title);
+		a.setContentText(String.valueOf(ex.getMessage()));
+		a.show();
+	}
+
+	private static String baseName(String fileName)
+	{
+		int dot = fileName.lastIndexOf('.');
+		return dot > 0 ? fileName.substring(0, dot) : fileName;
 	}
 
 	private Menu buildDisastersMenu()
@@ -1212,7 +1436,7 @@ public class DesktopApp extends Application
 			clearToolBtn.setVisible(true);
 			clearToolBtn.setManaged(true);
 		}
-		stage.setTitle("NietoCity - " + s.date);
+		stage.setTitle("NietoCity - " + cityName + " - " + s.date);
 	}
 
 	private void onResize()
