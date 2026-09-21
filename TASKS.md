@@ -91,8 +91,11 @@ Created by Nieto Software
       Space+drag pan dropped). Chosen speed persists on the retained controller
       for the session. JUnit SpeedTest (5): interval per speed, cycle order,
       pause separate, PAUSED stops ticks, null/PAUSED ignored by setChosenSpeed.
-- [ ] 1. Engine overlay accessors (small read-only per-coordinate accessors on
-      Micropolis; GPL header kept; recorded in CHANGES.md; no logic change).
+- [x] 1. Engine overlay accessors: added 4 small read-only per-tile getters to
+      Micropolis (getPopulationDensityAt, getPollutionAt, getCrimeAt,
+      getPoliceCoverage); GPL header kept; no logic change; recorded in
+      CHANGES.md with a note that land value/traffic/fire/power were already
+      publicly accessible so only these four were missing.
 - [ ] 2. Mini map panel (shared overview bitmap, viewport rect, tap/drag to
       re-centre; phone corner overlay, desktop docked side panel). JUnit:
       overview tap maps to the matching tile within one tile.

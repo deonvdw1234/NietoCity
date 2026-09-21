@@ -1147,6 +1147,39 @@ public class Micropolis
 		}
 	}
 
+	// --- Read-only overlay accessors (added by Nieto Software, Phase 4b) ---
+	//
+	// Small bounds-checked per-tile getters so the platform-neutral overlay/mini
+	// map render core can read these half- and eighth-size maps without reaching
+	// into the arrays or repeating the index scaling. Read-only; no simulation
+	// logic is changed. Land value, traffic and fire-station coverage already have
+	// public accessors above (getLandValue / getTrafficDensity /
+	// getFireStationCoverage) and the power grid is read via isTilePowered().
+
+	/** Population density (0-?) for the 2x2 block containing this tile. */
+	public int getPopulationDensityAt(int xpos, int ypos)
+	{
+		return testBounds(xpos, ypos) ? popDensity[ypos/2][xpos/2] : 0;
+	}
+
+	/** Pollution level (0-255) for the 2x2 block containing this tile. */
+	public int getPollutionAt(int xpos, int ypos)
+	{
+		return testBounds(xpos, ypos) ? pollutionMem[ypos/2][xpos/2] : 0;
+	}
+
+	/** Crime level (0-250) for the 2x2 block containing this tile. */
+	public int getCrimeAt(int xpos, int ypos)
+	{
+		return testBounds(xpos, ypos) ? crimeMem[ypos/2][xpos/2] : 0;
+	}
+
+	/** Police-station coverage (reach) for the 8x8 block containing this tile. */
+	public int getPoliceCoverage(int xpos, int ypos)
+	{
+		return testBounds(xpos, ypos) ? policeMapEffect[ypos/8][xpos/8] : 0;
+	}
+
 	//power, terrain, land value
 	void ptlScan()
 	{

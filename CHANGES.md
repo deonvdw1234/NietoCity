@@ -3,6 +3,30 @@
 Changes made to the imported Micropolis / MicropolisJ source, most recent first.
 Created by Nieto Software.
 
+## 2026-09-21 - Phase 4b speed, mini map, overlays and dialogs
+
+Engine change (first time an imported `micropolisj.*` file is touched): added
+small READ-ONLY accessors to `micropolisj/engine/Micropolis.java` so the
+platform-neutral overlay / mini map render core can read the coarse overlay maps
+without reaching into engine arrays. The GPL header is unchanged and no
+simulation logic is altered. Accessors added (most recent first):
+
+- `getPopulationDensityAt(int x, int y)` - popDensity for the 2x2 block (0 out of
+  bounds).
+- `getPollutionAt(int x, int y)` - pollutionMem for the 2x2 block.
+- `getCrimeAt(int x, int y)` - crimeMem for the 2x2 block.
+- `getPoliceCoverage(int x, int y)` - policeMapEffect (reach) for the 8x8 block.
+
+Investigation note: the phase brief listed powerMap, landValueMem, trfDensity,
+fireStMap and policeMap as the package-private maps needing accessors, but in
+this engine land value, traffic and fire-station coverage already have public
+accessors (`getLandValue`, `getTrafficDensity`, `getFireStationCoverage`), the
+power grid is read through the existing public `isTilePowered`, and pollution,
+crime, population density, fire reach (fireRate) and police reach
+(policeMapEffect) are already public fields. So only the four bounds-checked
+per-tile getters above were genuinely missing; they wrap the already-public
+`popDensity`, `pollutionMem`, `crimeMem` and `policeMapEffect`.
+
 ## 2026-09-17 - Phase 4a play feedback (first real city)
 
 - Road join: investigated first. The engine already joins orthogonally-adjacent
