@@ -29,6 +29,28 @@ which is our independent check for the writer we add. The stream is big-endian
    power (`checkPowerMap`), so a loaded city differs from the original on those
    transient bits by design - the tile's low ordinal (`z & LOMASK`) is preserved.
 
+Writer and save/load (built golden-test-first):
+
+- `micropolisj.engine.CityWriterV1` writes the 27120-byte stream in exactly that
+  order. It is a new Nieto-authored file in the engine package (so it can read the
+  same package-private fields the reader writes); no upstream file was changed.
+- `micropolisj.engine.CityFileV1RoundTripTest` is the golden test: it saves a
+  seeded, developed, 200-tick city through our writer and reloads it through the
+  engine's own upstream `load_v1` (the independent check), asserting the 27120
+  byte count, a byte-for-byte load fixpoint, tile-ordinal survival, and equal
+  funds/pop/time/tax/level/evaluation/history. Proven RED first with a row-major
+  and a misc-dropping writer, then GREEN.
+- `game.CityFile` is the platform-neutral facade: `save` snapshots under the
+  engine lock (no tick tears it) and writes to a `.tmp` then renames it (atomic);
+  `load` delegates to the engine's `load`. `GameController.loadGame(File)` builds
+  a fresh controller from a `.cty`. `game.SaveMeta` is a `.properties` sidecar.
+- Storage: Android keeps `<filesDir>/saves/<base>.cty` + a `.png` thumbnail +
+  `.meta`; desktop keeps `<user.home>/NietoCity/saves/<base>.cty` + `.meta` and a
+  file chooser for arbitrary locations. Saves never go into the repo or Dropbox.
+- Save/Load screens live in the overflow menu (slot list with thumbnail/name/
+  date/population, load and delete behind confirms; overwrite confirm on save).
+  The discard guard offers Save first / Proceed / Cancel.
+
 ## 2026-09-21 - Phase 6a map generator and New City screen
 
 Engine change: added a small public terrain-config API to

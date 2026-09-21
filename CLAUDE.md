@@ -24,10 +24,12 @@
 - Sprites and audio (Phase 5) are bundled GPL assets from the MicropolisJ source
   (engine resources /sprites and /sounds); played offline only, best-effort, no
   network (see THIRD_PARTY.md).
-- Deferred to later phases: the eight scenarios (no scenario data in our engine
-  source) and save/load. Save/load will use the classic binary .cty format
-  because Android lacks StAX (javax.xml.stream), so the engine's XML .cty
-  reader/writer cannot run on the phone.
+- Save/load (Phase 6b) is the classic binary v1 .cty (exactly 27120 bytes, no
+  header): micropolisj.engine.CityWriterV1 writes it, the engine's own load_v1
+  reads it (golden round-trip test), and it round-trips history and interchanges
+  with desktop Micropolis / classic SimCity .cty. Binary (not the engine's XML
+  .cty) because Android lacks StAX (javax.xml.stream). The eight scenarios remain
+  deferred (no scenario data in our engine source).
 
 ## Toolchain (verified 2026-09-16)
 - JDK: 25.0.3 (Android Studio JBR at %JAVA_HOME%). Runs the Gradle daemon fine;

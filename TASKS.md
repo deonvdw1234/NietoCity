@@ -275,8 +275,11 @@ Created by Nieto Software
       CityFileV1RoundTripTest 2, incl. the 27120-byte count + golden fixpoint).
       NietoCity-debug.apk (3 271 276 B) and NietoCity-desktop.jar refreshed in the
       root (stamped 2026-09-21 13:44).
-- [ ] 7. Docs: TASKS; CHANGES top (format + writer); README (save/load, where
-      saves live, .cty interchange); CLAUDE one line.
+- [x] 7. Docs: TASKS.md finalised; CHANGES.md Phase 6b entry at the top (format +
+      writer + golden test + facade/storage/screens); README gained a Save and
+      Load section (menu, where saves live, .cty interchange with desktop
+      Micropolis); CLAUDE.md notes .cty is classic binary v1, round-trips history
+      and interchanges with the engine's own reader.
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar

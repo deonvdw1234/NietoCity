@@ -116,6 +116,22 @@ large X that returns to Pan (it shows "Pan" when nothing is selected).
   ("Start a new city? Your current city will be discarded.") - Cancel keeps your
   current city.
 
+### Save and Load
+
+- Save and Load are in the menu. Save asks for a name (the current city's name by
+  default) and confirms before overwriting an existing save. Load shows your saved
+  cities as a list with a thumbnail, name, date and population; tap one to load it
+  (you are asked first, and can Save first). Delete a save from its row.
+- Where saves live: on Android, in the app's private storage
+  (`<app files>/saves/`), so they are removed if you uninstall the app. On the PC,
+  in `Documents`-adjacent `NietoCity/saves` under your home folder; "Save as…" and
+  "Open .cty…" let you read or write a `.cty` anywhere. Saves are never written
+  into the project or Dropbox.
+- Interchange: the `.cty` files are the classic binary Micropolis/SimCity v1
+  format (exactly 27120 bytes), so a city saved here opens in desktop Micropolis
+  and, if you have any classic SimCity/Micropolis `.cty`, it opens here. (Loading
+  clears a few transient tile bits and rescans power, as the format intends.)
+
 ### Disasters and sound
 
 - Disasters menu: the menu's Disasters submenu triggers Fire, Flood, Tornado,
