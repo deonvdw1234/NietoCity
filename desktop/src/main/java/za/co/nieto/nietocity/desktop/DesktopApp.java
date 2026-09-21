@@ -65,6 +65,7 @@ import micropolisj.engine.ToolPreview;
 import micropolisj.engine.ToolResult;
 import za.co.nieto.nietocity.game.BudgetControl;
 import za.co.nieto.nietocity.game.CurrencyFormat;
+import za.co.nieto.nietocity.game.EvaluationReport;
 import za.co.nieto.nietocity.game.GameController;
 import za.co.nieto.nietocity.game.GameStrings;
 import za.co.nieto.nietocity.game.QueryReport;
@@ -246,8 +247,11 @@ public class DesktopApp extends Application
 		Button budgetBtn = topButton("Budget");
 		budgetBtn.setOnAction(e -> showBudgetDialog());
 
+		Button evalBtn = topButton("Evaluation");
+		evalBtn.setOnAction(e -> showEvaluationDialog());
+
 		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, selIconView, toolLbl, costLbl,
-			clearToolBtn, pauseBtn, speedBtn, mapBtn, overlayBtn, budgetBtn);
+			clearToolBtn, pauseBtn, speedBtn, mapBtn, overlayBtn, budgetBtn, evalBtn);
 		status.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 		status.setPadding(new Insets(4, 8, 4, 8));
 		status.setStyle("-fx-background-color: #202020;");
@@ -663,6 +667,39 @@ public class DesktopApp extends Application
 	{
 		autoShowBudget = v;
 		prefs.putBoolean("autoBudget", v);
+	}
+
+	/** The evaluation dialog: approval, score, population, class and top problems.
+	 *  Read-only; closes on OK or Esc. */
+	private void showEvaluationDialog()
+	{
+		EvaluationReport r = EvaluationReport.of(controller.getEngine());
+		StringBuilder sb = new StringBuilder();
+		sb.append("Is the mayor doing a good job?\n");
+		sb.append("  Yes: ").append(r.approveYes).append("%    No: ").append(r.approveNo).append("%\n\n");
+		sb.append("City score: ").append(r.score).append(" (").append(signed(r.scoreDelta)).append(")\n");
+		sb.append("Population: ").append(r.population).append(" (").append(signed(r.populationDelta)).append(")\n");
+		sb.append("Class: ").append(r.cityClass).append("\n\n");
+		sb.append("What are the worst problems?\n");
+		if (r.problems.length == 0) {
+			sb.append("  (none reported)");
+		} else {
+			for (int i = 0; i < r.problems.length; i++) {
+				sb.append("  ").append(i + 1).append(". ").append(r.problems[i]);
+				if (i < r.problems.length - 1) sb.append('\n');
+			}
+		}
+		Alert a = new Alert(Alert.AlertType.INFORMATION);
+		a.initOwner(stage);
+		a.setTitle("City Evaluation");
+		a.setHeaderText("City Evaluation");
+		a.setContentText(sb.toString());
+		a.show();
+	}
+
+	private static String signed(int v)
+	{
+		return v >= 0 ? "+" + v : Integer.toString(v);
 	}
 
 	private static Speed speedForKey(KeyCode c)

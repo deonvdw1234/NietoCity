@@ -19,6 +19,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import za.co.nieto.nietocity.game.BudgetControl
 import za.co.nieto.nietocity.game.CurrencyFormat
+import za.co.nieto.nietocity.game.EvaluationReport
 import za.co.nieto.nietocity.game.GameController
 
 /** Builders for the classic city dialogs, shared by the status-bar menu. */
@@ -113,6 +114,30 @@ object AppDialogs {
             .setOnDismissListener { onDismiss?.invoke() }
             .show()
     }
+
+    /** The evaluation dialog: approval, score, population, class and top problems.
+     *  Read-only; closes on OK, Back or tap-outside. */
+    fun showEvaluation(context: Context, controller: GameController) {
+        val r = EvaluationReport.of(controller.engine)
+        val sb = StringBuilder()
+        sb.append("Is the mayor doing a good job?\n")
+        sb.append("  Yes: ${r.approveYes}%    No: ${r.approveNo}%\n\n")
+        sb.append("City score: ${r.score} (${signed(r.scoreDelta)})\n")
+        sb.append("Population: ${r.population} (${signed(r.populationDelta)})\n")
+        sb.append("Class: ${r.cityClass}\n\n")
+        sb.append("What are the worst problems?\n")
+        if (r.problems.isEmpty()) {
+            sb.append("  (none reported)")
+        } else {
+            for (i in r.problems.indices) {
+                sb.append("  ${i + 1}. ${r.problems[i]}")
+                if (i < r.problems.size - 1) sb.append('\n')
+            }
+        }
+        titledMessage(context, "City Evaluation", sb.toString()).show()
+    }
+
+    private fun signed(v: Int): String = if (v >= 0) "+$v" else v.toString()
 
     // --- small view helpers ---
 

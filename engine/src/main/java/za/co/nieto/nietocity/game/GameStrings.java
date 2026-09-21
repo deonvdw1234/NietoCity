@@ -13,12 +13,49 @@ import java.text.MessageFormat;
 import java.util.Calendar;
 import java.util.ResourceBundle;
 
+import micropolisj.engine.CityProblem;
 import micropolisj.engine.MicropolisMessage;
 import micropolisj.engine.MicropolisTool;
 import micropolisj.engine.Speed;
 
 public final class GameStrings
 {
+	/**
+	 * City-size class name (CityEval.cityClass 0..5). The original reads these from
+	 * a CityStrings bundle that was not part of the imported source, so the names
+	 * are provided here (matching the engine's doPopNum thresholds).
+	 */
+	public static String cityClassName(int cityClass)
+	{
+		switch (cityClass) {
+		case 0:  return "Village";
+		case 1:  return "Town";
+		case 2:  return "City";
+		case 3:  return "Capital";
+		case 4:  return "Metropolis";
+		case 5:  return "Megalopolis";
+		default: return "Village";
+		}
+	}
+
+	/** Display name for a city problem (the CityStrings bundle was not imported). */
+	public static String problemName(CityProblem p)
+	{
+		if (p == null) {
+			return "";
+		}
+		switch (p) {
+		case CRIME:        return "Crime";
+		case POLLUTION:    return "Pollution";
+		case HOUSING:      return "Housing costs";
+		case TAXES:        return "Taxes";
+		case TRAFFIC:      return "Traffic";
+		case UNEMPLOYMENT: return "Unemployment";
+		case FIRE:         return "Fire";
+		default:           return p.name();
+		}
+	}
+
 	/** Short display name for a simulation speed (status bar speed label). */
 	public static String speedName(Speed speed)
 	{

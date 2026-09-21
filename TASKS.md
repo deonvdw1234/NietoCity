@@ -117,8 +117,11 @@ Created by Nieto Software
       Preferences); always reachable from the menu/Budget button. JUnit
       BudgetControlTest (4): apply writes + clamps the fields; preview is
       side-effect-free and reflects the proposed tax rate.
-- [ ] 5. Evaluation dialog (approval, score+delta, pop+delta, class, top four
-      problems + votes; read-only, menu button, closes on tap/Esc).
+- [x] 5. Evaluation dialog: shared game.EvaluationReport reads CityEval under the
+      lock (approval yes/no, score+delta, population+delta, city class, top four
+      problems + votes). Read-only dialog on both platforms (menu/Evaluation
+      button); closes on OK/Back/Esc. Class and problem names are provided in
+      GameStrings (the original CityStrings bundle was not imported).
 - [ ] 6. Graphs dialog (res/com/ind/crime/pollution/money line graphs, 10y/120y
       toggle, native draw, legend).
 - [ ] 7. Menu (overflow holding Budget, Evaluation, Graphs, mini map toggle,
