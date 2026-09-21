@@ -9,19 +9,28 @@ package za.co.nieto.nietocity
 
 import android.app.AlertDialog
 import android.content.Context
+import android.content.res.Configuration
+import android.text.InputType
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.SeekBar
+import android.widget.Spinner
 import android.widget.TextView
 import za.co.nieto.nietocity.game.BudgetControl
 import za.co.nieto.nietocity.game.CurrencyFormat
 import za.co.nieto.nietocity.game.EvaluationReport
 import za.co.nieto.nietocity.game.GameController
+import za.co.nieto.nietocity.game.TerrainConfig
+import java.util.Random
 
 /** Builders for the classic city dialogs, shared by the status-bar menu. */
 object AppDialogs {
@@ -167,6 +176,184 @@ object AppDialogs {
             .setView(root)
             .setPositiveButton(android.R.string.ok, null)
             .show()
+    }
+
+    /**
+     * The New City screen: difficulty, terrain controls (island, lake, river,
+     * trees), a seed field (shows the current seed; type one to reproduce a map)
+     * and a Reroll button, plus a live preview thumbnail. Start calls back with
+     * the chosen level, seed and terrain.
+     */
+    fun showNewCity(
+        context: Context,
+        current: GameController,
+        onStart: (Int, Long, TerrainConfig) -> Unit
+    ) {
+        val cfg0 = current.terrainConfig
+        val landscape =
+            context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+        // Difficulty.
+        val difficulty = RadioGroup(context).apply { orientation = LinearLayout.HORIZONTAL }
+        val diffEasy = radio(context, "Easy")
+        val diffMedium = radio(context, "Medium")
+        val diffHard = radio(context, "Hard")
+        difficulty.addView(diffEasy); difficulty.addView(diffMedium); difficulty.addView(diffHard)
+        when (current.gameLevel) {
+            GameController.LEVEL_MEDIUM -> diffMedium.isChecked = true
+            GameController.LEVEL_HARD -> diffHard.isChecked = true
+            else -> diffEasy.isChecked = true
+        }
+
+        val island = spinner(context, arrayOf("None", "Seldom", "Always"), cfg0.island.ordinal)
+        val lake = spinner(context, LEVEL_OPTIONS, cfg0.lake.ordinal)
+        val river = spinner(context, LEVEL_OPTIONS, cfg0.river.ordinal)
+        val trees = spinner(context, LEVEL_OPTIONS, cfg0.trees.ordinal)
+
+        val seedField = EditText(context).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED
+            setText(current.seed.toString())
+        }
+        val reroll = Button(context).apply {
+            text = "Reroll"
+            setOnClickListener { seedField.setText(Random().nextLong().toString()) }
+        }
+
+        val preview = za.co.nieto.nietocity.MiniMapPreview(context)
+
+        // Build the form column.
+        val form = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(label(context, "Difficulty"))
+            addView(difficulty)
+            addView(labeledRow(context, "Island", island))
+            addView(labeledRow(context, "Lake", lake))
+            addView(labeledRow(context, "River", river))
+            addView(labeledRow(context, "Trees", trees))
+            addView(label(context, "Seed"))
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                seedField.layoutParams = LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                addView(seedField)
+                addView(reroll)
+            })
+        }
+
+        fun readConfig(): TerrainConfig = TerrainConfig(
+            TerrainConfig.Island.values()[island.selectedItemPosition],
+            TerrainConfig.Level.values()[lake.selectedItemPosition],
+            TerrainConfig.Level.values()[river.selectedItemPosition],
+            TerrainConfig.Level.values()[trees.selectedItemPosition]
+        )
+
+        fun readSeed(): Long =
+            seedField.text.toString().trim().toLongOrNull() ?: Random().nextLong()
+
+        fun refreshPreview() {
+            preview.regenerate(readLevel(diffEasy, diffMedium, diffHard), readSeed(), readConfig())
+        }
+
+        // Regenerate the preview whenever a control changes.
+        val changed = { refreshPreview() }
+        difficulty.setOnCheckedChangeListener { _, _ -> changed() }
+        island.onItemSelected(changed); lake.onItemSelected(changed)
+        river.onItemSelected(changed); trees.onItemSelected(changed)
+        seedField.addTextChangedListener(SimpleWatcher(changed))
+        refreshPreview()
+
+        val previewBox = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            addView(label(context, "Preview"))
+            preview.layoutParams = LinearLayout.LayoutParams(dp(context, 160), dp(context, 134))
+            addView(preview)
+        }
+
+        // Portrait: one scrollable column. Landscape: form beside the preview.
+        val content: View = if (landscape) {
+            LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                val pad = dp(context, 12)
+                setPadding(pad, dp(context, 8), pad, dp(context, 8))
+                form.layoutParams = LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                addView(ScrollView(context).apply {
+                    layoutParams = LinearLayout.LayoutParams(0,
+                        LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+                    addView(form)
+                })
+                addView(previewBox)
+            }
+        } else {
+            ScrollView(context).apply {
+                addView(LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    val pad = dp(context, 16)
+                    setPadding(pad, dp(context, 8), pad, dp(context, 8))
+                    addView(form)
+                    addView(spacer(context))
+                    addView(previewBox)
+                })
+            }
+        }
+
+        AlertDialog.Builder(context)
+            .setTitle("New City")
+            .setView(content)
+            .setPositiveButton("Start") { _, _ ->
+                onStart(readLevel(diffEasy, diffMedium, diffHard), readSeed(), readConfig())
+            }
+            .setNegativeButton("Cancel", null)
+            .setOnDismissListener { preview.dispose() }
+            .show()
+    }
+
+    private fun readLevel(easy: RadioButton, medium: RadioButton, hard: RadioButton): Int =
+        when {
+            hard.isChecked -> GameController.LEVEL_HARD
+            medium.isChecked -> GameController.LEVEL_MEDIUM
+            else -> GameController.LEVEL_EASY
+        }
+
+    private val LEVEL_OPTIONS = arrayOf("Auto", "None", "Low", "High")
+
+    private fun radio(context: Context, text: String): RadioButton =
+        RadioButton(context).apply {
+            this.text = text
+            setTextColor(0xFFFFFFFF.toInt())
+        }
+
+    private fun spinner(context: Context, options: Array<String>, selected: Int): Spinner =
+        Spinner(context).apply {
+            adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, options)
+            setSelection(selected.coerceIn(0, options.size - 1))
+        }
+
+    private fun labeledRow(context: Context, text: String, control: View): LinearLayout =
+        LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            val lbl = label(context, text)
+            lbl.layoutParams = LinearLayout.LayoutParams(dp(context, 64),
+                LinearLayout.LayoutParams.WRAP_CONTENT)
+            addView(lbl)
+            control.layoutParams = LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            addView(control)
+        }
+
+    private fun Spinner.onItemSelected(action: () -> Unit) {
+        onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: android.widget.AdapterView<*>?, v: View?, pos: Int, id: Long) = action()
+            override fun onNothingSelected(p: android.widget.AdapterView<*>?) {}
+        }
+    }
+
+    private class SimpleWatcher(val action: () -> Unit) : android.text.TextWatcher {
+        override fun afterTextChanged(s: android.text.Editable?) = action()
+        override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+        override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
     }
 
     // --- small view helpers ---

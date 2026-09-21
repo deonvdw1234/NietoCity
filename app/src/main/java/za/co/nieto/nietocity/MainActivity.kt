@@ -170,9 +170,10 @@ class MainActivity : Activity() {
     private fun showMenu() {
         val popup = PopupMenu(this, statusBar)
         val menu = popup.menu
-        menu.add(0, ID_BUDGET, 0, "Budget…")
-        menu.add(0, ID_EVALUATION, 1, "Evaluation…")
-        menu.add(0, ID_GRAPHS, 2, "Graphs…")
+        menu.add(0, ID_NEW_CITY, 0, "New City…")
+        menu.add(0, ID_BUDGET, 1, "Budget…")
+        menu.add(0, ID_EVALUATION, 2, "Evaluation…")
+        menu.add(0, ID_GRAPHS, 3, "Graphs…")
         val miniOn = miniMap.visibility == View.VISIBLE
         menu.add(0, ID_MINIMAP, 4, if (miniOn) "Hide mini map" else "Show mini map")
 
@@ -208,6 +209,7 @@ class MainActivity : Activity() {
 
     private fun onMenuItem(item: android.view.MenuItem): Boolean {
         when (item.itemId) {
+            ID_NEW_CITY -> { showNewCityScreen(); return true }
             ID_BUDGET -> { showBudget(); return true }
             ID_EVALUATION -> { AppDialogs.showEvaluation(this, controller); return true }
             ID_GRAPHS -> { AppDialogs.showGraphs(this, controller); return true }
@@ -232,6 +234,33 @@ class MainActivity : Activity() {
     private fun selectOverlay(overlay: MapOverlay) {
         cityView.setMapOverlay(overlay)
         miniMap.setOverlay(overlay)
+    }
+
+    private fun showNewCityScreen() {
+        AppDialogs.showNewCity(this, controller) { level, seed, cfg ->
+            applyNewCity(level, seed, cfg)
+        }
+    }
+
+    /** Replace the running city with a freshly generated one (task 4 adds the guard). */
+    private fun applyNewCity(level: Int, seed: Long, cfg: za.co.nieto.nietocity.game.TerrainConfig) {
+        val old = controller
+        val fresh = GameController.newGame(level, seed, cfg)
+        // Carry over the player's session settings.
+        fresh.setChosenSpeed(old.chosenSpeed)
+        fresh.setPaused(old.isPaused)
+        fresh.setRandomDisastersEnabled(old.isRandomDisastersEnabled)
+        soundPlayer?.let { fresh.setSoundPlayer(it) }
+
+        old.stop()
+        controller = fresh
+        cityView.setController(controller)
+        cityView.resetViewportToMapCentre()
+        miniMap.bind(controller, cityView.getViewport())
+        lastBudgetYear = currentYear()
+        controller.start()
+        refreshSpeed()
+        refreshTool()
     }
 
     private fun triggerDisaster(index: Int) {
@@ -417,6 +446,7 @@ class MainActivity : Activity() {
         private const val ID_EVALUATION = 4
         private const val ID_GRAPHS = 5
         private const val ID_MUTE = 6
+        private const val ID_NEW_CITY = 11
         private const val ID_RANDOM_DISASTERS = 8
         private const val ID_MINIMAP = 1
         private const val ID_OVERLAY_SUB = 2

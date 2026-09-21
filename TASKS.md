@@ -207,8 +207,12 @@ Created by Nieto Software
       Auto/None/Low/High levels). JUnit MapGenTest (4): same seed+settings ->
       identical map, different seeds differ, seed remembered, trees-off removes
       trees.
-- [ ] 2. New City screen (menu "New City"): difficulty, terrain controls, seed
-      field + Reroll; phone scrollable form, landscape/desktop two-column.
+- [x] 2. New City screen (overflow menu "New City…"): difficulty Easy/Medium/Hard,
+      terrain controls (Island none/seldom/always; Lake/River/Trees auto/none/
+      low/high), a seed field showing the current seed (type to reproduce) and a
+      Reroll button, plus a preview thumbnail. Phone portrait a scrollable column,
+      landscape and desktop a two-column form. Start swaps to the new city and
+      recentres the view (the discard confirm comes in task 4).
 - [ ] 3. Live preview: mini-map thumbnail regenerated off-thread on any change.
 - [ ] 4. Start + discard guard (confirm before discarding a running city); swap
       the controller and reset the viewport to centre.

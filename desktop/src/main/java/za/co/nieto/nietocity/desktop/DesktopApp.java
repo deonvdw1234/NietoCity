@@ -33,14 +33,17 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.CheckMenuItem;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -75,6 +78,7 @@ import za.co.nieto.nietocity.game.GameController;
 import za.co.nieto.nietocity.game.GameStrings;
 import za.co.nieto.nietocity.game.GraphData;
 import za.co.nieto.nietocity.game.QueryReport;
+import za.co.nieto.nietocity.game.TerrainConfig;
 import za.co.nieto.nietocity.game.StatusSnapshot;
 import za.co.nieto.nietocity.render.MapOverlay;
 import za.co.nieto.nietocity.render.MiniMap;
@@ -292,6 +296,8 @@ public class DesktopApp extends Application
 		mb.setFocusTraversable(false);
 		mb.setStyle("-fx-text-fill: white;");
 
+		MenuItem newCity = new MenuItem("New City…");
+		newCity.setOnAction(e -> showNewCityDialog());
 		MenuItem budget = new MenuItem("Budget…");
 		budget.setOnAction(e -> showBudgetDialog());
 		MenuItem eval = new MenuItem("Evaluation…");
@@ -329,7 +335,8 @@ public class DesktopApp extends Application
 
 		Menu disasters = buildDisastersMenu();
 
-		mb.getItems().addAll(budget, eval, graphs, disasters, new SeparatorMenuItem(),
+		mb.getItems().addAll(newCity, new SeparatorMenuItem(),
+			budget, eval, graphs, disasters, new SeparatorMenuItem(),
 			miniToggle, overlayMenu, randomDisasters, mute);
 		return mb;
 	}
@@ -339,6 +346,166 @@ public class DesktopApp extends Application
 		overlay = ov;
 		redraw();
 		refreshMiniMap();
+	}
+
+	private static final String[] LEVEL_OPTIONS = { "Auto", "None", "Low", "High" };
+
+	/**
+	 * The New City screen: difficulty, terrain controls, a seed field (shows the
+	 * current seed; type one to reproduce) and Reroll, with a live preview. A
+	 * two-column form. Start begins the new city (task 4 adds the discard guard).
+	 */
+	private void showNewCityDialog()
+	{
+		TerrainConfig cfg0 = controller.getTerrainConfig();
+
+		ComboBox<String> difficulty = combo(new String[] { "Easy", "Medium", "Hard" },
+			controller.getGameLevel());
+		ComboBox<String> island = combo(new String[] { "None", "Seldom", "Always" },
+			cfg0.island.ordinal());
+		ComboBox<String> lake = combo(LEVEL_OPTIONS, cfg0.lake.ordinal());
+		ComboBox<String> river = combo(LEVEL_OPTIONS, cfg0.river.ordinal());
+		ComboBox<String> trees = combo(LEVEL_OPTIONS, cfg0.trees.ordinal());
+
+		TextField seedField = new TextField(Long.toString(controller.getSeed()));
+		Button reroll = new Button("Reroll");
+		reroll.setFocusTraversable(false);
+
+		Canvas previewCanvas = new Canvas(200, 168);
+
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(8);
+		grid.setPadding(new Insets(12));
+		grid.addRow(0, new Label("Difficulty"), difficulty);
+		grid.addRow(1, new Label("Island"), island);
+		grid.addRow(2, new Label("Lake"), lake);
+		grid.addRow(3, new Label("River"), river);
+		grid.addRow(4, new Label("Trees"), trees);
+		HBox seedRow = new HBox(6, seedField, reroll);
+		grid.addRow(5, new Label("Seed"), seedRow);
+
+		VBox previewBox = new VBox(4, new Label("Preview"), previewCanvas);
+		previewBox.setPadding(new Insets(12));
+
+		HBox content = new HBox(8, grid, previewBox);
+
+		Runnable refresh = () -> drawPreviewInto(previewCanvas,
+			levelIndex(difficulty), readSeed(seedField), readConfig(island, lake, river, trees));
+		difficulty.setOnAction(e -> refresh.run());
+		island.setOnAction(e -> refresh.run());
+		lake.setOnAction(e -> refresh.run());
+		river.setOnAction(e -> refresh.run());
+		trees.setOnAction(e -> refresh.run());
+		seedField.textProperty().addListener((o, a, b) -> refresh.run());
+		reroll.setOnAction(e -> seedField.setText(Long.toString(new java.util.Random().nextLong())));
+		refresh.run();
+
+		Button startBtn = new Button("Start");
+		Button cancelBtn = new Button("Cancel");
+		HBox buttons = new HBox(8, startBtn, cancelBtn);
+		buttons.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+		buttons.setPadding(new Insets(0, 12, 12, 12));
+
+		VBox outer = new VBox(4, content, buttons);
+
+		Stage dlg = new Stage();
+		dlg.initOwner(stage);
+		dlg.initModality(Modality.WINDOW_MODAL);
+		dlg.setTitle("New City");
+		dlg.setScene(new Scene(outer));
+
+		startBtn.setOnAction(e -> {
+			int level = levelIndex(difficulty);
+			long seed = readSeed(seedField);
+			TerrainConfig cfg = readConfig(island, lake, river, trees);
+			dlg.close();
+			startNewCity(level, seed, cfg);
+		});
+		cancelBtn.setOnAction(e -> dlg.close());
+		dlg.show();
+	}
+
+	private static ComboBox<String> combo(String[] options, int selected)
+	{
+		ComboBox<String> cb = new ComboBox<String>();
+		cb.getItems().addAll(options);
+		cb.getSelectionModel().select(Math.max(0, Math.min(selected, options.length - 1)));
+		cb.setFocusTraversable(false);
+		return cb;
+	}
+
+	private static int levelIndex(ComboBox<String> difficulty)
+	{
+		return difficulty.getSelectionModel().getSelectedIndex();
+	}
+
+	private static long readSeed(TextField f)
+	{
+		try {
+			return Long.parseLong(f.getText().trim());
+		} catch (NumberFormatException e) {
+			return new java.util.Random().nextLong();
+		}
+	}
+
+	private static TerrainConfig readConfig(ComboBox<String> island, ComboBox<String> lake,
+		ComboBox<String> river, ComboBox<String> trees)
+	{
+		return new TerrainConfig(
+			TerrainConfig.Island.values()[island.getSelectionModel().getSelectedIndex()],
+			TerrainConfig.Level.values()[lake.getSelectionModel().getSelectedIndex()],
+			TerrainConfig.Level.values()[river.getSelectionModel().getSelectedIndex()],
+			TerrainConfig.Level.values()[trees.getSelectionModel().getSelectedIndex()]);
+	}
+
+	/** Draw a one-pixel-per-tile preview of a generated map into the canvas. */
+	private void drawPreviewInto(Canvas c, int level, long seed, TerrainConfig cfg)
+	{
+		Micropolis city = GameController.buildCity(level, seed, cfg);
+		int w = city.getWidth();
+		int h = city.getHeight();
+		int[] px = MiniMap.overviewPixels(city);
+		WritableImage img = new WritableImage(w, h);
+		img.getPixelWriter().setPixels(0, 0, w, h, PixelFormat.getIntArgbInstance(), px, 0, w);
+
+		GraphicsContext gc = c.getGraphicsContext2D();
+		gc.setFill(Color.BLACK);
+		gc.fillRect(0, 0, c.getWidth(), c.getHeight());
+		double scale = Math.min(c.getWidth() / w, c.getHeight() / h);
+		double dw = w * scale, dh = h * scale;
+		double left = (c.getWidth() - dw) / 2, top = (c.getHeight() - dh) / 2;
+		gc.drawImage(img, left, top, dw, dh);
+		gc.setStroke(Color.rgb(255, 255, 255, 0.8));
+		gc.strokeRect(left, top, dw, dh);
+	}
+
+	/** Replace the running city with a freshly generated one (task 4 adds the guard). */
+	private void startNewCity(int level, long seed, TerrainConfig cfg)
+	{
+		GameController fresh = GameController.newGame(level, seed, cfg);
+		fresh.setChosenSpeed(controller.getChosenSpeed());
+		fresh.setPaused(controller.isPaused());
+		fresh.setRandomDisastersEnabled(controller.isRandomDisastersEnabled());
+		fresh.setSoundPlayer(soundPlayer);
+
+		controller.stop();
+		controller = fresh;
+		Micropolis city = controller.getEngine();
+		viewport = new Viewport(city.getWidth(), city.getHeight(),
+			(int) canvas.getWidth(), (int) canvas.getHeight());
+		viewport.setZoom(DEFAULT_ZOOM);
+		viewport.centreOnTile(city.getWidth() / 2, city.getHeight() / 2);
+		controller.setFrameCallback(() -> Platform.runLater(this::redraw));
+		controller.start();
+		lastBudgetYear = currentYear();
+		refreshSpeed();
+		refreshPalette();
+		updateStatus();
+		redraw();
+		if (miniVisible) {
+			refreshMiniMap();
+		}
 	}
 
 	private Menu buildDisastersMenu()

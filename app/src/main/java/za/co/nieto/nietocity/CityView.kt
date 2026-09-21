@@ -160,6 +160,14 @@ class CityView @JvmOverloads constructor(
 
     fun getViewport(): Viewport? = viewport
 
+    /** Recentre the view on the middle of the map (e.g. after starting a new city). */
+    fun resetViewportToMapCentre() {
+        val c = controller?.getEngine() ?: return
+        val vp = viewport ?: return
+        vp.centreOnTile(c.width / 2, c.height / 2)
+        requestRender()
+    }
+
     /** Set the data overlay tinting the map (MapOverlay.NONE turns it off). */
     fun setMapOverlay(o: MapOverlay) {
         overlay = o
