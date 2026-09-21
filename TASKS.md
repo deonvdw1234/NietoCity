@@ -239,9 +239,13 @@ Created by Nieto Software
 ## Phase 6b: Save and load (classic binary .cty)
 - [x] 0. Confirm + record the exact v1 layout in CHANGES.md (history x6, misc
       field order, column-major map, 27120 bytes, no header). Reader is upstream.
-- [ ] 1. Golden round-trip test FIRST, proven RED (row-major / misc-dropping
-      writer) then GREEN. Load-fixpoint byte-equal + tile-ordinal survival +
-      funds/pop/time/tax/level/eval/history equal.
+- [x] 1. Golden round-trip test (micropolisj.engine.CityFileV1RoundTripTest, 2
+      tests): 27120-byte count; load-fixpoint (s2==s3 byte-for-byte); tile-ordinal
+      survival A->B; funds/resPop/comPop/indPop/cityTime/cityTax/gameLevel/
+      cityClass/cityScore and all six history arrays equal A->B. Proven RED first
+      - row-major writer: "fixpoint ... first differed at element [3125]"; drop
+      resPop: "resPop expected:<1> but was:<0>" - then GREEN with the correct
+      writer. Engine tests: 54 total, 0 failures.
 - [ ] 2. Writer (engine-package CityWriterV1, 27120 bytes) + game.CityFile
       facade; save paused/on the engine thread; load via engine load().
 - [ ] 3. Storage: Android <filesDir>/saves/<name>.cty + .png thumbnail + meta;
