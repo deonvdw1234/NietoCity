@@ -498,6 +498,50 @@ public final class GameController
 		}
 	}
 
+	// --- disasters (menu-triggered; the engine's own make* methods) ---
+	//
+	// Each runs on the engine thread under the lock, so it mutates the map safely.
+	// The engine's make* fire their own *_REPORT message (which the ticker shows)
+	// and, for some, their own sounds; we add a representative sound for the ones
+	// the engine does not voice at the moment of triggering. Plane crash and
+	// shipwreck have no direct trigger - they arise naturally from traffic and
+	// air/sea travel - so they are not offered here (their sprites and explosions
+	// still render when the engine spawns them).
+
+	public void triggerFire()       { postDisaster(new Runnable(){ public void run(){ engine.makeFire(); } }, Sound.SIREN); }
+	public void triggerFlood()      { postDisaster(new Runnable(){ public void run(){ engine.makeFlood(); } }, Sound.EXPLOSION_LOW); }
+	public void triggerTornado()    { postDisaster(new Runnable(){ public void run(){ engine.makeTornado(); } }, Sound.EXPLOSION_HIGH); }
+	public void triggerMonster()    { postDisaster(new Runnable(){ public void run(){ engine.makeMonster(); } }, Sound.MONSTER); }
+
+	/** Earthquake: the engine already plays its own rumble, so no extra sound. */
+	public void triggerEarthquake() { postDisaster(new Runnable(){ public void run(){ engine.makeEarthquake(); } }, null); }
+
+	/** Nuclear meltdown: only if a nuclear plant exists; otherwise a ticker note. */
+	public void triggerMeltdown()
+	{
+		clock.post(new Runnable() {
+			public void run() {
+				boolean happened = engine.makeMeltdown();
+				if (!happened) {
+					messages.add("No nuclear plant to melt down.");
+				}
+				// The meltdown's own explosions voice it via citySound.
+			}
+		});
+	}
+
+	private void postDisaster(final Runnable action, final Sound sound)
+	{
+		clock.post(new Runnable() {
+			public void run() {
+				action.run();
+				if (sound != null) {
+					playSound(sound);
+				}
+			}
+		});
+	}
+
 	/** Query the zone at a tile (read-only). */
 	public ZoneStatus query(int x, int y)
 	{

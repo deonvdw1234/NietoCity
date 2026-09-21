@@ -164,9 +164,14 @@ Created by Nieto Software
       (AudioClip). Both preload all clips, default ON, best-effort (never throw),
       with a persisted Mute item in the overflow menu. JUnit SoundTest (1): every
       Sound maps to a bundled wav (BULLDOZE is intentionally silent).
-- [ ] 3. Disaster menu: Disasters submenu triggers Fire/Flood/Tornado/Earthquake/
-      Monster/Nuclear meltdown via the engine's make*; ticker message + sound.
-      Plane crash / shipwreck are natural only (noted, not faked).
+- [x] 3. Disaster menu: a Disasters submenu triggers the engine's own make* on
+      the engine thread - Fire/Flood/Tornado/Earthquake/Monster/Nuclear meltdown.
+      Each engine call fires its *_REPORT message (shown in the ticker); a
+      representative sound plays for the ones the engine doesn't voice at trigger
+      (fire=siren, flood/tornado=explosion, monster=roar; earthquake and meltdown
+      use the engine's own explosions). Meltdown with no nuclear plant shows a
+      note. Plane crash & shipwreck are natural-only and labelled as such, not
+      faked - their sprites/explosions still render when the engine spawns them.
 - [ ] 4. Random-disasters toggle: menu checkbox wired to the engine flag
       (investigate/report which), default ON, persisted; no engine logic change.
 - [ ] 5. Earthquake shake: subtle decaying view shake in each renderer while a

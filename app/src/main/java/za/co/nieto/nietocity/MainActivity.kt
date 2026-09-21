@@ -173,11 +173,19 @@ class MainActivity : Activity() {
         val miniOn = miniMap.visibility == View.VISIBLE
         menu.add(0, ID_MINIMAP, 4, if (miniOn) "Hide mini map" else "Show mini map")
 
-        val muteItem = menu.add(0, ID_MUTE, 6, "Mute sound")
+        val dsub = menu.addSubMenu(0, ID_DISASTER_SUB, 3, "Disasters")
+        for (i in DISASTER_NAMES.indices) {
+            dsub.add(0, ID_DISASTER_BASE + i, i, DISASTER_NAMES[i])
+        }
+        val note = dsub.add(0, ID_DISASTER_NOTE, DISASTER_NAMES.size,
+            "(Plane crash & shipwreck happen during play)")
+        note.isEnabled = false
+
+        val muteItem = menu.add(0, ID_MUTE, 7, "Mute sound")
         muteItem.isCheckable = true
         muteItem.isChecked = soundPlayer?.isMuted == true
 
-        val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 5, "Overlay")
+        val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 6, "Overlay")
         val current = cityView.getMapOverlay()
         val overlays = MapOverlay.values()
         for (idx in overlays.indices) {
@@ -199,6 +207,11 @@ class MainActivity : Activity() {
             ID_MINIMAP -> { toggleMiniMap(); return true }
             ID_MUTE -> { toggleMute(); return true }
         }
+        val dIdx = item.itemId - ID_DISASTER_BASE
+        if (dIdx in DISASTER_NAMES.indices) {
+            triggerDisaster(dIdx)
+            return true
+        }
         val idx = item.itemId - ID_OVERLAY_BASE
         val overlays = MapOverlay.values()
         if (idx in overlays.indices) {
@@ -211,6 +224,17 @@ class MainActivity : Activity() {
     private fun selectOverlay(overlay: MapOverlay) {
         cityView.setMapOverlay(overlay)
         miniMap.setOverlay(overlay)
+    }
+
+    private fun triggerDisaster(index: Int) {
+        when (index) {
+            0 -> controller.triggerFire()
+            1 -> controller.triggerFlood()
+            2 -> controller.triggerTornado()
+            3 -> controller.triggerEarthquake()
+            4 -> controller.triggerMonster()
+            5 -> controller.triggerMeltdown()
+        }
     }
 
     private fun toggleMute() {
@@ -383,6 +407,12 @@ class MainActivity : Activity() {
         private const val ID_OVERLAY_SUB = 2
         private const val GROUP_OVERLAY = 10
         private const val ID_OVERLAY_BASE = 100
+        private const val ID_DISASTER_SUB = 7
+        private const val ID_DISASTER_BASE = 200
+        private const val ID_DISASTER_NOTE = 250
+        private val DISASTER_NAMES = arrayOf(
+            "Fire", "Flood", "Tornado", "Earthquake", "Monster", "Nuclear meltdown"
+        )
         private const val PREF_AUTO_BUDGET = "autoBudget"
         private const val PREF_MUTED = "muted"
     }

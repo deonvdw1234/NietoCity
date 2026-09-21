@@ -317,7 +317,9 @@ public class DesktopApp extends Application
 			overlayMenu.getItems().add(item);
 		}
 
-		mb.getItems().addAll(budget, eval, graphs, new SeparatorMenuItem(),
+		Menu disasters = buildDisastersMenu();
+
+		mb.getItems().addAll(budget, eval, graphs, disasters, new SeparatorMenuItem(),
 			miniToggle, overlayMenu, mute);
 		return mb;
 	}
@@ -327,6 +329,28 @@ public class DesktopApp extends Application
 		overlay = ov;
 		redraw();
 		refreshMiniMap();
+	}
+
+	private Menu buildDisastersMenu()
+	{
+		Menu m = new Menu("Disasters");
+		MenuItem fire = new MenuItem("Fire");
+		fire.setOnAction(e -> controller.triggerFire());
+		MenuItem flood = new MenuItem("Flood");
+		flood.setOnAction(e -> controller.triggerFlood());
+		MenuItem tornado = new MenuItem("Tornado");
+		tornado.setOnAction(e -> controller.triggerTornado());
+		MenuItem quake = new MenuItem("Earthquake");
+		quake.setOnAction(e -> controller.triggerEarthquake());
+		MenuItem monster = new MenuItem("Monster");
+		monster.setOnAction(e -> controller.triggerMonster());
+		MenuItem meltdown = new MenuItem("Nuclear meltdown");
+		meltdown.setOnAction(e -> controller.triggerMeltdown());
+		MenuItem note = new MenuItem("(Plane crash & shipwreck happen during play)");
+		note.setDisable(true);
+		m.getItems().addAll(fire, flood, tornado, quake, monster, meltdown,
+			new SeparatorMenuItem(), note);
+		return m;
 	}
 
 	private Label statusLabel()
