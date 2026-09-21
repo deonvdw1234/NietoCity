@@ -213,7 +213,11 @@ Created by Nieto Software
       Reroll button, plus a preview thumbnail. Phone portrait a scrollable column,
       landscape and desktop a two-column form. Start swaps to the new city and
       recentres the view (the discard confirm comes in task 4).
-- [ ] 3. Live preview: mini-map thumbnail regenerated off-thread on any change.
+- [x] 3. Live preview: the mini-map thumbnail regenerates on any control/seed
+      change on a background thread (Android MiniMapPreview single-thread
+      executor; desktop a daemon executor + Platform.runLater), with a generation
+      counter dropping stale results so the UI never blocks and only the newest
+      map is painted.
 - [ ] 4. Start + discard guard (confirm before discarding a running city); swap
       the controller and reset the viewport to centre.
 - [ ] 5. Gate: --rerun-tasks :engine:test :desktop:jar assembleDebug; raw tail +

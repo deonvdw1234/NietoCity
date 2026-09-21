@@ -18,6 +18,8 @@ import android.view.View
 import za.co.nieto.nietocity.game.GameController
 import za.co.nieto.nietocity.game.TerrainConfig
 import za.co.nieto.nietocity.render.MiniMap
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * A small preview of a generated map (one pixel per tile via the shared MiniMap /
@@ -40,22 +42,38 @@ class MiniMapPreview(context: Context) : View(context) {
     private val src = Rect()
     private val dst = RectF()
 
-    /** Regenerate the preview for the given level, seed and terrain. */
+    // Generation runs off the UI thread; a counter drops stale results so a fast
+    // series of changes only paints the newest map.
+    private val worker = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "nieto-preview").apply { isDaemon = true }
+    }
+    private val genId = AtomicInteger(0)
+
+    /** Regenerate the preview for the given level, seed and terrain (off the UI thread). */
     fun regenerate(level: Int, seed: Long, cfg: TerrainConfig) {
-        val city = GameController.buildCity(level, seed, cfg)
-        val w = city.width
-        val h = city.height
-        val px = synchronized(city) { MiniMap.overviewPixels(city) }
-        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        bmp.setPixels(px, 0, w, 0, 0, w, h)
-        bitmap = bmp
-        mapW = w
-        mapH = h
-        invalidate()
+        val id = genId.incrementAndGet()
+        worker.execute {
+            val city = GameController.buildCity(level, seed, cfg)
+            val w = city.width
+            val h = city.height
+            val px = MiniMap.overviewPixels(city)
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            bmp.setPixels(px, 0, w, 0, 0, w, h)
+            post {
+                if (id == genId.get()) {
+                    bitmap = bmp
+                    mapW = w
+                    mapH = h
+                    invalidate()
+                }
+            }
+        }
     }
 
-    /** Release any pending work (no-op for the synchronous version). */
-    fun dispose() {}
+    /** Stop the background worker (called when the dialog is dismissed). */
+    fun dispose() {
+        worker.shutdownNow()
+    }
 
     override fun onDraw(canvas: Canvas) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), bgPaint)

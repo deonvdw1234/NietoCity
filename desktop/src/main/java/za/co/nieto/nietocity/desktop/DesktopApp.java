@@ -390,8 +390,31 @@ public class DesktopApp extends Application
 
 		HBox content = new HBox(8, grid, previewBox);
 
-		Runnable refresh = () -> drawPreviewInto(previewCanvas,
-			levelIndex(difficulty), readSeed(seedField), readConfig(island, lake, river, trees));
+		// Generate previews off the FX thread; a counter drops stale results.
+		final java.util.concurrent.ExecutorService exec =
+			java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+				Thread t = new Thread(r, "nieto-preview");
+				t.setDaemon(true);
+				return t;
+			});
+		final int[] genId = { 0 };
+		Runnable refresh = () -> {
+			final int id = ++genId[0];
+			final int level = levelIndex(difficulty);
+			final long seed = readSeed(seedField);
+			final TerrainConfig cfg = readConfig(island, lake, river, trees);
+			exec.submit(() -> {
+				Micropolis city = GameController.buildCity(level, seed, cfg);
+				final int w = city.getWidth();
+				final int h = city.getHeight();
+				final int[] px = MiniMap.overviewPixels(city);
+				Platform.runLater(() -> {
+					if (id == genId[0]) {
+						paintPreview(previewCanvas, px, w, h);
+					}
+				});
+			});
+		};
 		difficulty.setOnAction(e -> refresh.run());
 		island.setOnAction(e -> refresh.run());
 		lake.setOnAction(e -> refresh.run());
@@ -423,6 +446,7 @@ public class DesktopApp extends Application
 			startNewCity(level, seed, cfg);
 		});
 		cancelBtn.setOnAction(e -> dlg.close());
+		dlg.setOnHidden(e -> exec.shutdownNow());
 		dlg.show();
 	}
 
@@ -459,13 +483,9 @@ public class DesktopApp extends Application
 			TerrainConfig.Level.values()[trees.getSelectionModel().getSelectedIndex()]);
 	}
 
-	/** Draw a one-pixel-per-tile preview of a generated map into the canvas. */
-	private void drawPreviewInto(Canvas c, int level, long seed, TerrainConfig cfg)
+	/** Paint an overview pixel buffer into the preview canvas (on the FX thread). */
+	private void paintPreview(Canvas c, int[] px, int w, int h)
 	{
-		Micropolis city = GameController.buildCity(level, seed, cfg);
-		int w = city.getWidth();
-		int h = city.getHeight();
-		int[] px = MiniMap.overviewPixels(city);
 		WritableImage img = new WritableImage(w, h);
 		img.getPixelWriter().setPixels(0, 0, w, h, PixelFormat.getIntArgbInstance(), px, 0, w);
 
