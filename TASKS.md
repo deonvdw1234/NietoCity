@@ -281,6 +281,26 @@ Created by Nieto Software
       Micropolis); CLAUDE.md notes .cty is classic binary v1, round-trips history
       and interchanges with the engine's own reader.
 
+## Phase 7: Start screen, educational mode, splash, about and GPL
+- [ ] 0. Assets: mp4 into Android res/raw + desktop resources; compressed
+      splash_exit.jpg (<1 MB); adaptive launcher icon from AppIcon.png.
+- [ ] 1. Start splash on cold launch (video on black, tap to skip after 1s,
+      ~5s safety timer), then the start screen.
+- [ ] 2. Start screen: Continue (autosave only), New City, Load City, How to
+      play / Educational, About, Licence (GPL), Quit; Scenarios disabled.
+- [ ] 3. Autosave to a reserved slot on pause/exit; Continue loads it; failure
+      never crashes or blocks exit.
+- [ ] 4. Educational mode: an Explain toggle; shared registry covering all 16
+      tools, 8 overlays and 7 CityProblem values plus basics. JUnit completeness.
+- [ ] 5. About screen: credits, "Created by Nieto Software", version, offline +
+      GPLv3 line.
+- [ ] 6. Licence (GPL) screen: LICENSE + THIRD_PARTY, from About and start.
+- [ ] 7. Exit splash: the single exit point fades, shows splash_exit.jpg ~1.8s,
+      then exits; ceiling timer + swallow-all; re-entrancy safe.
+- [ ] 8. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug;
+      raw tail + test count; APK size; fresh artefact timestamps.
+- [ ] 9. Docs: TASKS.md, CHANGES.md, README, CLAUDE.md.
+
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar
 - Phase 4: Speed, budget, evaluation, graphs, mini map
