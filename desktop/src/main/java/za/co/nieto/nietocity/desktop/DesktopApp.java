@@ -22,6 +22,7 @@ import java.util.Map;
 
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -55,14 +56,25 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.prefs.Preferences;
 
 import micropolisj.engine.BudgetNumbers;
@@ -97,6 +109,8 @@ public class DesktopApp extends Application
 	private static final int TS = TileIndex.TILE_SIZE;
 	private static final int DEFAULT_ZOOM = 3;
 	private static final long MESSAGE_MS = 4000;
+	private static final int START_W = 1024;
+	private static final int START_H = 720;
 
 	private static final List<MicropolisTool> TOOLS = Arrays.asList(
 		MicropolisTool.BULLDOZER, MicropolisTool.WIRE, MicropolisTool.PARK,
@@ -175,22 +189,110 @@ public class DesktopApp extends Application
 
 		loadSprites();
 
-		this.controller = GameController.newGame();
-		Micropolis city = controller.getEngine();
-
-		// Sound: default on, best-effort. Created before the menu so its Mute item
-		// reflects the persisted state.
+		// Sound: default on, best-effort. Independent of any one city, so it is
+		// created once and reused as cities are swapped.
 		this.soundPlayer = new DesktopSoundPlayer();
 		this.soundPlayer.setMuted(prefs.getBoolean("muted", false));
-		controller.setSoundPlayer(soundPlayer);
 
-		// Random disasters: default on, persisted, applied to the engine's flag.
+		stage.setTitle("NietoCity");
+		stage.setOnCloseRequest(e -> onCloseRequest(e));
+		stage.setScene(new Scene(new StackPane(), START_W, START_H, Color.BLACK));
+		stage.show();
+
+		showIntroSplash();
+	}
+
+	// --- intro splash -> start menu -> game ---
+
+	/**
+	 * Play the Nieto intro video full-screen on black (letterboxed "contain", no
+	 * controls), then show the start menu. Tap skips after 1s; a ~5s safety timer
+	 * proceeds if playback never ends or errors, and if the media cannot be loaded
+	 * at all the menu is shown straight away.
+	 */
+	private void showIntroSplash()
+	{
+		final long startAt = System.currentTimeMillis();
+		final boolean[] done = { false };
+
+		StackPane pane = new StackPane();
+		pane.setStyle("-fx-background-color: black;");
+		Scene scene = new Scene(pane, START_W, START_H, Color.BLACK);
+
+		final Runnable proceed = () -> {
+			if (done[0]) {
+				return;
+			}
+			done[0] = true;
+			showStartMenu();
+		};
+
+		try {
+			File tmp = extractResource("/nieto_logo_animated.mp4", "nieto_intro", ".mp4");
+			Media media = new Media(tmp.toURI().toString());
+			final MediaPlayer player = new MediaPlayer(media);
+			MediaView view = new MediaView(player);
+			view.setPreserveRatio(true);
+			view.fitWidthProperty().bind(scene.widthProperty());
+			view.fitHeightProperty().bind(scene.heightProperty());
+			pane.getChildren().add(view);
+			player.setMute(true);
+			player.setOnEndOfMedia(() -> { player.stop(); proceed.run(); });
+			player.setOnError(() -> proceed.run());
+			player.play();
+		} catch (Exception ex) {
+			// No media (e.g. JavaFX media unavailable): go straight to the menu.
+			Platform.runLater(proceed);
+		}
+
+		scene.setOnMouseClicked(e -> {
+			if (System.currentTimeMillis() - startAt >= 1000) {
+				proceed.run();
+			}
+		});
+
+		PauseTransition safety = new PauseTransition(Duration.millis(5000));
+		safety.setOnFinished(e -> proceed.run());
+		safety.play();
+
+		stage.setScene(scene);
+	}
+
+	/**
+	 * The start menu shown after the intro. Task 2 fills in the full option set
+	 * (Continue, New City, Load City, How to play, About, Licence, Quit); for now
+	 * it simply enters the game.
+	 */
+	private void showStartMenu()
+	{
+		Button play = menuButton("Play");
+		play.setOnAction(e -> { controller = GameController.newGame(); cityName = "New City"; enterGame(); });
+		Button quit = menuButton("Quit");
+		quit.setOnAction(e -> stage.close());
+
+		VBox box = new VBox(12, play, quit);
+		box.setAlignment(javafx.geometry.Pos.CENTER);
+		box.setStyle("-fx-background-color: black;");
+		stage.setScene(new Scene(box, START_W, START_H, Color.BLACK));
+	}
+
+	private static Button menuButton(String text)
+	{
+		Button b = new Button(text);
+		b.setMinWidth(240);
+		b.setFont(Font.font(16));
+		b.setFocusTraversable(false);
+		return b;
+	}
+
+	/** Build and show the game scene for the current controller (already set). */
+	private void enterGame()
+	{
+		Micropolis city = controller.getEngine();
+		controller.setSoundPlayer(soundPlayer);
 		controller.setRandomDisastersEnabled(prefs.getBoolean("randomDisasters", true));
 
-		final int startW = 1024;
-		final int startH = 720;
-
-		this.canvas = new Canvas(startW, startH);
+		this.canvas = new Canvas(START_W, START_H);
 		Pane canvasPane = new Pane(canvas);
 		canvas.widthProperty().bind(canvasPane.widthProperty());
 		canvas.heightProperty().bind(canvasPane.heightProperty());
@@ -203,19 +305,16 @@ public class DesktopApp extends Application
 		root.setCenter(canvasPane);
 		buildMiniPanel();
 
-		Scene scene = new Scene(root, startW, startH, Color.BLACK);
+		Scene scene = new Scene(root, START_W, START_H, Color.BLACK);
 		installInput(scene);
 
-		this.viewport = new Viewport(city.getWidth(), city.getHeight(), startW, startH);
+		this.viewport = new Viewport(city.getWidth(), city.getHeight(), START_W, START_H);
 		viewport.setZoom(DEFAULT_ZOOM);
 		viewport.centreOnTile(city.getWidth() / 2, city.getHeight() / 2);
 
 		controller.setFrameCallback(() -> Platform.runLater(this::redraw));
 
 		stage.setScene(scene);
-		stage.setTitle("NietoCity");
-		stage.setOnCloseRequest(e -> controller.stop());
-		stage.show();
 
 		controller.start();
 		refreshPalette();
@@ -227,7 +326,39 @@ public class DesktopApp extends Application
 		ui.setCycleCount(Animation.INDEFINITE);
 		ui.play();
 
+		updateStatus();
 		redraw();
+	}
+
+	/** Copy a bundled resource to a temp file (for APIs that need a file/URI). */
+	private static File extractResource(String path, String prefix, String suffix) throws IOException
+	{
+		InputStream in = DesktopApp.class.getResourceAsStream(path);
+		if (in == null) {
+			throw new IOException("missing resource " + path);
+		}
+		File tmp = File.createTempFile(prefix, suffix);
+		tmp.deleteOnExit();
+		OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
+		try {
+			byte[] buf = new byte[8192];
+			int n;
+			while ((n = in.read(buf)) > 0) {
+				out.write(buf, 0, n);
+			}
+		} finally {
+			out.close();
+			in.close();
+		}
+		return tmp;
+	}
+
+	/** Window close handler (task 7 adds the exit splash + autosave). */
+	private void onCloseRequest(WindowEvent e)
+	{
+		if (controller != null) {
+			controller.stop();
+		}
 	}
 
 	@Override
