@@ -259,30 +259,123 @@ public class DesktopApp extends Application
 	}
 
 	/**
-	 * The start menu shown after the intro. Task 2 fills in the full option set
-	 * (Continue, New City, Load City, How to play, About, Licence, Quit); for now
-	 * it simply enters the game.
+	 * The start menu shown after the intro: Continue (only when an autosave
+	 * exists), New City, Load City, How to play / Educational, About, Licence
+	 * (GPL) and Quit, plus a disabled "Scenarios (coming soon)".
 	 */
 	private void showStartMenu()
 	{
-		Button play = menuButton("Play");
-		play.setOnAction(e -> { controller = GameController.newGame(); cityName = "New City"; enterGame(); });
-		Button quit = menuButton("Quit");
-		quit.setOnAction(e -> stage.close());
+		Label title = new Label("NietoCity");
+		title.setStyle("-fx-text-fill: white;");
+		title.setFont(Font.font(34));
+		Label sub = new Label("Created by Nieto Software");
+		sub.setStyle("-fx-text-fill: #B0C4FF;");
 
-		VBox box = new VBox(12, play, quit);
+		VBox box = new VBox(10);
 		box.setAlignment(javafx.geometry.Pos.CENTER);
 		box.setStyle("-fx-background-color: black;");
+		box.getChildren().addAll(title, sub);
+
+		if (saveStore.autosaveExists()) {
+			box.getChildren().add(menuButton("Continue", true, e -> continueGame()));
+		}
+		box.getChildren().add(menuButton("New City", true, e -> newCityFromMenu()));
+		box.getChildren().add(menuButton("Load City", true, e -> loadCityFromMenu()));
+		box.getChildren().add(menuButton("How to play / Educational", true, e -> showInfo(DesktopInfo.EDUCATION)));
+		box.getChildren().add(menuButton("About", true, e -> showInfo(DesktopInfo.ABOUT)));
+		box.getChildren().add(menuButton("Licence (GPL)", true, e -> showInfo(DesktopInfo.LICENCE)));
+		box.getChildren().add(menuButton("Scenarios (coming soon)", false, e -> { }));
+		box.getChildren().add(menuButton("Quit", true, e -> stage.close()));
+
 		stage.setScene(new Scene(box, START_W, START_H, Color.BLACK));
 	}
 
-	private static Button menuButton(String text)
+	private void continueGame()
+	{
+		try {
+			controller = GameController.loadGame(saveStore.autosaveFile());
+			cityName = saveStore.autosaveMeta().name;
+		} catch (Exception ex) {
+			controller = GameController.newGame();
+			cityName = "New City";
+		}
+		enterGame();
+	}
+
+	private void newCityFromMenu()
+	{
+		controller = GameController.newGame();
+		cityName = "New City";
+		enterGame();
+		showNewCityDialog(false); // no discard guard: nothing worth keeping yet
+	}
+
+	private void loadCityFromMenu()
+	{
+		controller = GameController.newGame();
+		cityName = "New City";
+		enterGame();
+		showLoadDialog(false); // no discard guard on the placeholder city
+	}
+
+	private static Button menuButton(String text, boolean enabled, javafx.event.EventHandler<javafx.event.ActionEvent> onAction)
 	{
 		Button b = new Button(text);
-		b.setMinWidth(240);
+		b.setMinWidth(280);
 		b.setFont(Font.font(16));
 		b.setFocusTraversable(false);
+		b.setDisable(!enabled);
+		b.setOnAction(onAction);
 		return b;
+	}
+
+	/** A modal information window (About / Licence / How to play). */
+	private void showInfo(String mode)
+	{
+		String title = DesktopInfo.LICENCE.equals(mode) ? "Licence"
+			: DesktopInfo.EDUCATION.equals(mode) ? "How to play" : "About NietoCity";
+
+		javafx.scene.Node bodyNode;
+		if (DesktopInfo.LICENCE.equals(mode)) {
+			javafx.scene.control.TextArea ta = new javafx.scene.control.TextArea(DesktopInfo.licence());
+			ta.setEditable(false);
+			ta.setWrapText(false);
+			ta.setFont(Font.font("Monospaced", 11));
+			VBox.setVgrow(ta, javafx.scene.layout.Priority.ALWAYS);
+			bodyNode = ta;
+		} else {
+			Label body = new Label(DesktopInfo.EDUCATION.equals(mode)
+				? DesktopInfo.howToPlay() : DesktopInfo.about());
+			body.setWrapText(true);
+			ScrollPane sp = new ScrollPane(body);
+			sp.setFitToWidth(true);
+			sp.setPadding(new Insets(4));
+			VBox.setVgrow(sp, javafx.scene.layout.Priority.ALWAYS);
+			bodyNode = sp;
+		}
+
+		final Stage dlg = new Stage();
+		dlg.initOwner(stage);
+		dlg.initModality(Modality.WINDOW_MODAL);
+		dlg.setTitle(title);
+
+		HBox buttons = new HBox(8);
+		buttons.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+		if (DesktopInfo.ABOUT.equals(mode)) {
+			Button lic = new Button("Licence (GPL)");
+			lic.setOnAction(e -> { dlg.close(); showInfo(DesktopInfo.LICENCE); });
+			buttons.getChildren().add(lic);
+		}
+		Button close = new Button("Close");
+		close.setOnAction(e -> dlg.close());
+		buttons.getChildren().add(close);
+
+		Label heading = new Label(title);
+		heading.setFont(Font.font(18));
+		VBox content = new VBox(8, heading, bodyNode, buttons);
+		content.setPadding(new Insets(12));
+		dlg.setScene(new Scene(content, 640, 560));
+		dlg.show();
 	}
 
 	/** Build and show the game scene for the current controller (already set). */
@@ -498,6 +591,11 @@ public class DesktopApp extends Application
 	 */
 	private void showNewCityDialog()
 	{
+		showNewCityDialog(true);
+	}
+
+	private void showNewCityDialog(final boolean guard)
+	{
 		TerrainConfig cfg0 = controller.getTerrainConfig();
 
 		ComboBox<String> difficulty = combo(new String[] { "Easy", "Medium", "Hard" },
@@ -584,7 +682,7 @@ public class DesktopApp extends Application
 			long seed = readSeed(seedField);
 			TerrainConfig cfg = readConfig(island, lake, river, trees);
 			dlg.close();
-			confirmNewCity(level, seed, cfg);
+			confirmNewCity(level, seed, cfg, guard);
 		});
 		cancelBtn.setOnAction(e -> dlg.close());
 		dlg.setOnHidden(e -> exec.shutdownNow());
@@ -642,8 +740,12 @@ public class DesktopApp extends Application
 	}
 
 	/** Guard the swap: the running city is discarded, so confirm (offering Save first). */
-	private void confirmNewCity(int level, long seed, TerrainConfig cfg)
+	private void confirmNewCity(int level, long seed, TerrainConfig cfg, boolean guard)
 	{
+		if (!guard) {
+			startNewCity(level, seed, cfg);
+			return;
+		}
 		int choice = discardChoice("Start a new city?", "Your current city will be discarded.", "Start");
 		if (choice == DISCARD_SAVE_FIRST && !quickSave()) {
 			return; // save failed; keep the city
@@ -788,6 +890,11 @@ public class DesktopApp extends Application
 
 	private void showLoadDialog()
 	{
+		showLoadDialog(true);
+	}
+
+	private void showLoadDialog(final boolean guard)
+	{
 		VBox list = new VBox(6);
 		ScrollPane scroll = new ScrollPane(list);
 		scroll.setFitToWidth(true);
@@ -807,7 +914,7 @@ public class DesktopApp extends Application
 		dlg.setTitle("Load City");
 		dlg.setScene(new Scene(content));
 
-		Runnable rebuild = () -> populateSlots(list, dlg);
+		Runnable rebuild = () -> populateSlots(list, dlg, guard);
 		rebuild.run();
 
 		openBtn.setOnAction(e -> {
@@ -816,7 +923,7 @@ public class DesktopApp extends Application
 			fc.setInitialDirectory(saveStore.getDir());
 			fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Classic city (*.cty)", "*.cty"));
 			File file = fc.showOpenDialog(stage);
-			if (file != null && confirmLoadDiscard()) {
+			if (file != null && (!guard || confirmLoadDiscard())) {
 				loadFile(file, baseName(file.getName()));
 				dlg.close();
 			}
@@ -825,7 +932,7 @@ public class DesktopApp extends Application
 		dlg.show();
 	}
 
-	private void populateSlots(VBox list, Stage dlg)
+	private void populateSlots(VBox list, Stage dlg, boolean guard)
 	{
 		list.getChildren().clear();
 		java.util.List<DesktopSaveStore.Slot> slots = saveStore.list();
@@ -847,7 +954,7 @@ public class DesktopApp extends Application
 			VBox text = new VBox(2, name, info);
 			Button loadBtn = new Button("Load");
 			loadBtn.setOnAction(e -> {
-				if (confirmLoadDiscard()) {
+				if (!guard || confirmLoadDiscard()) {
 					loadFile(slot.cty, slot.meta.name);
 					dlg.close();
 				}
@@ -857,7 +964,7 @@ public class DesktopApp extends Application
 				if (confirmYesNo("Delete save?",
 					"Delete \"" + slot.meta.name + "\"? This cannot be undone.", "Delete")) {
 					saveStore.delete(slot.base);
-					populateSlots(list, dlg);
+					populateSlots(list, dlg, guard);
 				}
 			});
 			HBox row = new HBox(8, thumb, text, loadBtn, delBtn);

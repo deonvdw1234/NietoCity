@@ -30,6 +30,31 @@ class SaveStore(context: Context) {
 
     fun ctyFile(base: String): File = File(dir, "$base.cty")
 
+    // --- reserved autosave slot (Continue) ---
+    // A hidden slot the game writes on pause/exit and Continue reloads. It is kept
+    // out of the normal Load list.
+
+    fun autosaveFile(): File = ctyFile(AUTOSAVE_BASE)
+
+    fun autosaveExists(): Boolean = autosaveFile().exists()
+
+    fun autosaveMeta(): SaveMeta =
+        SaveMeta.read(File(dir, "$AUTOSAVE_BASE.meta"), "Autosave")
+
+    /** Write the reserved autosave slot (best-effort; caller swallows failures). */
+    fun saveAutosave(displayName: String, controller: GameController) {
+        val engine = controller.engine
+        CityFile.save(engine, autosaveFile())
+        val pop: Int
+        val funds: Int
+        synchronized(engine) {
+            pop = engine.cityPopulation
+            funds = engine.budget.totalFunds
+        }
+        SaveMeta(displayName, System.currentTimeMillis(), pop, funds)
+            .write(File(dir, "$AUTOSAVE_BASE.meta"))
+    }
+
     fun exists(displayName: String): Boolean = ctyFile(slug(displayName)).exists()
 
     /** Save the running city under the given display name (writes .cty, .png, .meta). */
@@ -56,9 +81,11 @@ class SaveStore(context: Context) {
         SaveMeta(displayName, System.currentTimeMillis(), pop, funds).write(File(dir, "$base.meta"))
     }
 
-    /** All saved slots, newest first. */
+    /** All saved slots, newest first (the reserved autosave slot is hidden). */
     fun list(): List<SaveSlot> {
-        val ctys = dir.listFiles { f -> f.name.endsWith(".cty") } ?: return emptyList()
+        val ctys = dir.listFiles { f ->
+            f.name.endsWith(".cty") && f.name != "$AUTOSAVE_BASE.cty"
+        } ?: return emptyList()
         return ctys.map { cty ->
             val base = cty.name.removeSuffix(".cty")
             val meta = SaveMeta.read(File(dir, "$base.meta"), base)
@@ -78,5 +105,10 @@ class SaveStore(context: Context) {
     private fun slug(name: String): String {
         val trimmed = name.trim().ifEmpty { "city" }
         return trimmed.replace(Regex("[^A-Za-z0-9._-]"), "_")
+    }
+
+    companion object {
+        /** Reserved base name for the autosave slot (hidden from the Load list). */
+        const val AUTOSAVE_BASE = "__autosave__"
     }
 }

@@ -39,6 +39,9 @@ public final class DesktopSaveStore
 		}
 	}
 
+	/** Reserved base name for the autosave slot (hidden from the Load list). */
+	public static final String AUTOSAVE_BASE = "__autosave__";
+
 	private final File dir;
 
 	public DesktopSaveStore()
@@ -55,6 +58,37 @@ public final class DesktopSaveStore
 	public File ctyFile(String base)
 	{
 		return new File(dir, base + ".cty");
+	}
+
+	// --- reserved autosave slot (Continue) ---
+
+	public File autosaveFile()
+	{
+		return ctyFile(AUTOSAVE_BASE);
+	}
+
+	public boolean autosaveExists()
+	{
+		return autosaveFile().exists();
+	}
+
+	public SaveMeta autosaveMeta()
+	{
+		return SaveMeta.read(new File(dir, AUTOSAVE_BASE + ".meta"), "Autosave");
+	}
+
+	/** Write the reserved autosave slot (caller swallows failures). */
+	public void saveAutosave(String displayName, GameController controller) throws IOException
+	{
+		Micropolis engine = controller.getEngine();
+		CityFile.save(engine, autosaveFile());
+		int pop, funds;
+		synchronized (engine) {
+			pop = engine.getCityPopulation();
+			funds = engine.budget.totalFunds;
+		}
+		new SaveMeta(displayName, System.currentTimeMillis(), pop, funds)
+			.write(new File(dir, AUTOSAVE_BASE + ".meta"));
 	}
 
 	public boolean exists(String displayName)
@@ -81,7 +115,9 @@ public final class DesktopSaveStore
 	public List<Slot> list()
 	{
 		File[] ctys = dir.listFiles(new FilenameFilter() {
-			public boolean accept(File d, String name) { return name.endsWith(".cty"); }
+			public boolean accept(File d, String name) {
+				return name.endsWith(".cty") && !name.equals(AUTOSAVE_BASE + ".cty");
+			}
 		});
 		List<Slot> out = new ArrayList<Slot>();
 		if (ctys != null) {

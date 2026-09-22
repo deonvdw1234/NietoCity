@@ -76,7 +76,12 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        controller = (lastNonConfigurationInstance as? GameController) ?: GameController.newGame()
+        // A fresh cold start honours the action the start screen asked for; a
+        // configuration change (rotation) keeps the retained running city.
+        val retained = lastNonConfigurationInstance as? GameController
+        val action = if (retained == null) intent.getStringExtra(EXTRA_ACTION) else null
+        saveStore = SaveStore(applicationContext)
+        controller = retained ?: buildInitialController(action)
 
         setContentView(R.layout.activity_main)
         statusBar = findViewById(R.id.statusBar)
@@ -144,10 +149,29 @@ class MainActivity : Activity() {
         // Random disasters: default on, persisted, applied to the engine's own flag.
         controller.setRandomDisastersEnabled(prefs().getBoolean(PREF_RANDOM, true))
 
-        saveStore = SaveStore(applicationContext)
-
         refreshSpeed()
         refreshTool()
+
+        // New City / Load City from the start screen open the matching screen on
+        // top of the (placeholder) running city, with no discard guard.
+        when (action) {
+            ACTION_NEW -> showNewCityScreen(guard = false)
+            ACTION_LOAD -> showLoadScreen(guard = false)
+        }
+    }
+
+    /** Build the controller for a fresh cold start according to the chosen action. */
+    private fun buildInitialController(action: String?): GameController {
+        if (action == ACTION_CONTINUE && saveStore.autosaveExists()) {
+            try {
+                val gc = GameController.loadGame(saveStore.autosaveFile())
+                cityName = saveStore.autosaveMeta().name
+                return gc
+            } catch (e: Exception) {
+                // Autosave unreadable: fall back to a fresh city.
+            }
+        }
+        return GameController.newGame()
     }
 
     private fun prefs() = getSharedPreferences("nietocity", MODE_PRIVATE)
@@ -244,9 +268,9 @@ class MainActivity : Activity() {
         miniMap.setOverlay(overlay)
     }
 
-    private fun showNewCityScreen() {
+    private fun showNewCityScreen(guard: Boolean = true) {
         AppDialogs.showNewCity(this, controller) { level, seed, cfg ->
-            confirmNewCity(level, seed, cfg)
+            if (guard) confirmNewCity(level, seed, cfg) else applyNewCity(level, seed, cfg)
         }
     }
 
@@ -320,8 +344,8 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showLoadScreen() {
-        AppDialogs.showLoad(this, saveStore) { slot -> confirmLoad(slot) }
+    private fun showLoadScreen(guard: Boolean = true) {
+        AppDialogs.showLoad(this, saveStore) { slot -> if (guard) confirmLoad(slot) else applyLoad(slot) }
     }
 
     private fun confirmLoad(slot: SaveSlot) {
@@ -540,5 +564,11 @@ class MainActivity : Activity() {
         private const val PREF_AUTO_BUDGET = "autoBudget"
         private const val PREF_MUTED = "muted"
         private const val PREF_RANDOM = "randomDisasters"
+
+        // Start-screen action passed in the launch intent.
+        const val EXTRA_ACTION = "action"
+        const val ACTION_CONTINUE = "continue"
+        const val ACTION_NEW = "new"
+        const val ACTION_LOAD = "load"
     }
 }
