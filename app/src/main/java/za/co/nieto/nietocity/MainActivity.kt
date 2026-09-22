@@ -208,20 +208,21 @@ class MainActivity : Activity() {
         )
     }
 
-    /** The overflow menu: mini map toggle and the data-overlay picker. */
+    /** The overflow menu, grouped by order: city files, dialogs, disasters,
+     *  view (mini map + overlay) and the on/off toggles. */
     private fun showMenu() {
         val popup = PopupMenu(this, statusBar)
         val menu = popup.menu
         menu.add(0, ID_NEW_CITY, 0, "New City…")
         menu.add(0, ID_SAVE, 1, "Save…")
         menu.add(0, ID_LOAD, 2, "Load…")
-        menu.add(0, ID_BUDGET, 1, "Budget…")
-        menu.add(0, ID_EVALUATION, 2, "Evaluation…")
-        menu.add(0, ID_GRAPHS, 3, "Graphs…")
+        menu.add(0, ID_BUDGET, 10, "Budget…")
+        menu.add(0, ID_EVALUATION, 11, "Evaluation…")
+        menu.add(0, ID_GRAPHS, 12, "Graphs…")
         val miniOn = miniMap.visibility == View.VISIBLE
-        menu.add(0, ID_MINIMAP, 4, if (miniOn) "Hide mini map" else "Show mini map")
+        menu.add(0, ID_MINIMAP, 30, if (miniOn) "Hide mini map" else "Show mini map")
 
-        val dsub = menu.addSubMenu(0, ID_DISASTER_SUB, 3, "Disasters")
+        val dsub = menu.addSubMenu(0, ID_DISASTER_SUB, 20, "Disasters")
         for (i in DISASTER_NAMES.indices) {
             dsub.add(0, ID_DISASTER_BASE + i, i, DISASTER_NAMES[i])
         }
@@ -229,19 +230,19 @@ class MainActivity : Activity() {
             "(Plane crash & shipwreck happen during play)")
         note.isEnabled = false
 
-        val randomItem = menu.add(0, ID_RANDOM_DISASTERS, 8, "Random disasters")
+        val randomItem = menu.add(0, ID_RANDOM_DISASTERS, 40, "Random disasters")
         randomItem.isCheckable = true
         randomItem.isChecked = controller.isRandomDisastersEnabled
 
-        val muteItem = menu.add(0, ID_MUTE, 9, "Mute sound")
+        val muteItem = menu.add(0, ID_MUTE, 41, "Mute sound")
         muteItem.isCheckable = true
         muteItem.isChecked = soundPlayer?.isMuted == true
 
-        val explainItem = menu.add(0, ID_EXPLAIN, 10, "Explain (learn as you play)")
+        val explainItem = menu.add(0, ID_EXPLAIN, 42, "Explain (learn as you play)")
         explainItem.isCheckable = true
         explainItem.isChecked = explainEnabled
 
-        val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 6, "Overlay")
+        val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 31, "Overlay")
         val current = cityView.getMapOverlay()
         val overlays = MapOverlay.values()
         for (idx in overlays.indices) {

@@ -46,6 +46,7 @@ class InfoActivity : Activity() {
             setTextColor(0xFFEDEDED.toInt())
             textSize = if (mode == MODE_LICENCE) 11f else 15f
             if (mode == MODE_LICENCE) typeface = Typeface.MONOSPACE
+            else setLineSpacing(0f, 1.2f) // roomier prose; keep the licence compact
             setTextIsSelectable(true)
             val p = dp(16)
             setPadding(p, 0, p, dp(16))
