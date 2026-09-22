@@ -282,23 +282,50 @@ Created by Nieto Software
       and interchanges with the engine's own reader.
 
 ## Phase 7: Start screen, educational mode, splash, about and GPL
-- [ ] 0. Assets: mp4 into Android res/raw + desktop resources; compressed
-      splash_exit.jpg (<1 MB); adaptive launcher icon from AppIcon.png.
-- [ ] 1. Start splash on cold launch (video on black, tap to skip after 1s,
-      ~5s safety timer), then the start screen.
-- [ ] 2. Start screen: Continue (autosave only), New City, Load City, How to
-      play / Educational, About, Licence (GPL), Quit; Scenarios disabled.
-- [ ] 3. Autosave to a reserved slot on pause/exit; Continue loads it; failure
-      never crashes or blocks exit.
-- [ ] 4. Educational mode: an Explain toggle; shared registry covering all 16
-      tools, 8 overlays and 7 CityProblem values plus basics. JUnit completeness.
-- [ ] 5. About screen: credits, "Created by Nieto Software", version, offline +
-      GPLv3 line.
-- [ ] 6. Licence (GPL) screen: LICENSE + THIRD_PARTY, from About and start.
-- [ ] 7. Exit splash: the single exit point fades, shows splash_exit.jpg ~1.8s,
-      then exits; ceiling timer + swallow-all; re-entrancy safe.
-- [ ] 8. Gate: gradlew --rerun-tasks :engine:test :desktop:jar assembleDebug;
-      raw tail + test count; APK size; fresh artefact timestamps.
+- [x] 0. Assets: intro mp4 copied verbatim to app res/raw and desktop resources;
+      splash_exit.png -> splash_exit.jpg (~300 KB, 1280x1280) for both; adaptive
+      launcher icon from AppIcon.png (foreground with the black corners flood-
+      filled transparent, solid brand-blue #0B3986 background, all densities +
+      legacy fallbacks). Root originals untouched; the 10 MB PNG not shipped.
+      Repeatable via scripts/prep-assets.cmd (scripts/AssetPrep.java).
+- [x] 1. Start splash on cold launch: full-screen video on black (letterboxed
+      contain, no controls, tap-skip after 1s, ~5s safety), then the start
+      screen. Android SplashActivity is the launcher (VideoView; shows the first
+      frame when OS animations are off). Desktop plays it via JavaFX MediaView
+      (mp4 extracted to a temp file). Intro audio muted (logo animation).
+- [x] 2. Start screen (both): Continue (only when an autosave exists), New City,
+      Load City, How to play / Educational, About, Licence (GPL), Quit, and a
+      disabled "Scenarios (coming soon)". Continue/New/Load wired to the existing
+      screens (New/Load from the menu skip the discard guard).
+- [x] 3. Autosave to a reserved, hidden slot (Android onStop; desktop on close)
+      and Continue reloads it. Best-effort: a failure never crashes or blocks
+      exit. The slot is excluded from the Load list.
+- [x] 4. Educational mode: persisted "Explain" toggle (off by default) in the
+      overflow menu; when on, picking a tool, choosing an overlay, querying a
+      tile (footer) and viewing the evaluation (per-problem) show a plain-language
+      card. ONE shared game.Education registry covers all 16 tools, 8 overlays and
+      7 CityProblem values, plus power/road-access/demand basics and the How-to-
+      play reference. JUnit EducationTest (4) proves completeness.
+- [x] 5. About screen (shared game.AppInfo): credits (Micropolis; Electronic
+      Arts; Maxis and Will Wright; Don Hopkins; Jason Long / MicropolisJ),
+      "Created by Nieto Software", the app version (Android reads its real
+      versionName), and the offline + GPLv3-Micropolis line.
+- [x] 6. Licence (GPL) screen: bundled GPLv3 LICENSE + THIRD_PARTY notices
+      (engine resources), scrollable, reachable from About and the start screen
+      via shared game.LicenseText.
+- [x] 7. Exit splash: the single exit point (Android 3-press back confirm + start
+      Quit; desktop window close + menu Quit) fades to splash_exit.jpg with
+      "Copyright 2026 Nieto Software. All rights reserved." for ~1.8s, then exits.
+      Autosave happens first; ceiling timer + swallow-all; re-entrancy safe.
+- [x] 8. Gate green. `gradlew --rerun-tasks :engine:test :desktop:jar
+      assembleDebug` raw tail:
+        "BUILD SUCCESSFUL in 11s
+         44 actionable tasks: 44 executed"
+      Engine tests (XML reports): 58 total, 0 failures, 0 errors (Phase 6b's 54 +
+      EducationTest 4). NietoCity-debug.apk refreshed to 5 710 129 B (was
+      3 271 276 B; +2 438 853 B, ~2.33 MiB, from the intro mp4, the splash jpg and
+      the launcher icons) and NietoCity-desktop.jar refreshed, both stamped
+      2026-09-22 09:57.
 - [ ] 9. Docs: TASKS.md, CHANGES.md, README, CLAUDE.md.
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
