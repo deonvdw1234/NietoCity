@@ -93,8 +93,9 @@ class StartActivity : Activity() {
     }
 
     private fun quit() {
-        // Task 7 wires the exit splash here (the app's single exit surface).
-        finishAffinity()
+        startActivity(Intent(this, ExitSplashActivity::class.java))
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        finish()
     }
 
     private fun menuButton(text: String, enabled: Boolean = true, onClick: () -> Unit): Button =

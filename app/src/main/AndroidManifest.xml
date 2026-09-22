@@ -25,6 +25,9 @@
         <activity
             android:name=".InfoActivity"
             android:exported="false" />
+        <activity
+            android:name=".ExitSplashActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

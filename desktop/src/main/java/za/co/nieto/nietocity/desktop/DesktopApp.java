@@ -290,7 +290,7 @@ public class DesktopApp extends Application
 		box.getChildren().add(menuButton("About", true, e -> showInfo(DesktopInfo.ABOUT)));
 		box.getChildren().add(menuButton("Licence (GPL)", true, e -> showInfo(DesktopInfo.LICENCE)));
 		box.getChildren().add(menuButton("Scenarios (coming soon)", false, e -> { }));
-		box.getChildren().add(menuButton("Quit", true, e -> stage.close()));
+		box.getChildren().add(menuButton("Quit", true, e -> requestExit()));
 
 		stage.setScene(new Scene(box, START_W, START_H, Color.BLACK));
 	}
@@ -452,12 +452,93 @@ public class DesktopApp extends Application
 		return tmp;
 	}
 
-	/** Window close handler (task 7 adds the exit splash). */
+	private boolean exiting;
+
+	/** Window close handler: run the app's single exit path (autosave + splash). */
 	private void onCloseRequest(WindowEvent e)
 	{
+		e.consume(); // we close ourselves once the exit splash has shown
+		requestExit();
+	}
+
+	/**
+	 * The single exit point: autosave, stop the sim, fade to the exit splash for
+	 * ~1.8s, then quit. Re-entrancy safe, and a hard ceiling timer guarantees the
+	 * app quits even if something along the way hangs.
+	 */
+	private void requestExit()
+	{
+		if (exiting) {
+			return;
+		}
+		exiting = true;
 		autosave();
 		if (controller != null) {
 			controller.stop();
+		}
+		showExitSplash();
+	}
+
+	private void showExitSplash()
+	{
+		StackPane pane = new StackPane();
+		pane.setStyle("-fx-background-color: black;");
+		Scene scene = new Scene(pane, stage.getWidth(), stage.getHeight(), Color.BLACK);
+
+		try {
+			Image img = new Image(DesktopApp.class.getResourceAsStream("/splash_exit.jpg"));
+			ImageView iv = new ImageView(img);
+			iv.setPreserveRatio(true);
+			iv.fitWidthProperty().bind(scene.widthProperty());
+			iv.fitHeightProperty().bind(scene.heightProperty());
+			pane.getChildren().add(iv);
+		} catch (Exception ex) {
+			// No image: the black background and the copyright line are enough.
+		}
+
+		Label copyright = new Label("Copyright 2026 Nieto Software. All rights reserved.");
+		copyright.setStyle("-fx-text-fill: white; -fx-background-color: rgba(0,0,0,0.55); "
+			+ "-fx-padding: 6 12 6 12;");
+		StackPane.setAlignment(copyright, javafx.geometry.Pos.BOTTOM_CENTER);
+		StackPane.setMargin(copyright, new Insets(0, 0, 24, 0));
+		pane.getChildren().add(copyright);
+
+		stage.setScene(scene);
+
+		// Fade the app to the splash.
+		javafx.animation.FadeTransition fade =
+			new javafx.animation.FadeTransition(Duration.millis(300), pane);
+		fade.setFromValue(0.0);
+		fade.setToValue(1.0);
+		fade.play();
+
+		// Show for ~1.8s, then quit; a hard ceiling ensures we quit even if hung.
+		PauseTransition hold = new PauseTransition(Duration.millis(1800));
+		hold.setOnFinished(e -> exitNow());
+		hold.play();
+		PauseTransition ceiling = new PauseTransition(Duration.millis(4000));
+		ceiling.setOnFinished(e -> exitNow());
+		ceiling.play();
+	}
+
+	private boolean exited;
+
+	/** Actually quit, swallowing anything so shutdown never blocks. */
+	private void exitNow()
+	{
+		if (exited) {
+			return;
+		}
+		exited = true;
+		try {
+			Platform.exit();
+		} catch (Throwable t) {
+			// ignore
+		}
+		try {
+			System.exit(0);
+		} catch (Throwable t) {
+			// ignore
 		}
 	}
 

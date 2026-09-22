@@ -46,6 +46,7 @@ class MainActivity : Activity() {
     private var queryDialog: android.app.AlertDialog? = null
     private var backCount = 0
     private var firstBackAt = 0L
+    private var exiting = false
 
     // Budget auto-show: once a year unless the player turned it off (persisted).
     private var autoShowBudget = true
@@ -560,8 +561,17 @@ class MainActivity : Activity() {
         dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
     }
 
-    /** The single exit point (Phase 7 will show the exit splash here). */
+    /** The single exit point: autosave, then the exit splash, then quit. */
     private fun exitApp() {
+        if (exiting) return
+        exiting = true
+        try {
+            saveStore.saveAutosave(cityName, controller)
+        } catch (e: Exception) {
+            // Autosave failure must never block the exit.
+        }
+        startActivity(android.content.Intent(this, ExitSplashActivity::class.java))
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         finish()
     }
 
