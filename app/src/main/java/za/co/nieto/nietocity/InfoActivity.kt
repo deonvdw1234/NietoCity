@@ -48,15 +48,23 @@ class InfoActivity : Activity() {
             if (mode == MODE_LICENCE) typeface = Typeface.MONOSPACE
             else setLineSpacing(0f, 1.2f) // roomier prose; keep the licence compact
             setTextIsSelectable(true)
+            // Cap the line length so text stays readable on tablets / wide screens.
+            maxWidth = dp(680)
             val p = dp(16)
             setPadding(p, 0, p, dp(16))
             text = bodyFor(mode)
+        }
+        // Centre the capped body so wide screens don't left-align a narrow column.
+        val bodyWrap = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            addView(body)
         }
         val scroll = ScrollView(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
             )
-            addView(body)
+            addView(bodyWrap)
         }
         root.addView(scroll)
 
