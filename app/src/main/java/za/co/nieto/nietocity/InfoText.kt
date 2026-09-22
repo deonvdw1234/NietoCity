@@ -26,17 +26,7 @@ object InfoText {
         return AppInfo.about(version)
     }
 
-    fun licence(context: Context): CharSequence =
-        loadResource("/license/LICENSE.txt")
-            ?: "Licence text is unavailable in this build."
+    fun licence(context: Context): CharSequence = za.co.nieto.nietocity.game.LicenseText.full()
 
     fun howToPlay(): CharSequence = Education.fullReference()
-
-    /** Read a bundled UTF-8 text resource from the classpath, or null if absent. */
-    private fun loadResource(path: String): String? = try {
-        InfoText::class.java.getResourceAsStream(path)?.bufferedReader(Charsets.UTF_8)
-            ?.use { it.readText() }
-    } catch (_: Exception) {
-        null
-    }
 }
