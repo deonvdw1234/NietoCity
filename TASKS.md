@@ -332,6 +332,36 @@ Created by Nieto Software
       updated); CLAUDE.md notes the launcher icon and splash are wired and the app
       is English-only for now.
 
+## Phase 8: Polish, landscape/tablet, and the 1.0.0 release
+- [x] 0. Prerequisites and version: versionCode 2 / versionName "1.0.0" (and
+      AppInfo.VERSION for the desktop About). Toolchain check on this machine:
+      keytool present (Android Studio JBR); Liberica JDK 8 Full jre present
+      (jre/bin/java.exe + jre/lib/ext/jfxrt.jar); apksigner present (SDK
+      build-tools 34/35/36). MISSING: launch4j (needed for the Windows exe, task
+      5). STOP for Andre to confirm the tools are ready before proceeding.
+- [ ] 1. Polish pass (newer screens + in-game HUD): spacing, type, dialog sizing
+      + scroll, no clipped text at 3x, tidy menu. Investigate before changing.
+- [ ] 2. Landscape and tablet pass: left tool column in landscape, centred
+      scrollable dialogs, mini map/status bar placement, start + New City scaling;
+      rotation without restart.
+- [ ] 3. Intro audio ON (both platforms); keep tap-skip after 1s + safety timer.
+      *** STOP: polish + landscape ready to test on the S22 before release. ***
+- [ ] 4. Android release signing: keystore via keytool OUTSIDE the repo; wire
+      signingConfigs.release from gitignored keystore.properties; assembleRelease;
+      verify with apksigner; copy to root as NietoCity-1.0.0.apk. .gitignore
+      *.zip/*.exe/keystore.properties.
+- [ ] 5. Windows icon + exe: NietoCity.ico from AppIcon.png (black corners cut to
+      transparent, 16..256); launch4j wraps desktop.jar into NietoCity.exe with a
+      bundled relative jre\ and the .ico.
+- [ ] 6. Bundle + package under C:\NietoCity-build: Liberica JRE 8 Full beside the
+      exe as jre\; include LICENSE + THIRD_PARTY; zip to root as
+      NietoCity-1.0.0-windows.zip; report size; delete the scratch (named).
+- [ ] 7. GPL publish check: full source + LICENSE + THIRD_PARTY present; grep for
+      secrets/keystores/passwords (none); suggest tagging v1.0.0.
+- [ ] 8. Gate + docs: gradlew --rerun-tasks :engine:test :desktop:jar
+      assembleDebug AND assembleRelease; raw tail + test count; update TASKS.md,
+      CHANGES.md, README, CLAUDE.md; confirm root artefacts + timestamps.
+
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar
 - Phase 4: Speed, budget, evaluation, graphs, mini map
