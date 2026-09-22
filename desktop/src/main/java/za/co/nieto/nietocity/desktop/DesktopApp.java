@@ -446,11 +446,28 @@ public class DesktopApp extends Application
 		return tmp;
 	}
 
-	/** Window close handler (task 7 adds the exit splash + autosave). */
+	/** Window close handler (task 7 adds the exit splash). */
 	private void onCloseRequest(WindowEvent e)
 	{
+		autosave();
 		if (controller != null) {
 			controller.stop();
+		}
+	}
+
+	/**
+	 * Autosave the current city to the reserved slot so Continue can resume it.
+	 * Best-effort: a failure must never crash or block the shutdown.
+	 */
+	private void autosave()
+	{
+		if (controller == null) {
+			return;
+		}
+		try {
+			saveStore.saveAutosave(cityName, controller);
+		} catch (Exception ex) {
+			// Swallow: an autosave failure must not stop the app from closing.
 		}
 	}
 

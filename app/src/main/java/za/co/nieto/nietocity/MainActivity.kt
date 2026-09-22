@@ -443,6 +443,19 @@ class MainActivity : Activity() {
         super.onPause()
     }
 
+    /**
+     * Autosave the current city to the reserved slot on pause/exit so Continue can
+     * resume it. Best-effort: a failure must never crash or block leaving.
+     */
+    override fun onStop() {
+        try {
+            saveStore.saveAutosave(cityName, controller)
+        } catch (e: Exception) {
+            // Swallow: an autosave failure must not stop the app from backgrounding.
+        }
+        super.onStop()
+    }
+
     override fun onDestroy() {
         // Release this activity's sound player (a new one is made on recreate).
         soundPlayer?.release()
