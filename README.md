@@ -69,6 +69,40 @@ into `tools\`), run:
 scripts\compose-tiles.cmd
 ```
 
+## Starting the game
+
+- Intro splash: on a cold launch the Nieto intro video plays full-screen on black
+  (letterboxed, no controls). Tap (or click) to skip after a second; it also ends
+  on its own, with a short safety timer as a backstop. On Android, if the OS is set
+  to remove animations, the first frame is shown briefly instead.
+- Start screen: **Continue** (shown only when an autosave exists), **New City**,
+  **Load City**, **How to play / Educational**, **About**, **Licence (GPL)**,
+  **Quit**, and a disabled **Scenarios (coming soon)**. New City and Load City open
+  the usual screens.
+- Continue and autosave: the current city is autosaved to a hidden slot when you
+  leave (Android: when the app is stopped; desktop: on close). Continue resumes it.
+  Autosaving is best-effort and never blocks leaving the app.
+- Exit splash: leaving the game (Android: press Back three times, then confirm, or
+  Quit on the start screen; desktop: close the window or Quit) autosaves, then
+  shows the exit splash with "Copyright 2026 Nieto Software. All rights reserved."
+  for a moment before the app closes.
+- About and Licence: About lists the credits (Micropolis; Electronic Arts; Maxis
+  and Will Wright; Don Hopkins; Jason Long / MicropolisJ), the version, and a note
+  that NietoCity is offline and based on GPLv3 Micropolis. The Licence screen shows
+  the full GPLv3 text and the third-party notices, reachable from About and the
+  start screen.
+
+## Educational mode ("Explain")
+
+Turn on **Explain (learn as you play)** in the menu (off by default, remembered).
+While it is on, picking a tool, choosing an overlay, querying a tile, or viewing
+the city evaluation shows a short plain-language card: what it is and the real
+engine mechanic behind it (zones need power, road access and demand to grow;
+industry and traffic raise pollution, which lowers land value; and so on). The
+**How to play / Educational** screen on the start menu is the full reference,
+covering the basics, all 16 tools, the 8 overlays and what citizens complain
+about.
+
 ## Controls
 
 A top status bar shows the date, funds, population, and the selected tool and its
@@ -93,8 +127,8 @@ large X that returns to Pan (it shows "Pan" when nothing is selected).
   land value, traffic, the power grid (powered zones red, unpowered blue), or fire
   and police coverage. Choose one - or None - from the menu. Off by default.
 - Menu: an overflow menu (the ⋮ button in the phone status bar; the "Menu" button
-  on the PC) holds the Budget, Evaluation and Graphs dialogs, the mini map toggle
-  and the overlay picker.
+  on the PC) holds the Budget, Evaluation and Graphs dialogs, the mini map toggle,
+  the overlay picker and the "Explain (learn as you play)" toggle.
 - Budget dialog: sliders for the tax rate (0-20%) and road/fire/police funding,
   with tax revenue, expenses and cash flow shown in rand; Apply saves them. It
   opens automatically once a year unless you tick "Don't show automatically".
@@ -112,9 +146,10 @@ large X that returns to Pan (it shows "Pan" when nothing is selected).
 - Every map has a seed. The seed field shows the current city's seed; type a seed
   to reproduce that exact map, or press Reroll for a new random one. A live
   preview thumbnail shows the map as you change the controls.
-- Start begins the new city. Because save/load is not available yet, it asks first
-  ("Start a new city? Your current city will be discarded.") - Cancel keeps your
-  current city.
+- Start begins the new city. Since the running city is discarded, it asks first
+  ("Start a new city? Your current city will be discarded.") with Save first /
+  Start / Cancel - Cancel keeps your current city. (Opening New City from the start
+  screen skips this, as there is nothing to keep.)
 
 ### Save and Load
 

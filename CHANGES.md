@@ -3,6 +3,49 @@
 Changes made to the imported Micropolis / MicropolisJ source, most recent first.
 Created by Nieto Software.
 
+## 2026-09-22 - Phase 7 start screen, educational mode, splash, about and GPL
+
+No `micropolisj.*` engine source was changed this phase; the one small engine-
+adjacent addition is a field on our own `game.EvaluationReport` (the top problems
+exposed as `CityProblem` enums, so the Explain cards can be looked up). Everything
+else is new app/desktop UI, new shared `game`/resource files, and assets.
+
+- Assets (build-time, originals untouched): the intro `Nieto Logo Animated.mp4` is
+  copied verbatim to `app/src/main/res/raw/nieto_logo_animated.mp4` and to
+  `desktop/src/main/resources/`; `splash_exit.png` (10 MB) is compressed to a
+  ~300 KB `splash_exit.jpg` (1280x1280) for both platforms; and `AppIcon.png`
+  becomes an Android adaptive launcher icon - a foreground with the black corners
+  flood-filled transparent over a solid brand-blue (#0B3986) background, at every
+  mipmap density with legacy square/round fallbacks. Regenerate with
+  `scripts/prep-assets.cmd` (`scripts/AssetPrep.java`, headless javax.imageio).
+  The 10 MB PNG is not shipped.
+- Start splash: Android `SplashActivity` (the launcher) plays the video with a
+  `VideoView` (first frame shown when OS animations are off); desktop plays it with
+  a JavaFX `MediaView` (the mp4 extracted from the jar to a temp file, since
+  JavaFX media wants a file URI). Letterboxed "contain", no controls, tap to skip
+  after 1s, ~5s safety timer. Intro audio is muted.
+- Start screen: Continue (only when an autosave exists), New City, Load City, How
+  to play / Educational, About, Licence (GPL), Quit, and a disabled "Scenarios
+  (coming soon)". Android uses a `StartActivity` that launches `MainActivity` with
+  an action; desktop swaps the JavaFX scene (the game scene is built in a new
+  `enterGame()`).
+- Autosave + Continue: both platforms write a hidden reserved slot (Android in
+  `onStop`, desktop on close) that Continue reloads; the slot is excluded from the
+  Load list; failures are swallowed so leaving is never blocked.
+- Educational "Explain" mode: a persisted menu toggle (off by default). ONE shared
+  `game.Education` registry maps every tool (16), overlay (8) and city problem (7),
+  plus power/road-access/demand basics, to a short accurate card, and builds the
+  How-to-play reference. When on, selecting a tool, choosing an overlay, querying a
+  tile (footer) and viewing the evaluation (per-problem) show the matching card.
+  JUnit `EducationTest` (4) proves the registry is complete.
+- About / Licence: shared `game.AppInfo` (About text + version) and
+  `game.LicenseText` (reads the bundled GPLv3 `LICENSE` + `THIRD_PARTY` from engine
+  resources). The Licence screen is the GPL-compliance surface for the build,
+  reachable from About and the start screen.
+- Exit splash: the single exit point on each platform fades to `splash_exit.jpg`
+  with "Copyright 2026 Nieto Software. All rights reserved." for ~1.8s, then quits.
+  Autosave runs first; re-entrancy safe with a hard ceiling timer and swallow-all.
+
 ## 2026-09-21 - Phase 6b save and load (classic binary .cty)
 
 Confirmed the exact classic binary v1 `.cty` layout by reading the engine's own

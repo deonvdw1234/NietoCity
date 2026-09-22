@@ -326,7 +326,11 @@ Created by Nieto Software
       3 271 276 B; +2 438 853 B, ~2.33 MiB, from the intro mp4, the splash jpg and
       the launcher icons) and NietoCity-desktop.jar refreshed, both stamped
       2026-09-22 09:57.
-- [ ] 9. Docs: TASKS.md, CHANGES.md, README, CLAUDE.md.
+- [x] 9. Docs: TASKS.md finalised; CHANGES.md Phase 7 entry at the top; README
+      gained "Starting the game" (splash, start screen, Continue, About/GPL, exit
+      splash) and an "Educational mode" section (and the New City / menu notes
+      updated); CLAUDE.md notes the launcher icon and splash are wired and the app
+      is English-only for now.
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar

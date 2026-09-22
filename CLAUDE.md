@@ -30,6 +30,11 @@
   with desktop Micropolis / classic SimCity .cty. Binary (not the engine's XML
   .cty) because Android lacks StAX (javax.xml.stream). The eight scenarios remain
   deferred (no scenario data in our engine source).
+- Phase 7 wired the launcher icon (Android adaptive icon generated from
+  AppIcon.png), the cold-launch intro splash and the exit splash, the start screen
+  (Continue/New City/Load City/How to play/About/Licence/Quit), autosave+Continue,
+  and the shared Explain educational registry (game.Education); English only for
+  now. Regenerate the icon/splash assets with scripts/prep-assets.cmd.
 
 ## Toolchain (verified 2026-09-16)
 - JDK: 25.0.3 (Android Studio JBR at %JAVA_HOME%). Runs the Gradle daemon fine;
