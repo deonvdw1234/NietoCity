@@ -129,8 +129,9 @@ object AppDialogs {
     }
 
     /** The evaluation dialog: approval, score, population, class and top problems.
-     *  Read-only; closes on OK, Back or tap-outside. */
-    fun showEvaluation(context: Context, controller: GameController) {
+     *  Read-only; closes on OK, Back or tap-outside. When explain is on, each top
+     *  problem is followed by a short plain-language card. */
+    fun showEvaluation(context: Context, controller: GameController, explain: Boolean = false) {
         val r = EvaluationReport.of(controller.engine)
         val sb = StringBuilder()
         sb.append("Is the mayor doing a good job?\n")
@@ -144,6 +145,11 @@ object AppDialogs {
         } else {
             for (i in r.problems.indices) {
                 sb.append("  ${i + 1}. ${r.problems[i]}")
+                if (explain && i < r.topProblems.size) {
+                    za.co.nieto.nietocity.game.Education.forProblem(r.topProblems[i])?.let {
+                        sb.append("\n     ").append(it.body)
+                    }
+                }
                 if (i < r.problems.size - 1) sb.append('\n')
             }
         }

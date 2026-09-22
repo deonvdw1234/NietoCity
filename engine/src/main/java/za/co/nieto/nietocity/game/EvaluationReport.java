@@ -24,9 +24,11 @@ public final class EvaluationReport
 	public final int populationDelta;
 	public final String cityClass; // village/town/.../megalopolis
 	public final String[] problems; // top problems, "Name (votes)", may be empty
+	public final CityProblem[] topProblems; // the same top problems as enums (for Explain cards)
 
 	private EvaluationReport(int approveYes, int approveNo, int score, int scoreDelta,
-		int population, int populationDelta, String cityClass, String[] problems)
+		int population, int populationDelta, String cityClass, String[] problems,
+		CityProblem[] topProblems)
 	{
 		this.approveYes = approveYes;
 		this.approveNo = approveNo;
@@ -36,6 +38,7 @@ public final class EvaluationReport
 		this.populationDelta = populationDelta;
 		this.cityClass = cityClass;
 		this.problems = problems;
+		this.topProblems = topProblems;
 	}
 
 	/** Read and format the current evaluation. */
@@ -46,8 +49,10 @@ public final class EvaluationReport
 			CityProblem[] order = e.problemOrder;
 			int n = Math.min(4, order != null ? order.length : 0);
 			String[] probs = new String[n];
+			CityProblem[] top = new CityProblem[n];
 			for (int i = 0; i < n; i++) {
 				CityProblem p = order[i];
+				top[i] = p;
 				Integer votes = e.problemVotes.get(p);
 				probs[i] = GameStrings.problemName(p) + " (" + (votes != null ? votes : 0) + ")";
 			}
@@ -56,7 +61,7 @@ public final class EvaluationReport
 				e.cityScore, e.deltaCityScore,
 				e.cityPop, e.deltaCityPop,
 				GameStrings.cityClassName(e.cityClass),
-				probs);
+				probs, top);
 		}
 	}
 }

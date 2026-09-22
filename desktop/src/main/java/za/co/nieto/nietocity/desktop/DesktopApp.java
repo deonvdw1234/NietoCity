@@ -156,6 +156,11 @@ public class DesktopApp extends Application
 	private int lastBudgetYear;
 	private boolean budgetOpen;
 
+	// Educational mode: when on, picking a tool, choosing an overlay, querying a
+	// tile or viewing the evaluation shows a short plain-language card. Off by
+	// default; persisted.
+	private boolean explainEnabled;
+
 	private DesktopSoundPlayer soundPlayer;
 
 	private final DesktopSaveStore saveStore = new DesktopSaveStore();
@@ -413,6 +418,7 @@ public class DesktopApp extends Application
 		refreshPalette();
 		refreshSpeed();
 		autoShowBudget = prefs.getBoolean("autoBudget", true);
+		explainEnabled = prefs.getBoolean("explain", false);
 		lastBudgetYear = currentYear();
 
 		Timeline ui = new Timeline(new KeyFrame(Duration.millis(250), e -> onUiTick()));
@@ -574,6 +580,13 @@ public class DesktopApp extends Application
 			prefs.putBoolean("randomDisasters", randomDisasters.isSelected());
 		});
 
+		CheckMenuItem explain = new CheckMenuItem("Explain (learn as you play)");
+		explain.setSelected(explainEnabled);
+		explain.setOnAction(e -> {
+			explainEnabled = explain.isSelected();
+			prefs.putBoolean("explain", explainEnabled);
+		});
+
 		Menu overlayMenu = new Menu("Overlay");
 		ToggleGroup group = new ToggleGroup();
 		for (final MapOverlay ov : MapOverlay.values()) {
@@ -588,7 +601,7 @@ public class DesktopApp extends Application
 
 		mb.getItems().addAll(newCity, save, load, new SeparatorMenuItem(),
 			budget, eval, graphs, disasters, new SeparatorMenuItem(),
-			miniToggle, overlayMenu, randomDisasters, mute);
+			miniToggle, overlayMenu, randomDisasters, mute, explain);
 		return mb;
 	}
 
@@ -597,6 +610,24 @@ public class DesktopApp extends Application
 		overlay = ov;
 		redraw();
 		refreshMiniMap();
+		if (explainEnabled && ov != MapOverlay.NONE) {
+			showCard(za.co.nieto.nietocity.game.Education.forOverlay(ov));
+		}
+	}
+
+	/** Show an educational card (Explain mode). */
+	private void showCard(za.co.nieto.nietocity.game.Education.Card card)
+	{
+		if (card == null) {
+			return;
+		}
+		Alert a = new Alert(Alert.AlertType.INFORMATION);
+		a.initOwner(stage);
+		a.setTitle(card.title);
+		a.setHeaderText(card.title);
+		a.setContentText(card.body);
+		a.getDialogPane().setPrefWidth(460);
+		a.show();
 	}
 
 	private static final String[] LEVEL_OPTIONS = { "Auto", "None", "Low", "High" };
@@ -1108,6 +1139,9 @@ public class DesktopApp extends Application
 				controller.toggleTool(tool);
 				refreshPalette();
 				updateStatus();
+				if (explainEnabled && controller.getTool() != null) {
+					showCard(za.co.nieto.nietocity.game.Education.forTool(controller.getTool()));
+				}
 			});
 			toolButtons.put(tool, b);
 			box.getChildren().add(b);
@@ -1476,6 +1510,13 @@ public class DesktopApp extends Application
 		} else {
 			for (int i = 0; i < r.problems.length; i++) {
 				sb.append("  ").append(i + 1).append(". ").append(r.problems[i]);
+				if (explainEnabled && i < r.topProblems.length) {
+					za.co.nieto.nietocity.game.Education.Card c =
+						za.co.nieto.nietocity.game.Education.forProblem(r.topProblems[i]);
+					if (c != null) {
+						sb.append("\n     ").append(c.body);
+					}
+				}
 				if (i < r.problems.length - 1) sb.append('\n');
 			}
 		}
@@ -1666,6 +1707,13 @@ public class DesktopApp extends Application
 		for (int i = 0; i < r.labels.length; i++) {
 			body.append(r.labels[i]).append(' ').append(r.values[i]);
 			if (i < r.labels.length - 1) body.append('\n');
+		}
+		if (explainEnabled) {
+			za.co.nieto.nietocity.game.Education.Card c =
+				za.co.nieto.nietocity.game.Education.forTool(MicropolisTool.QUERY);
+			if (c != null) {
+				body.append("\n\n").append(c.body);
+			}
 		}
 		Alert a = new Alert(Alert.AlertType.INFORMATION);
 		a.initOwner(stage);

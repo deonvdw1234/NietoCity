@@ -8,6 +8,7 @@
 package za.co.nieto.nietocity
 
 import android.content.Context
+import za.co.nieto.nietocity.game.Education
 
 /**
  * Builds the text shown on the information screens. About and Licence get their
@@ -21,7 +22,7 @@ object InfoText {
         loadResource("/license/LICENSE.txt")
             ?: "Licence text is unavailable in this build."
 
-    fun howToPlay(): CharSequence = "How to play."
+    fun howToPlay(): CharSequence = Education.fullReference()
 
     /** Read a bundled UTF-8 text resource from the classpath, or null if absent. */
     private fun loadResource(path: String): String? = try {

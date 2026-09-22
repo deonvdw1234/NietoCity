@@ -32,7 +32,7 @@ public final class DesktopInfo
 
 	public static String howToPlay()
 	{
-		return "How to play.";
+		return za.co.nieto.nietocity.game.Education.fullReference();
 	}
 
 	/** Read a bundled UTF-8 text resource from the classpath, or null if absent. */

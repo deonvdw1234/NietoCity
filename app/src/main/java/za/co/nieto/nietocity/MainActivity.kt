@@ -56,6 +56,11 @@ class MainActivity : Activity() {
     private lateinit var saveStore: SaveStore
     private var cityName = "My City"
 
+    // Educational mode: when on, picking a tool, choosing an overlay, querying a
+    // tile or viewing the evaluation shows a short plain-language card. Off by
+    // default; persisted.
+    private var explainEnabled = false
+
     private val pump = object : Runnable {
         override fun run() {
             val now = SystemClock.uptimeMillis()
@@ -114,6 +119,11 @@ class MainActivity : Activity() {
         }
         palette.listener = {
             refreshTool()
+            // Explain: show a card when the user picks a tool (not on deselect).
+            if (explainEnabled) {
+                val t = controller.getTool()
+                if (t != null) showCard(za.co.nieto.nietocity.game.Education.forTool(t))
+            }
         }
         // A one-shot tool clears itself after placing; refresh the bar and palette.
         cityView.placementListener = { refreshTool() }
@@ -148,6 +158,9 @@ class MainActivity : Activity() {
 
         // Random disasters: default on, persisted, applied to the engine's own flag.
         controller.setRandomDisastersEnabled(prefs().getBoolean(PREF_RANDOM, true))
+
+        // Educational mode: off by default, persisted.
+        explainEnabled = prefs().getBoolean(PREF_EXPLAIN, false)
 
         refreshSpeed()
         refreshTool()
@@ -223,6 +236,10 @@ class MainActivity : Activity() {
         muteItem.isCheckable = true
         muteItem.isChecked = soundPlayer?.isMuted == true
 
+        val explainItem = menu.add(0, ID_EXPLAIN, 10, "Explain (learn as you play)")
+        explainItem.isCheckable = true
+        explainItem.isChecked = explainEnabled
+
         val sub = menu.addSubMenu(0, ID_OVERLAY_SUB, 6, "Overlay")
         val current = cityView.getMapOverlay()
         val overlays = MapOverlay.values()
@@ -243,11 +260,12 @@ class MainActivity : Activity() {
             ID_SAVE -> { showSaveScreen(); return true }
             ID_LOAD -> { showLoadScreen(); return true }
             ID_BUDGET -> { showBudget(); return true }
-            ID_EVALUATION -> { AppDialogs.showEvaluation(this, controller); return true }
+            ID_EVALUATION -> { AppDialogs.showEvaluation(this, controller, explainEnabled); return true }
             ID_GRAPHS -> { AppDialogs.showGraphs(this, controller); return true }
             ID_MINIMAP -> { toggleMiniMap(); return true }
             ID_MUTE -> { toggleMute(); return true }
             ID_RANDOM_DISASTERS -> { toggleRandomDisasters(); return true }
+            ID_EXPLAIN -> { toggleExplain(); return true }
         }
         val dIdx = item.itemId - ID_DISASTER_BASE
         if (dIdx in DISASTER_NAMES.indices) {
@@ -266,6 +284,24 @@ class MainActivity : Activity() {
     private fun selectOverlay(overlay: MapOverlay) {
         cityView.setMapOverlay(overlay)
         miniMap.setOverlay(overlay)
+        if (explainEnabled && overlay != MapOverlay.NONE) {
+            showCard(za.co.nieto.nietocity.game.Education.forOverlay(overlay))
+        }
+    }
+
+    private fun toggleExplain() {
+        explainEnabled = !explainEnabled
+        prefs().edit().putBoolean(PREF_EXPLAIN, explainEnabled).apply()
+        if (explainEnabled) {
+            Toast.makeText(this, "Explain on: pick a tool or overlay to learn how it works.",
+                Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** Show an educational card (Explain mode). */
+    private fun showCard(card: za.co.nieto.nietocity.game.Education.Card?) {
+        if (card == null) return
+        AppDialogs.titledMessage(this, card.title, card.body).show()
     }
 
     private fun showNewCityScreen(guard: Boolean = true) {
@@ -469,6 +505,11 @@ class MainActivity : Activity() {
             body.append(report.labels[i]).append(' ').append(report.values[i])
             if (i < report.labels.size - 1) body.append('\n')
         }
+        if (explainEnabled) {
+            za.co.nieto.nietocity.game.Education.forTool(MicropolisTool.QUERY)?.let {
+                body.append("\n\n").append(it.body)
+            }
+        }
         queryDialog = android.app.AlertDialog.Builder(this)
             .setTitle(report.header)
             .setMessage(body.toString())
@@ -560,6 +601,7 @@ class MainActivity : Activity() {
         private const val ID_EVALUATION = 4
         private const val ID_GRAPHS = 5
         private const val ID_MUTE = 6
+        private const val ID_EXPLAIN = 14
         private const val ID_NEW_CITY = 11
         private const val ID_SAVE = 12
         private const val ID_LOAD = 13
@@ -577,6 +619,7 @@ class MainActivity : Activity() {
         private const val PREF_AUTO_BUDGET = "autoBudget"
         private const val PREF_MUTED = "muted"
         private const val PREF_RANDOM = "randomDisasters"
+        private const val PREF_EXPLAIN = "explain"
 
         // Start-screen action passed in the launch intent.
         const val EXTRA_ACTION = "action"
