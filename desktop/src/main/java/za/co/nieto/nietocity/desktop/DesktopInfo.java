@@ -21,7 +21,8 @@ public final class DesktopInfo
 
 	public static String about()
 	{
-		return "About NietoCity.";
+		return za.co.nieto.nietocity.game.AppInfo.about(
+			za.co.nieto.nietocity.game.AppInfo.VERSION);
 	}
 
 	public static String licence()

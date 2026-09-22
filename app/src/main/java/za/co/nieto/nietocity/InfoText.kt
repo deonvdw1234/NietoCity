@@ -8,6 +8,7 @@
 package za.co.nieto.nietocity
 
 import android.content.Context
+import za.co.nieto.nietocity.game.AppInfo
 import za.co.nieto.nietocity.game.Education
 
 /**
@@ -16,7 +17,14 @@ import za.co.nieto.nietocity.game.Education
  */
 object InfoText {
 
-    fun about(context: Context): CharSequence = "About NietoCity."
+    fun about(context: Context): CharSequence {
+        val version = try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        } catch (_: Exception) {
+            null
+        } ?: AppInfo.VERSION
+        return AppInfo.about(version)
+    }
 
     fun licence(context: Context): CharSequence =
         loadResource("/license/LICENSE.txt")
