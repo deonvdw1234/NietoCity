@@ -67,8 +67,8 @@ class SplashActivity : Activity() {
 
         val uri = Uri.parse("android.resource://$packageName/${R.raw.nieto_logo_animated}")
         video.setVideoURI(uri)
-        video.setOnPreparedListener { mp ->
-            mp.setVolume(0f, 0f) // offline splash: no audio needed
+        video.setOnPreparedListener { _ ->
+            // Play with the intro logo's sound (offline, best-effort).
             video.start()
         }
         video.setOnCompletionListener { proceed() }

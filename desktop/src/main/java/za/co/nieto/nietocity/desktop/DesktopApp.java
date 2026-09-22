@@ -241,7 +241,7 @@ public class DesktopApp extends Application
 			view.fitWidthProperty().bind(scene.widthProperty());
 			view.fitHeightProperty().bind(scene.heightProperty());
 			pane.getChildren().add(view);
-			player.setMute(true);
+			// Play with the intro logo's sound (offline, best-effort).
 			player.setOnEndOfMedia(() -> { player.stop(); proceed.run(); });
 			player.setOnError(() -> proceed.run());
 			player.play();
