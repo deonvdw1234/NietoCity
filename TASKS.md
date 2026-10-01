@@ -339,14 +339,14 @@ Created by Nieto Software
       (jre/bin/java.exe + jre/lib/ext/jfxrt.jar); apksigner present (SDK
       build-tools 34/35/36). MISSING: launch4j (needed for the Windows exe, task
       5). STOP for Andre to confirm the tools are ready before proceeding.
-- [ ] 1. Polish pass (newer screens + in-game HUD): spacing, type, dialog sizing
+- [x] 1. Polish pass (newer screens + in-game HUD): spacing, type, dialog sizing
       + scroll, no clipped text at 3x, tidy menu. Investigate before changing.
-- [ ] 2. Landscape and tablet pass: left tool column in landscape, centred
+- [x] 2. Landscape and tablet pass: left tool column in landscape, centred
       scrollable dialogs, mini map/status bar placement, start + New City scaling;
       rotation without restart.
-- [ ] 3. Intro audio ON (both platforms); keep tap-skip after 1s + safety timer.
+- [x] 3. Intro audio ON (both platforms); keep tap-skip after 1s + safety timer.
       *** STOP: polish + landscape ready to test on the S22 before release. ***
-- [ ] 4. Android release signing: keystore via keytool OUTSIDE the repo; wire
+- [ ] 4. (ON HOLD until the Phase 8 fix is tested on the S22) Android release signing: keystore via keytool OUTSIDE the repo; wire
       signingConfigs.release from gitignored keystore.properties; assembleRelease;
       verify with apksigner; copy to root as NietoCity-1.0.0.apk. .gitignore
       *.zip/*.exe/keystore.properties.
@@ -361,6 +361,33 @@ Created by Nieto Software
 - [ ] 8. Gate + docs: gradlew --rerun-tasks :engine:test :desktop:jar
       assembleDebug AND assembleRelease; raw tail + test count; update TASKS.md,
       CHANGES.md, README, CLAUDE.md; confirm root artefacts + timestamps.
+
+## Phase 8 fix: tool selection desync and status bar wrapping
+(Release tasks 4 to 8 above stay ON HOLD until Andre has tested this on the S22.)
+- [x] 0. Investigate + report. CAUSE A: the selected tool lives in
+      GameController.tool, but ToolPaletteView keeps its OWN controller reference
+      (set once by palette.setup in onCreate). MainActivity.swapController (New
+      City / Load, including the start screen's New City and Load City, which open
+      over a placeholder city) rebinds CityView and the mini map but NOT the
+      palette, so palette taps toggle the discarded controller: palette highlights
+      POWERPLANT, while the bar and CityView touch read the live controller (no
+      tool) and show/do Pan. Re-tap then "deselects" only the old controller, and X
+      clears a tool the live one never had. Continue is fine (controller built
+      before setup); rotation re-runs setup, which hides the bug. Touch routing
+      itself was correct. Desktop always reads its current controller (no desync)
+      but pulls state by hand. CAUSE B: StatusBarView splits the width equally
+      across FIVE weighted cells (date, funds, pop, tool, cost; tool + cost
+      duplicate the bottom bar); with the fixed pause/speed/menu buttons (~130dp)
+      each gets ~43dp at 360dp, so "Feb 1900" / "R20 000" wrap. Desktop labels
+      ellipsize when narrow.
+- [ ] 1. Tests first, proven red: TouchRouter.decide (pure) + GameController
+      selection/listener test (select, re-select, X, one-shot, controller swap).
+- [ ] 2. Fix A: one source of truth (GameController + tool listener); palette,
+      bottom bar and touch observe it; rebind on every swap. Desktop too.
+- [ ] 3. Tool UX: picking collapses the drawer; accent border round the map while
+      armed; "Pan" only when nothing armed; Back with a tool armed returns to Pan.
+- [ ] 4. Fix B: status values one line, flexible width, autosize down; desktop too.
+- [ ] 5. Gate + CHANGES.md + TASKS.md.
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar
