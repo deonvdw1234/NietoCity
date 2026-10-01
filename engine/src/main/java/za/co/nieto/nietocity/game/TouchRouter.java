@@ -20,9 +20,18 @@ public final class TouchRouter
 
 	private TouchRouter() { }
 
-	/** Decide what a touch does (stub: not implemented yet). */
+	/**
+	 * Decide what a touch does: two or more fingers always pan; a long press
+	 * queries; otherwise one finger builds with an armed tool and pans without.
+	 */
 	public static Action decide(MicropolisTool selectedTool, int pointerCount, Phase phase)
 	{
-		return Action.PAN;
+		if (pointerCount >= 2) {
+			return Action.PAN;
+		}
+		if (phase == Phase.LONG_PRESS) {
+			return Action.QUERY;
+		}
+		return selectedTool != null ? Action.BUILD : Action.PAN;
 	}
 }

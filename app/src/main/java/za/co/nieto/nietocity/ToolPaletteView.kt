@@ -20,7 +20,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import micropolisj.engine.MicropolisTool
-import za.co.nieto.nietocity.game.GameController
 import za.co.nieto.nietocity.game.GameStrings
 
 /**
@@ -35,8 +34,10 @@ class ToolPaletteView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : GridLayout(context, attrs) {
 
-    /** Notified when the selection changes (null = pan mode). */
-    var listener: ((MicropolisTool?) -> Unit)? = null
+    /** Tapped a tool cell. The palette keeps no selection of its own: the owner
+     *  toggles the tool on the live GameController, and the controller's tool
+     *  listener calls [showSelection] back. */
+    var onToolTapped: ((MicropolisTool) -> Unit)? = null
 
     private val tools = listOf(
         MicropolisTool.BULLDOZER, MicropolisTool.WIRE, MicropolisTool.PARK,
@@ -50,7 +51,6 @@ class ToolPaletteView @JvmOverloads constructor(
     private val plainIcons = HashMap<MicropolisTool, Bitmap>()
     private val hiIcons = HashMap<MicropolisTool, Bitmap>()
     private val cells = HashMap<MicropolisTool, Cell>()
-    private var controller: GameController? = null
 
     init {
         setBackgroundColor(Color.argb(210, 16, 16, 16))
@@ -60,9 +60,9 @@ class ToolPaletteView @JvmOverloads constructor(
         }
     }
 
-    /** Build the cells laid out in [columns] columns and bind the controller. */
-    fun setup(controller: GameController, columns: Int) {
-        this.controller = controller
+    /** Build the cells laid out in [columns] columns (nothing highlighted until
+     *  [showSelection] is called). */
+    fun setup(columns: Int) {
         columnCount = columns
         removeAllViews()
         cells.clear()
@@ -71,23 +71,13 @@ class ToolPaletteView @JvmOverloads constructor(
             cells[tool] = cell
             addView(cell)
         }
-        refresh()
     }
 
-    /** The (scaled) icon for a tool, for the collapsed "Tools" bar. */
+    /** The (scaled) icon for a tool, for the selected-tool bar. */
     fun iconFor(tool: MicropolisTool): Bitmap? = plainIcons[tool]
 
-    /** Re-read the controller's selection into the cells (after an external change). */
-    fun syncSelection() = refresh()
-
-    private fun toggle(tool: MicropolisTool) {
-        controller?.toggleTool(tool)
-        refresh()
-        listener?.invoke(controller?.getTool())
-    }
-
-    private fun refresh() {
-        val selected = controller?.getTool()
+    /** Highlight the controller's selected tool (null = Pan, nothing highlighted). */
+    fun showSelection(selected: MicropolisTool?) {
         for (tool in tools) {
             cells[tool]?.setSelectedState(tool == selected)
         }
@@ -149,7 +139,7 @@ class ToolPaletteView @JvmOverloads constructor(
             lp.setMargins(dp(2), dp(2), dp(2), dp(2))
             layoutParams = lp
 
-            setOnClickListener { toggle(tool) }
+            setOnClickListener { onToolTapped?.invoke(tool) }
         }
 
         fun setSelectedState(selected: Boolean) {

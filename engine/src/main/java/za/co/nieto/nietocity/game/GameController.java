@@ -313,28 +313,91 @@ public final class GameController
 		void toolChanged(MicropolisTool tool);
 	}
 
-	/** Observe the selected tool (stub: not implemented yet). */
-	public void addToolListener(ToolListener l) { }
+	// The selected tool lives ONLY here. The palette highlight, the selected-tool
+	// bar and the map's touch routing observe it through ToolListener and never
+	// keep their own copy. Changes and notifications happen under toolLock, so
+	// listeners hear changes in order; listeners must be quick (post to the UI
+	// thread), since a one-shot auto-clear notifies from the engine thread.
+	private final Object toolLock = new Object();
+	private final List<ToolListener> toolListeners = new ArrayList<ToolListener>();
 
-	public void removeToolListener(ToolListener l) { }
+	/** Observe the selected tool. The listener is told the current tool at once. */
+	public void addToolListener(ToolListener l)
+	{
+		if (l == null) {
+			return;
+		}
+		synchronized (toolLock) {
+			if (!toolListeners.contains(l)) {
+				toolListeners.add(l);
+			}
+			l.toolChanged(tool);
+		}
+	}
 
-	/** Move this controller's tool listeners to a fresh one (stub: not implemented yet). */
-	public void transferToolListeners(GameController fresh) { }
+	public void removeToolListener(ToolListener l)
+	{
+		synchronized (toolLock) {
+			toolListeners.remove(l);
+		}
+	}
+
+	/**
+	 * New City / Load: move this controller's tool listeners to the fresh one, so
+	 * the UI observes the live city only. Each listener is synced to the fresh
+	 * controller's tool, and this (discarded) controller stops reaching the UI.
+	 */
+	public void transferToolListeners(GameController fresh)
+	{
+		if (fresh == null || fresh == this) {
+			return;
+		}
+		List<ToolListener> moving;
+		synchronized (toolLock) {
+			moving = new ArrayList<ToolListener>(toolListeners);
+			toolListeners.clear();
+		}
+		for (ToolListener l : moving) {
+			fresh.addToolListener(l);
+		}
+	}
 
 	public MicropolisTool getTool() { return tool; }
-	public void setTool(MicropolisTool tool) { this.tool = tool; }
+
+	public void setTool(MicropolisTool t)
+	{
+		synchronized (toolLock) {
+			changeTool(t);
+		}
+	}
 
 	/** Selecting the already-selected tool clears it (returns to pan mode). */
 	public void toggleTool(MicropolisTool t)
 	{
-		this.tool = (this.tool == t) ? null : t;
+		synchronized (toolLock) {
+			changeTool(this.tool == t ? null : t);
+		}
 	}
 
 	/** After a successful placement, a one-shot tool returns to Pan. */
 	private void maybeAutoClear(MicropolisTool t, ToolResult r)
 	{
-		if (r == ToolResult.SUCCESS && kindOf(t) == ToolKind.ONE_SHOT && this.tool == t) {
-			this.tool = null;
+		synchronized (toolLock) {
+			if (r == ToolResult.SUCCESS && kindOf(t) == ToolKind.ONE_SHOT && this.tool == t) {
+				changeTool(null);
+			}
+		}
+	}
+
+	/** Set the tool and notify the listeners if it changed. Hold toolLock. */
+	private void changeTool(MicropolisTool t)
+	{
+		if (this.tool == t) {
+			return;
+		}
+		this.tool = t;
+		for (ToolListener l : toolListeners) {
+			l.toolChanged(t);
 		}
 	}
 

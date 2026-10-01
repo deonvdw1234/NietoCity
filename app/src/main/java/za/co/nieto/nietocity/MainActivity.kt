@@ -62,6 +62,16 @@ class MainActivity : Activity() {
     // default; persisted.
     private var explainEnabled = false
 
+    // The ONE observer of the selected tool. GameController is the only owner of
+    // the selection; this listener redraws the palette highlight, the selected-
+    // tool bar and the status bar from it. It moves with the controller on every
+    // swap (New City / Load) and is removed when this activity is destroyed, so
+    // a rotated activity registers its own. It can fire on the engine thread (a
+    // one-shot auto-clear), so it hops to the UI thread.
+    private val toolListener = GameController.ToolListener { _ ->
+        if (Looper.myLooper() == Looper.getMainLooper()) refreshTool() else ui.post { refreshTool() }
+    }
+
     private val pump = object : Runnable {
         override fun run() {
             val now = SystemClock.uptimeMillis()
@@ -98,7 +108,7 @@ class MainActivity : Activity() {
 
         val columns = if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) 1 else 4
         cityView.setController(controller)
-        palette.setup(controller, columns)
+        palette.setup(columns)
 
         // Long press queries the tile and shows a small panel (tap outside / Back
         // to close).
@@ -114,20 +124,17 @@ class MainActivity : Activity() {
             }
         }
         val clearBtn: View? = findViewById(R.id.clearTool)
-        clearBtn?.setOnClickListener {
-            controller.setTool(null)
-            refreshTool()
-        }
-        palette.listener = {
-            refreshTool()
+        clearBtn?.setOnClickListener { controller.setTool(null) }
+        // A palette tap toggles the tool on the LIVE controller (never a copy); the
+        // tool listener then redraws the palette and the bar.
+        palette.onToolTapped = { tool ->
+            controller.toggleTool(tool)
             // Explain: show a card when the user picks a tool (not on deselect).
             if (explainEnabled) {
                 val t = controller.getTool()
                 if (t != null) showCard(za.co.nieto.nietocity.game.Education.forTool(t))
             }
         }
-        // A one-shot tool clears itself after placing; refresh the bar and palette.
-        cityView.placementListener = { refreshTool() }
 
         // Speed control: pause/play toggle and a tap-cycle speed label.
         statusBar.onPauseClick = {
@@ -164,7 +171,8 @@ class MainActivity : Activity() {
         explainEnabled = prefs().getBoolean(PREF_EXPLAIN, false)
 
         refreshSpeed()
-        refreshTool()
+        // Observe the selected tool (delivers the current tool at once).
+        controller.addToolListener(toolListener)
 
         // New City / Load City from the start screen open the matching screen on
         // top of the (placeholder) running city, with no discard guard.
@@ -361,13 +369,14 @@ class MainActivity : Activity() {
 
         old.stop()
         controller = fresh
+        // Move the tool observer to the live city (it syncs to fresh's tool now).
+        old.transferToolListeners(fresh)
         cityView.setController(controller)
         cityView.resetViewportToMapCentre()
         miniMap.bind(controller, cityView.getViewport())
         lastBudgetYear = currentYear()
         controller.start()
         refreshSpeed()
-        refreshTool()
     }
 
     private fun showSaveScreen() {
@@ -440,12 +449,12 @@ class MainActivity : Activity() {
         statusBar.setSpeedState(controller.isPaused, controller.chosenSpeed)
     }
 
-    /** Sync the status bar, the palette highlight and the selected-tool bar to the
-     *  controller's current tool (which may have auto-cleared after a placement). */
+    /** Redraw the status bar, the palette highlight and the selected-tool bar from
+     *  the controller's tool (called only by the tool listener). */
     private fun refreshTool() {
         val tool = controller.getTool()
         statusBar.update(controller.snapshot())
-        palette.syncSelection()
+        palette.showSelection(tool)
 
         val icon: ImageView? = findViewById(R.id.selectedIcon)
         val name: TextView? = findViewById(R.id.selectedName)
@@ -495,7 +504,9 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
-        // Release this activity's sound player (a new one is made on recreate).
+        // Release this activity's sound player (a new one is made on recreate) and
+        // stop observing the (possibly retained) controller.
+        controller.removeToolListener(toolListener)
         soundPlayer?.release()
         super.onDestroy()
     }

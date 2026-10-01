@@ -25,6 +25,7 @@ import micropolisj.engine.ToolPreview
 import micropolisj.engine.ToolResult
 import micropolisj.engine.SpriteKind
 import za.co.nieto.nietocity.game.GameController
+import za.co.nieto.nietocity.game.TouchRouter
 import za.co.nieto.nietocity.render.MapOverlay
 import za.co.nieto.nietocity.render.PowerOverlay
 import za.co.nieto.nietocity.render.SpriteImages
@@ -75,10 +76,6 @@ class CityView @JvmOverloads constructor(
 
     /** Called (on the UI thread) when a long press queries a tile. */
     var queryListener: ((Int, Int) -> Unit)? = null
-
-    /** Called (on the UI thread) after a placement is applied (e.g. to refresh the
-     *  tool bar when a one-shot tool has returned to Pan). */
-    var placementListener: (() -> Unit)? = null
 
     // Stroke / pan state
     @Volatile private var preview: ToolPreview? = null
@@ -205,24 +202,28 @@ class CityView @JvmOverloads constructor(
         scaleDetector.onTouchEvent(event)
         gestureDetector.onTouchEvent(event)
 
+        // The tool is read live from the controller (the single source of truth)
+        // and TouchRouter decides what the touch does.
         val tool = controller?.getTool()
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 suppressUp = false
                 lastPanX = event.x
                 lastPanY = event.y
-                if (tool != null) {
+                if (TouchRouter.decide(tool, 1, TouchRouter.Phase.DOWN) == TouchRouter.Action.BUILD) {
                     beginStroke(event.x, event.y)
                 } else {
                     panning = true
                 }
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
-                // Second finger: switch to pan/zoom, abandon any stroke.
-                cancelStroke()
-                panning = true
-                lastPanX = event.getX(0)
-                lastPanY = event.getY(0)
+                // Second finger: TouchRouter says pan (any tool); abandon any stroke.
+                if (TouchRouter.decide(tool, event.pointerCount, TouchRouter.Phase.DOWN) == TouchRouter.Action.PAN) {
+                    cancelStroke()
+                    panning = true
+                    lastPanX = event.getX(0)
+                    lastPanY = event.getY(0)
+                }
             }
             MotionEvent.ACTION_MOVE -> {
                 if (event.pointerCount >= 2) {
@@ -297,10 +298,8 @@ class CityView @JvmOverloads constructor(
     }
 
     private fun applyStroke() {
-        controller?.applyPath(pathX.toIntArray(), pathY.toIntArray()) { _ ->
-            // onResult runs on the engine thread; refresh the UI on the UI thread.
-            post { placementListener?.invoke() }
-        }
+        // A one-shot tool returning to Pan reaches the UI via the tool listener.
+        controller?.applyPath(pathX.toIntArray(), pathY.toIntArray(), null)
     }
 
     private fun cancelStroke() {
@@ -539,6 +538,8 @@ class CityView @JvmOverloads constructor(
 
         override fun onLongPress(e: MotionEvent) {
             // Query regardless of the selected tool; do not also place.
+            val tool = controller?.getTool()
+            if (TouchRouter.decide(tool, 1, TouchRouter.Phase.LONG_PRESS) != TouchRouter.Action.QUERY) return
             suppressUp = true
             cancelStroke()
             val vp = viewport ?: return

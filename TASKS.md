@@ -387,8 +387,18 @@ Created by Nieto Software
       against API stubs (decide() always PAN; listener methods no-ops) so they
       fail on assertions, not compilation. Run: "9 tests completed, 7 failed"
       (the 2 pan tests pass only because the stub answers PAN). Committed red.
-- [ ] 2. Fix A: one source of truth (GameController + tool listener); palette,
-      bottom bar and touch observe it; rebind on every swap. Desktop too.
+- [x] 2. Fix A: the selected tool lives only in GameController, which now has
+      ToolListener (add delivers the current tool at once; setTool/toggleTool/
+      one-shot auto-clear notify under one lock) and transferToolListeners(fresh)
+      for swaps. ToolPaletteView keeps no controller or selection: it reports taps
+      (MainActivity toggles the LIVE controller) and shows what the listener tells
+      it. MainActivity has ONE listener redrawing palette + bottom bar + status;
+      registered in onCreate (fresh start, Continue, rotation), moved on New City/
+      Load (swapController), removed in onDestroy. CityView reads the live tool
+      and asks TouchRouter.decide (DOWN / second finger / long press);
+      placementListener removed. Desktop: same listener + transfer, palette and X
+      only toggle the controller, primary press uses TouchRouter. Green: 67 engine
+      tests, 0 failures (58 + TouchRouter 4 + ToolSelection 5); APK + JAR build.
 - [ ] 3. Tool UX: picking collapses the drawer; accent border round the map while
       armed; "Pan" only when nothing armed; Back with a tool armed returns to Pan.
 - [ ] 4. Fix B: status values one line, flexible width, autosize down; desktop too.

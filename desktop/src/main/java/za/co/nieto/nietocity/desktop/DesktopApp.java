@@ -94,6 +94,7 @@ import za.co.nieto.nietocity.game.CityFile;
 import za.co.nieto.nietocity.game.GraphData;
 import za.co.nieto.nietocity.game.QueryReport;
 import za.co.nieto.nietocity.game.TerrainConfig;
+import za.co.nieto.nietocity.game.TouchRouter;
 import za.co.nieto.nietocity.game.StatusSnapshot;
 import za.co.nieto.nietocity.render.MapOverlay;
 import za.co.nieto.nietocity.render.MiniMap;
@@ -165,6 +166,18 @@ public class DesktopApp extends Application
 
 	private final DesktopSaveStore saveStore = new DesktopSaveStore();
 	private String cityName = "My City";
+
+	// The ONE observer of the selected tool (GameController owns it): redraws the
+	// palette highlight and the selected-tool area. Moved to the fresh controller
+	// on New City / Load. A one-shot auto-clear fires on the engine thread, so it
+	// hops to the JavaFX thread.
+	private final GameController.ToolListener toolListener = t -> {
+		if (Platform.isFxApplicationThread()) {
+			onToolChanged();
+		} else {
+			Platform.runLater(this::onToolChanged);
+		}
+	};
 
 	private Label dateLbl, fundsLbl, popLbl, toolLbl, costLbl, tickerLbl;
 	private ImageView selIconView;
@@ -415,7 +428,8 @@ public class DesktopApp extends Application
 		stage.setScene(scene);
 
 		controller.start();
-		refreshPalette();
+		// Observe the selected tool (delivers the current tool at once).
+		controller.addToolListener(toolListener);
 		refreshSpeed();
 		autoShowBudget = prefs.getBoolean("autoBudget", true);
 		explainEnabled = prefs.getBoolean("explain", false);
@@ -586,11 +600,7 @@ public class DesktopApp extends Application
 		clearToolBtn.setMinSize(48, 48);
 		clearToolBtn.setFocusTraversable(false);
 		clearToolBtn.setStyle("-fx-font-size: 18; -fx-text-fill: white; -fx-background-color: #444;");
-		clearToolBtn.setOnAction(e -> {
-			controller.setTool(null);
-			refreshPalette();
-			updateStatus();
-		});
+		clearToolBtn.setOnAction(e -> controller.setTool(null));
 		clearToolBtn.setVisible(false);
 		clearToolBtn.setManaged(false);
 
@@ -939,8 +949,11 @@ public class DesktopApp extends Application
 		fresh.setRandomDisastersEnabled(controller.isRandomDisastersEnabled());
 		fresh.setSoundPlayer(soundPlayer);
 
-		controller.stop();
+		GameController old = controller;
+		old.stop();
 		controller = fresh;
+		// Move the tool observer to the live city (it syncs to fresh's tool now).
+		old.transferToolListeners(fresh);
 		Micropolis city = controller.getEngine();
 		viewport = new Viewport(city.getWidth(), city.getHeight(),
 			(int) canvas.getWidth(), (int) canvas.getHeight());
@@ -950,7 +963,6 @@ public class DesktopApp extends Application
 		controller.start();
 		lastBudgetYear = currentYear();
 		refreshSpeed();
-		refreshPalette();
 		updateStatus();
 		redraw();
 		if (miniVisible) {
@@ -1217,9 +1229,8 @@ public class DesktopApp extends Application
 			b.setStyle("-fx-background-color: transparent; -fx-padding: 1;");
 			b.setFocusTraversable(false);
 			b.setOnAction(e -> {
+				// Toggle on the live controller; the tool listener redraws.
 				controller.toggleTool(tool);
-				refreshPalette();
-				updateStatus();
 				if (explainEnabled && controller.getTool() != null) {
 					showCard(za.co.nieto.nietocity.game.Education.forTool(controller.getTool()));
 				}
@@ -1381,7 +1392,8 @@ public class DesktopApp extends Application
 			if (e.getButton() == MouseButton.SECONDARY) {
 				panning = true;
 			} else if (e.getButton() == MouseButton.PRIMARY) {
-				if (tool != null) {
+				// The mouse is one "finger"; TouchRouter decides build vs pan.
+				if (TouchRouter.decide(tool, 1, TouchRouter.Phase.DOWN) == TouchRouter.Action.BUILD) {
 					beginStroke(e.getX(), e.getY());
 				} else {
 					panning = true;
@@ -1764,12 +1776,9 @@ public class DesktopApp extends Application
 
 	private void applyStroke()
 	{
-		// onResult runs on the engine thread; a one-shot tool may have returned to
-		// Pan, so refresh the palette and status on the JavaFX thread.
-		controller.applyPath(pathXs(), pathYs(), r -> Platform.runLater(() -> {
-			refreshPalette();
-			updateStatus();
-		}));
+		// onResult runs on the engine thread; refresh the funds on the JavaFX thread.
+		// A one-shot tool returning to Pan reaches the UI via the tool listener.
+		controller.applyPath(pathXs(), pathYs(), r -> Platform.runLater(this::updateStatus));
 	}
 
 	private void cancelStroke()
@@ -1840,7 +1849,13 @@ public class DesktopApp extends Application
 		dateLbl.setText(s.date);
 		fundsLbl.setText(s.fundsText);
 		popLbl.setText("Pop " + s.population);
+		stage.setTitle("NietoCity - " + cityName + " - " + s.date);
+	}
 
+	/** The tool listener's redraw: palette highlight + the selected-tool area. */
+	private void onToolChanged()
+	{
+		refreshPalette();
 		MicropolisTool tool = controller.getTool();
 		if (tool == null) {
 			toolLbl.setText("Pan");
@@ -1849,13 +1864,12 @@ public class DesktopApp extends Application
 			clearToolBtn.setVisible(false);
 			clearToolBtn.setManaged(false);
 		} else {
-			toolLbl.setText(s.toolName);
-			costLbl.setText(s.toolCost != 0 ? CurrencyFormat.format(s.toolCost) : "");
+			toolLbl.setText(GameStrings.toolName(tool));
+			costLbl.setText(tool.getToolCost() != 0 ? CurrencyFormat.format(tool.getToolCost()) : "");
 			selIconView.setImage(plainIcons.get(tool));
 			clearToolBtn.setVisible(true);
 			clearToolBtn.setManaged(true);
 		}
-		stage.setTitle("NietoCity - " + cityName + " - " + s.date);
 	}
 
 	private void onResize()
