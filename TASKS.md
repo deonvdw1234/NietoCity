@@ -399,8 +399,14 @@ Created by Nieto Software
       placementListener removed. Desktop: same listener + transfer, palette and X
       only toggle the controller, primary press uses TouchRouter. Green: 67 engine
       tests, 0 failures (58 + TouchRouter 4 + ToolSelection 5); APK + JAR build.
-- [ ] 3. Tool UX: picking collapses the drawer; accent border round the map while
-      armed; "Pan" only when nothing armed; Back with a tool armed returns to Pan.
+- [x] 3. Tool UX: picking a tool collapses the portrait drawer (landscape and
+      desktop columns are permanent); a 3dp accent border (palette highlight
+      yellow) round the map while a tool is armed, drawn by CityView / the desktop
+      canvas from the live tool (never over the status bar), gone in Pan; the
+      selected-tool bar shows "Pan" only when nothing is armed, else icon, name,
+      cost and the 48dp X (driven by the tool listener); Back with a tool armed
+      returns to Pan first (desktop: Esc). Portrait note: the bottom tools bar
+      overlays the map, so the border's bottom edge sits under it.
 - [ ] 4. Fix B: status values one line, flexible width, autosize down; desktop too.
 - [ ] 5. Gate + CHANGES.md + TASKS.md.
 

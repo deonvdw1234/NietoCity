@@ -63,6 +63,15 @@ class CityView @JvmOverloads constructor(
     }
     private val tintOk = Paint().apply { color = Color.argb(70, 0, 200, 0) }
     private val tintBad = Paint().apply { color = Color.argb(90, 220, 0, 0) }
+    // A thin accent border round the map while a tool is armed (none in Pan), in
+    // the palette's highlight colour. The map sits below the status bar, so the
+    // border never covers it.
+    private val armedBorder = Paint().apply {
+        style = Paint.Style.STROKE
+        color = Color.rgb(255, 210, 77)
+        strokeWidth = 3 * resources.displayMetrics.density
+        isAntiAlias = false
+    }
 
     private val src = Rect()
     private val dst = Rect()
@@ -429,6 +438,12 @@ class CityView @JvmOverloads constructor(
             canvas.restore()
             // The sim fires a frame every tick, so the shake re-jitters and decays
             // without a busy redraw loop here.
+        }
+        // Armed-tool border, read live from the controller (the tool listener
+        // requests a redraw whenever the tool changes).
+        if (gc.getTool() != null) {
+            val half = armedBorder.strokeWidth / 2f
+            canvas.drawRect(half, half, width - half, height - half, armedBorder)
         }
     }
 

@@ -1434,6 +1434,11 @@ public class DesktopApp extends Application
 
 		scene.setOnKeyPressed(e -> {
 			KeyCode c = e.getCode();
+			// Esc with a tool armed returns to Pan (the desktop "Back").
+			if (c == KeyCode.ESCAPE && controller.getTool() != null) {
+				controller.setTool(null);
+				return;
+			}
 			// Space toggles pause (guard the key-repeat while held).
 			if (c == KeyCode.SPACE) {
 				if (!spaceDown) {
@@ -1856,6 +1861,7 @@ public class DesktopApp extends Application
 	private void onToolChanged()
 	{
 		refreshPalette();
+		redraw(); // armed-tool border on/off
 		MicropolisTool tool = controller.getTool();
 		if (tool == null) {
 			toolLbl.setText("Pan");
@@ -1970,7 +1976,17 @@ public class DesktopApp extends Application
 		if (shaking) {
 			gc.restore();
 		}
+		// A thin accent border round the map while a tool is armed (none in Pan),
+		// read live from the controller; the tool listener redraws on a change.
+		if (controller.getTool() != null) {
+			gc.setStroke(Color.rgb(255, 210, 77));
+			gc.setLineWidth(ARMED_BORDER);
+			double half = ARMED_BORDER / 2.0;
+			gc.strokeRect(half, half, cw - ARMED_BORDER, ch - ARMED_BORDER);
+		}
 	}
+
+	private static final double ARMED_BORDER = 3.0;
 
 	private void drawPreview(GraphicsContext gc, int zoom, int cycle,
 		int firstCol, int lastCol, int firstRow, int lastRow)

@@ -129,6 +129,11 @@ class MainActivity : Activity() {
         // tool listener then redraws the palette and the bar.
         palette.onToolTapped = { tool ->
             controller.toggleTool(tool)
+            // Picking a tool collapses the portrait drawer so the whole map shows
+            // (landscape's column is permanent and has no toolsBar).
+            if (controller.getTool() != null && toolsBar != null) {
+                paletteScroll?.visibility = View.GONE
+            }
             // Explain: show a card when the user picks a tool (not on deselect).
             if (explainEnabled) {
                 val t = controller.getTool()
@@ -455,6 +460,7 @@ class MainActivity : Activity() {
         val tool = controller.getTool()
         statusBar.update(controller.snapshot())
         palette.showSelection(tool)
+        cityView.requestRender() // armed-tool border on/off
 
         val icon: ImageView? = findViewById(R.id.selectedIcon)
         val name: TextView? = findViewById(R.id.selectedName)
@@ -538,14 +544,20 @@ class MainActivity : Activity() {
             dlg.dismiss()
             return
         }
-        // 2. Close the tools drawer (portrait only; landscape's palette is permanent).
+        // 2. A tool is armed: return to Pan first (before the drawer/exit rules).
+        if (controller.getTool() != null) {
+            controller.setTool(null)
+            backCount = 0
+            return
+        }
+        // 3. Close the tools drawer (portrait only; landscape's palette is permanent).
         val toolsBar: View? = findViewById(R.id.toolsBar)
         val paletteScroll: View? = findViewById(R.id.paletteScroll)
         if (toolsBar != null && paletteScroll != null && paletteScroll.visibility == View.VISIBLE) {
             paletteScroll.visibility = View.GONE
             return
         }
-        // 3. Nothing open: three presses within 2s ask to exit; fewer just hint.
+        // 4. Nothing open: three presses within 2s ask to exit; fewer just hint.
         val now = SystemClock.uptimeMillis()
         if (backCount == 0 || now - firstBackAt > BACK_WINDOW_MS) {
             backCount = 1
