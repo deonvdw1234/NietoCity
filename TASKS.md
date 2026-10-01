@@ -380,8 +380,13 @@ Created by Nieto Software
       duplicate the bottom bar); with the fixed pause/speed/menu buttons (~130dp)
       each gets ~43dp at 360dp, so "Feb 1900" / "R20 000" wrap. Desktop labels
       ellipsize when narrow.
-- [ ] 1. Tests first, proven red: TouchRouter.decide (pure) + GameController
-      selection/listener test (select, re-select, X, one-shot, controller swap).
+- [x] 1. Tests first, proven RED: TouchRouterTest (4: armed+1 finger=BUILD,
+      2+ fingers=PAN for any tool, no tool+1 finger=PAN, long press=QUERY) and
+      ToolSelectionTest (5: new listener synced at once, select/re-select, X,
+      one-shot auto-clear, controller swap rebinds and detaches the old one),
+      against API stubs (decide() always PAN; listener methods no-ops) so they
+      fail on assertions, not compilation. Run: "9 tests completed, 7 failed"
+      (the 2 pan tests pass only because the stub answers PAN). Committed red.
 - [ ] 2. Fix A: one source of truth (GameController + tool listener); palette,
       bottom bar and touch observe it; rebind on every swap. Desktop too.
 - [ ] 3. Tool UX: picking collapses the drawer; accent border round the map while

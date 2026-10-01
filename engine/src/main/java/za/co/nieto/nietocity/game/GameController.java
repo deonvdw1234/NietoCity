@@ -307,6 +307,20 @@ public final class GameController
 		}
 	}
 
+	/** Told the selected tool (null = Pan) whenever it changes. */
+	public interface ToolListener
+	{
+		void toolChanged(MicropolisTool tool);
+	}
+
+	/** Observe the selected tool (stub: not implemented yet). */
+	public void addToolListener(ToolListener l) { }
+
+	public void removeToolListener(ToolListener l) { }
+
+	/** Move this controller's tool listeners to a fresh one (stub: not implemented yet). */
+	public void transferToolListeners(GameController fresh) { }
+
 	public MicropolisTool getTool() { return tool; }
 	public void setTool(MicropolisTool tool) { this.tool = tool; }
 
