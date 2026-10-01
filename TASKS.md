@@ -407,7 +407,16 @@ Created by Nieto Software
       cost and the 48dp X (driven by the tool listener); Back with a tool armed
       returns to Pan first (desktop: Esc). Portrait note: the bottom tools bar
       overlays the map, so the border's bottom edge sits under it.
-- [ ] 4. Fix B: status values one line, flexible width, autosize down; desktop too.
+- [x] 4. Fix B: StatusBarView drops the duplicate tool + cost cells (the bottom
+      selected-tool bar shows them in both orientations); date, funds and pop
+      each get an equal weighted share (0dp, weight 1, fixed 28dp height), are
+      single-line (maxLines 1) and autosize 13sp down to 9sp (platform autosize,
+      API 26+) instead of wrapping or clipping. Buttons are wrap/fixed; the speed
+      button has a fixed 64dp min width so cycling never reflows the values.
+      Estimate at 360dp portrait: controls ~148dp, ~62dp per value ("Feb 1900",
+      "R20 000" fit at 13sp). Desktop: date/funds/pop/cost and the buttons keep
+      their preferred width (never ellipsized), only the tool name may shrink,
+      game window min width 860 so the bar fits on one line. (S22 check: Andre.)
 - [ ] 5. Gate + CHANGES.md + TASKS.md.
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)

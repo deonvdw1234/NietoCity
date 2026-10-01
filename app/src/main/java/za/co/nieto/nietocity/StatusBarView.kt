@@ -10,19 +10,24 @@ package za.co.nieto.nietocity
 import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import micropolisj.engine.Speed
-import za.co.nieto.nietocity.game.CurrencyFormat
 import za.co.nieto.nietocity.game.GameStrings
 import za.co.nieto.nietocity.game.StatusSnapshot
 
 /**
- * The classic top status bar: date, funds, population, current tool and its cost,
- * plus a pause/play toggle and a tap-cycle speed label (SLOW->NORMAL->FAST->ULTRA).
- * A small menu button (⋮) opens the overflow (mini map, overlays, dialogs).
+ * The classic top status bar: date, funds and population, plus a pause/play
+ * toggle and a tap-cycle speed label (SLOW->NORMAL->FAST->ULTRA). A small menu
+ * button (⋮) opens the overflow (mini map, overlays, dialogs). The selected tool
+ * and its cost live in the bottom selected-tool bar, not here.
+ *
+ * Layout rule: the three values share the flexible width equally and each stays
+ * on ONE line; when space is short the text autosizes down (13sp to a readable
+ * 9sp) instead of wrapping or clipping. The buttons keep a fixed width.
  */
 class StatusBarView @JvmOverloads constructor(
     context: Context,
@@ -32,10 +37,12 @@ class StatusBarView @JvmOverloads constructor(
     private val dateView = cell()
     private val fundsView = cell()
     private val popView = cell()
-    private val toolView = cell()
-    private val costView = cell()
     private val pauseView = button("▶")
-    private val speedView = button("Normal")
+    private val speedView = button("Normal").apply {
+        // Fixed width (fits the longest name, "Normal") so cycling the speed never
+        // reflows the values.
+        minWidth = (64 * resources.displayMetrics.density).toInt()
+    }
     private val menuView = button("⋮")
 
     /** Tapped the pause/play toggle. */
@@ -53,8 +60,6 @@ class StatusBarView @JvmOverloads constructor(
         addView(dateView)
         addView(fundsView)
         addView(popView)
-        addView(toolView)
-        addView(costView)
         addView(pauseView)
         addView(speedView)
         addView(menuView)
@@ -64,12 +69,20 @@ class StatusBarView @JvmOverloads constructor(
         update(null)
     }
 
+    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
+
+    /** A value cell: equal flexible share, one line, autosizing 13sp down to 9sp. */
     private fun cell(): TextView {
         val tv = TextView(context)
         tv.setTextColor(Color.WHITE)
         tv.textSize = 13f
         tv.gravity = Gravity.CENTER_VERTICAL
-        val lp = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+        tv.maxLines = 1
+        tv.isSingleLine = true
+        tv.setAutoSizeTextTypeUniformWithConfiguration(9, 13, 1, TypedValue.COMPLEX_UNIT_SP)
+        // Autosize needs a bounded box: 0dp width (weight 1) and a fixed height.
+        val lp = LayoutParams(0, dp(28), 1f)
+        lp.rightMargin = dp(4)
         tv.layoutParams = lp
         return tv
     }
@@ -87,6 +100,8 @@ class StatusBarView @JvmOverloads constructor(
         tv.isClickable = true
         tv.isFocusable = true
         tv.setBackgroundColor(Color.argb(60, 255, 255, 255))
+        tv.maxLines = 1
+        tv.isSingleLine = true
         val lp = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
         lp.leftMargin = (4 * resources.displayMetrics.density).toInt()
         tv.layoutParams = lp
@@ -109,14 +124,10 @@ class StatusBarView @JvmOverloads constructor(
             dateView.text = "—"
             fundsView.text = ""
             popView.text = ""
-            toolView.text = ""
-            costView.text = ""
             return
         }
         dateView.text = s.date
         fundsView.text = s.fundsText
         popView.text = "Pop ${s.population}"
-        toolView.text = s.toolName
-        costView.text = if (s.toolCost != 0) CurrencyFormat.format(s.toolCost.toLong()) else ""
     }
 }

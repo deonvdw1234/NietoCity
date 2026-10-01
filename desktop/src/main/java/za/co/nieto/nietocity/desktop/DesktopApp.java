@@ -56,6 +56,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
@@ -112,6 +114,8 @@ public class DesktopApp extends Application
 	private static final long MESSAGE_MS = 4000;
 	private static final int START_W = 1024;
 	private static final int START_H = 720;
+	/** The game window's minimum width: the whole status bar fits on one line. */
+	private static final int GAME_MIN_W = 860;
 
 	private static final List<MicropolisTool> TOOLS = Arrays.asList(
 		MicropolisTool.BULLDOZER, MicropolisTool.WIRE, MicropolisTool.PARK,
@@ -426,6 +430,8 @@ public class DesktopApp extends Application
 		controller.setFrameCallback(() -> Platform.runLater(this::redraw));
 
 		stage.setScene(scene);
+		stage.setMinWidth(GAME_MIN_W);
+		stage.setMinHeight(480);
 
 		controller.start();
 		// Observe the selected tool (delivers the current tool at once).
@@ -618,6 +624,15 @@ public class DesktopApp extends Application
 
 		HBox status = new HBox(16, dateLbl, fundsLbl, popLbl, selIconView, toolLbl, costLbl,
 			clearToolBtn, pauseBtn, speedBtn, menuBtn);
+		// One line, never clipped: date, funds, pop and the buttons keep their full
+		// (preferred) width; only the tool name may shrink (ellipsis) on a narrow
+		// window, and the window's minimum width fits the whole bar.
+		for (Region r : new Region[] { dateLbl, fundsLbl, popLbl, costLbl, clearToolBtn, pauseBtn, speedBtn, menuBtn }) {
+			r.setMinWidth(Region.USE_PREF_SIZE);
+		}
+		toolLbl.setMinWidth(0);
+		HBox.setHgrow(toolLbl, Priority.SOMETIMES);
+		speedBtn.setMinWidth(70); // fits "Normal", so cycling never reflows the bar
 		status.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 		status.setPadding(new Insets(4, 8, 4, 8));
 		status.setStyle("-fx-background-color: #202020;");
