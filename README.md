@@ -105,8 +105,10 @@ about.
 
 ## Controls
 
-A top status bar shows the date, funds, population, and the selected tool and its
-cost. Money is shown in South African rand (e.g. R8 833). A one-line ticker under
+A top status bar shows the date, funds and population, each on one line (the text
+shrinks a little on a narrow screen rather than wrapping). The selected tool, its
+cost and an X live in the selected-tool bar (it says "Pan" only when no tool is
+armed), and a thin yellow border frames the map while a tool is armed. Money is shown in South African rand (e.g. R8 833). A one-line ticker under
 it shows the latest city message for a few seconds. The tool palette lists the 16
 tools; the selected tool is highlighted. Selecting the highlighted tool again
 returns to pan mode.
@@ -197,9 +199,10 @@ Tools come in two kinds:
 - Long press: query the tile (a small panel; tap outside or Back to close).
 - The X on the selected-tool bar returns to Pan.
 - Palette: a scrollable left column in landscape; a bottom sheet in portrait that
-  collapses to a thin strip with the "Tools" button.
-- Back button: closes the query dialog first, then the tools drawer; with nothing
-  open, press Back three times within two seconds to be asked before exiting (one
+  collapses to a thin strip with the "Tools" button. Picking a tool closes the
+  sheet so the whole map is visible.
+- Back button: closes the query dialog first, then returns an armed tool to Pan,
+  then closes the tools drawer; with nothing open, press Back three times within two seconds to be asked before exiting (one
   or two presses show a hint).
 - Status bar: the pause/play button and the speed label (tap to cycle), and the ⋮
   button that opens the menu (Budget, Evaluation, Graphs, mini map, overlays).
@@ -211,7 +214,7 @@ Tools come in two kinds:
   selected; pans when no tool is selected. Roads/rail/wire follow the drag path.
 - Right-drag: pan. Mouse wheel: zoom. Arrow keys: pan.
 - Right-click: query the tile (a dialog; Esc or OK to close).
-- The X in the status area returns to Pan.
+- The X in the status area, or Esc, returns to Pan.
 - Space: pause/play. Keys 1-4: Slow / Normal / Fast / Ultra speed.
 - Palette: a scrollable left column. The "Menu" button opens Budget, Evaluation,
   Graphs, the mini map and the overlay picker.

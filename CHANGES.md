@@ -3,6 +3,34 @@
 Changes made to the imported Micropolis / MicropolisJ source, most recent first.
 Created by Nieto Software.
 
+## 2026-10-01 - Phase 8 fix: tool selection desync and status bar wrapping
+
+No `micropolisj.*` engine source was changed. Changes are in our shared `game`
+layer and the two UIs.
+
+- Cause (tool desync, Android): the palette kept its own `GameController`
+  reference, set once in `onCreate`; New City / Load (`swapController`, including
+  the start screen's New City and Load City) rebound the map and mini map but not
+  the palette, so palette taps went to the discarded controller (palette showed a
+  tool, the bar and touch said Pan). Rotation re-ran setup and hid it.
+- `game.GameController`: the selected tool lives only here. New `ToolListener`
+  (`addToolListener` syncs the new listener at once; `setTool`, `toggleTool` and
+  the one-shot auto-clear notify under one lock) and `transferToolListeners(fresh)`
+  for controller swaps.
+- New `game.TouchRouter.decide(tool, pointerCount, phase)` -> BUILD / PAN /
+  QUERY, a pure function used by `CityView` and the desktop canvas.
+- Android: `ToolPaletteView` holds no controller or selection (reports taps, shows
+  what the listener says); `MainActivity` has one tool listener (registered in
+  onCreate, moved on swap, removed in onDestroy). Picking a tool closes the
+  portrait drawer; an accent border frames the map while a tool is armed; Back
+  with a tool armed returns to Pan first.
+- Desktop: the same listener model, border, and Esc returns to Pan.
+- Status bar: Android drops the duplicate tool/cost cells; date, funds and
+  population share the width and autosize (13sp to 9sp) on one line; the speed
+  button has a fixed width. Desktop values never shrink; game window min width 860.
+- Tests: `TouchRouterTest` (4) and `ToolSelectionTest` (5), proven red against
+  stubs (9 run, 7 failed) before the fix. Engine tests: 67, 0 failures.
+
 ## 2026-09-22 - Phase 7 start screen, educational mode, splash, about and GPL
 
 No `micropolisj.*` engine source was changed this phase; the one small engine-

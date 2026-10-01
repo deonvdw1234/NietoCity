@@ -417,7 +417,15 @@ Created by Nieto Software
       "R20 000" fit at 13sp). Desktop: date/funds/pop/cost and the buttons keep
       their preferred width (never ellipsized), only the tool name may shrink,
       game window min width 860 so the bar fits on one line. (S22 check: Andre.)
-- [ ] 5. Gate + CHANGES.md + TASKS.md.
+- [x] 5. Gate green. `gradlew --rerun-tasks :engine:test :desktop:jar
+      assembleDebug` raw tail:
+        "BUILD SUCCESSFUL in 8s
+         44 actionable tasks: 44 executed"
+      Engine tests (XML reports): 67 total, 0 failures, 0 errors (Phase 7's 58 +
+      TouchRouter 4 + ToolSelection 5). NietoCity-debug.apk (5 711 949 B, stamped
+      2026-10-01 12:25) and NietoCity-desktop.jar (12:24) refreshed in the root.
+      CHANGES.md Phase 8 fix entry; README controls updated.
+      *** STOP: Andre tests on the S22 before release tasks 4 to 8. ***
 
 ## Later phases (see NietoCity_Project_Plan_rev2.pdf)
 - Phase 3: Tool palette, placement, status bar
